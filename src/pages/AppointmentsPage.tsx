@@ -63,7 +63,7 @@ export default function AppointmentsPage() {
       };
       if (statusFilter !== "all") params.status = statusFilter;
       
-      const data = await api.get("/appointments", params);
+      const data = await api.get("/appointments", params); 
       
       // Transform backend format to frontend format
       const transformed: Appointment[] = data.appointments.map((apt: any) => ({
