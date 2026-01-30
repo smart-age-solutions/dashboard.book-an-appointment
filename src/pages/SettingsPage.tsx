@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useStores, Store as StoreType, StoreHours, defaultHours } from "@/contexts/StoreContext";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/contexts/AuthContext";
 
 type EmailProvider = "aws_ses_api" | "aws_ses_smtp" | "gmail_smtp" | "mailgun_api" | "mailgun_smtp";
@@ -108,6 +109,8 @@ export default function SettingsPage() {
     slotDuration: "60",
   });
 
+  const [isLoading, setIsLoading] = useState(true);
+
   // Global settings
   const [globalSettings, setGlobalSettings] = useState({
     website: "",
@@ -197,6 +200,8 @@ export default function SettingsPage() {
       }
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load settings", variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -691,7 +696,12 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <Tabs defaultValue="stores" className="space-y-6">
+        {isLoading ? (
+          <div className="flex h-[50vh] items-center justify-center">
+            <LoadingSpinner size={48} />
+          </div>
+        ) : (
+          <Tabs defaultValue="stores" className="space-y-6">
           <TabsList className="flex-wrap">
             <TabsTrigger value="stores">Stores</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -1380,6 +1390,7 @@ export default function SettingsPage() {
           </TabsContent>
           )}
         </Tabs>
+        )}
 
         {/* Store Dialog */}
         <Dialog open={isStoreDialogOpen} onOpenChange={setIsStoreDialogOpen}>

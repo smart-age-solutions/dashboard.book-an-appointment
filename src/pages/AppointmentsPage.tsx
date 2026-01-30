@@ -17,6 +17,7 @@ import { useStores } from "@/contexts/StoreContext";
 import { api } from "@/lib/api";
 import { useEffect } from "react";
 import { parseLocalDate } from "@/lib/date";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface Appointment {
   id: string;
@@ -249,8 +250,10 @@ export default function AppointmentsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Loading appointments...
+                  <TableCell colSpan={6} className="h-24">
+                    <div className="flex items-center justify-center">
+                      <LoadingSpinner />
+                    </div>
                   </TableCell>
                 </TableRow>
               ) : filteredAppointments.length === 0 ? (

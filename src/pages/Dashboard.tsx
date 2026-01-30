@@ -8,6 +8,7 @@ import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -50,6 +51,16 @@ export default function Dashboard() {
 
     fetchStats();
   }, [isBackofficeUser, isImpersonating]);
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[50vh] items-center justify-center">
+          <LoadingSpinner size={48} />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

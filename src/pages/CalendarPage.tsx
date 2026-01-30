@@ -49,6 +49,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useStores } from "@/contexts/StoreContext";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface Appointment {
   id: string;
@@ -386,74 +387,82 @@ export default function CalendarPage() {
 
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
-              {Array.from({ length: startDay }).map((_, i) => (
-                <div key={`empty-${i}`} className="h-24" />
-              ))}
-              {days.map((day) => {
-                const dayAppointments = getAppointmentsForDate(day);
-                const isSelected = selectedDate && isSameDay(day, selectedDate);
-                const isPast = isPastDate(day);
-                const isBlocked = isBlockedDate(day);
-                return (
-                  <div
-                    key={day.toISOString()}
-                    onClick={() => setSelectedDate(day)}
-                    className={cn(
-                      "h-24 rounded-lg border border-border p-2 cursor-pointer transition-all",
-                      !isSameMonth(day, currentMonth) && "opacity-50",
-                      isToday(day) && "bg-accent",
-                      isSelected && "ring-2 ring-primary",
-                      isBlocked && "bg-destructive/10 border-destructive/30",
-                      isPast
-                        ? "opacity-60 cursor-not-allowed bg-muted/30"
-                        : "hover:border-primary/50"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "text-sm font-medium mb-1 flex items-center gap-1",
-                        isToday(day)
-                          ? "text-primary"
-                          : isPast
-                          ? "text-muted-foreground"
-                          : isBlocked
-                          ? "text-destructive"
-                          : "text-card-foreground"
-                      )}
-                    >
-                      {format(day, "d")}
-                      {isBlocked && <Ban className="h-3 w-3" />}
-                    </div>
-                    <div className="space-y-1 overflow-hidden">
-                      {isBlocked ? (
-                        <div className="text-xs text-destructive truncate">
-                          {getBlockedReason(day) || "Blocked"}
-                        </div>
-                      ) : (
-                        <>
-                          {dayAppointments.slice(0, 2).map((apt) => (
-                            <div
-                              key={apt.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewAppointment(apt);
-                              }}
-                              className="text-xs bg-primary/10 text-primary rounded px-1.5 py-0.5 truncate cursor-pointer hover:bg-primary/20"
-                            >
-                              {apt.time} {apt.client}
-                            </div>
-                          ))}
-                          {dayAppointments.length > 2 && (
-                            <div className="text-xs text-muted-foreground">
-                              +{dayAppointments.length - 2} more
-                            </div>
+              {isLoading ? (
+                <div className="col-span-7 h-96 flex items-center justify-center">
+                  <LoadingSpinner size={48} />
+                </div>
+              ) : (
+                <>
+                  {Array.from({ length: startDay }).map((_, i) => (
+                    <div key={`empty-${i}`} className="h-24" />
+                  ))}
+                  {days.map((day) => {
+                    const dayAppointments = getAppointmentsForDate(day);
+                    const isSelected = selectedDate && isSameDay(day, selectedDate);
+                    const isPast = isPastDate(day);
+                    const isBlocked = isBlockedDate(day);
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        onClick={() => setSelectedDate(day)}
+                        className={cn(
+                          "h-24 rounded-lg border border-border p-2 cursor-pointer transition-all",
+                          !isSameMonth(day, currentMonth) && "opacity-50",
+                          isToday(day) && "bg-accent",
+                          isSelected && "ring-2 ring-primary",
+                          isBlocked && "bg-destructive/10 border-destructive/30",
+                          isPast
+                            ? "opacity-60 cursor-not-allowed bg-muted/30"
+                            : "hover:border-primary/50"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "text-sm font-medium mb-1 flex items-center gap-1",
+                            isToday(day)
+                              ? "text-primary"
+                              : isPast
+                              ? "text-muted-foreground"
+                              : isBlocked
+                              ? "text-destructive"
+                              : "text-card-foreground"
                           )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                        >
+                          {format(day, "d")}
+                          {isBlocked && <Ban className="h-3 w-3" />}
+                        </div>
+                        <div className="space-y-1 overflow-hidden">
+                          {isBlocked ? (
+                            <div className="text-xs text-destructive truncate">
+                              {getBlockedReason(day) || "Blocked"}
+                            </div>
+                          ) : (
+                            <>
+                              {dayAppointments.slice(0, 2).map((apt) => (
+                                <div
+                                  key={apt.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewAppointment(apt);
+                                  }}
+                                  className="text-xs bg-primary/10 text-primary rounded px-1.5 py-0.5 truncate cursor-pointer hover:bg-primary/20"
+                                >
+                                  {apt.time} {apt.client}
+                                </div>
+                              ))}
+                              {dayAppointments.length > 2 && (
+                                <div className="text-xs text-muted-foreground">
+                                  +{dayAppointments.length - 2} more
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
             </div>
           </div>
 
@@ -499,7 +508,12 @@ export default function CalendarPage() {
               )}
             </div>
 
-            {selectedDate ? (
+            {isLoading ? (
+              <div className="text-center py-8">
+                <LoadingSpinner className="mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">Loading schedule...</p>
+              </div>
+            ) : selectedDate ? (
               <div className="space-y-3">
                 {isBlockedDate(selectedDate) ? (
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
