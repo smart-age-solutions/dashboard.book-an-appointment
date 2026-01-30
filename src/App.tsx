@@ -19,6 +19,7 @@ import BackofficePage from "./pages/BackofficePage";
 import BackofficeLogsPage from "./pages/BackofficeLogsPage";
 import BackofficeInvitationPage from "./pages/BackofficeInvitationPage";
 import InvitationAcceptPage from "./pages/InvitationAcceptPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
@@ -38,6 +39,7 @@ const App = () => (
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/invitation/accept" element={<InvitationAcceptPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 
                 {/* Protected Client Routes */}
                 <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
