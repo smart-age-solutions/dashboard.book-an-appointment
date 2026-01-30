@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { useStores, Store as StoreType, StoreHours, defaultHours } from "@/contexts/StoreContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 type EmailProvider = "aws_ses_api" | "aws_ses_smtp" | "gmail_smtp" | "mailgun_api" | "mailgun_smtp";
 
@@ -77,6 +78,7 @@ const initialSmsConfig: SmsConfig = {
 
 export default function SettingsPage() {
   const { stores, addStore, updateStore, deleteStore } = useStores();
+  const { isBackofficeUser } = useAuth();
   
   const [notifications, setNotifications] = useState({
     emailConfirmation: true,
@@ -140,12 +142,22 @@ export default function SettingsPage() {
     toast({ title: "Saved", description: "Notification settings updated successfully" });
   };
 
-  const handleSaveEmailConfig = () => {
-    toast({ title: "Saved", description: "Email service configuration saved successfully" });
+  const handleSaveEmailConfig = async () => {
+    try {
+      await api.put("/auth/settings/email-config", emailConfig);
+      toast({ title: "Saved", description: "Email service configuration saved successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to save email config", variant: "destructive" });
+    }
   };
 
-  const handleSaveSmsConfig = () => {
-    toast({ title: "Saved", description: "SMS service configuration saved successfully" });
+  const handleSaveSmsConfig = async () => {
+    try {
+      await api.put("/auth/settings/sms-config", smsConfig);
+      toast({ title: "Saved", description: "SMS service configuration saved successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to save sms config", variant: "destructive" });
+    }
   };
 
   const fetchGlobalSettings = async () => {
@@ -163,7 +175,26 @@ export default function SettingsPage() {
         description: profileData.profile.description || "",
         bookingWindowDays: String(profileData.profile.booking_window_days || "30"),
         timezone: profileData.profile.timezone || "America/New_York",
+        editAppointmentUrl: profileData.profile.edit_appointment_url || "",
+        cancelAppointmentUrl: profileData.profile.cancel_appointment_url || "",
       });
+
+      // Fetch Email & SMS configs
+      try {
+        const [emailRes, smsRes] = await Promise.all([
+          api.get("/auth/settings/email-config"),
+          api.get("/auth/settings/sms-config")
+        ]);
+        
+        if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
+          setEmailConfig({ ...initialEmailConfig, ...emailRes.email_config });
+        }
+        if (smsRes.sms_config && Object.keys(smsRes.sms_config).length > 0) {
+          setSmsConfig({ ...initialSmsConfig, ...smsRes.sms_config });
+        }
+      } catch (e) {
+        console.error("Failed to fetch service configs", e);
+      }
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load settings", variant: "destructive" });
     }
@@ -198,6 +229,8 @@ export default function SettingsPage() {
           company_name: "SmartAppointment Client",
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
           timezone: globalSettings.timezone,
+          edit_appointment_url: globalSettings.editAppointmentUrl,
+          cancel_appointment_url: globalSettings.cancelAppointmentUrl,
         })
       ]);
       toast({ title: "Saved", description: "Global settings updated successfully" });
@@ -662,9 +695,13 @@ export default function SettingsPage() {
           <TabsList className="flex-wrap">
             <TabsTrigger value="stores">Stores</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="email">Email Service</TabsTrigger>
-            <TabsTrigger value="sms">SMS Service</TabsTrigger>
+            {isBackofficeUser && (
+              <>
+                <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                <TabsTrigger value="email">Email Service</TabsTrigger>
+                <TabsTrigger value="sms">SMS Service</TabsTrigger>
+              </>
+            )}
           </TabsList>
 
           {/* Stores Tab */}
@@ -1026,84 +1063,87 @@ export default function SettingsPage() {
           </TabsContent>
 
           {/* Notifications */}
-          <TabsContent value="notifications" className="space-y-6">
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-accent">
-                  <Mail className="h-5 w-5 text-accent-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-card-foreground">Notification Preferences</h2>
-                  <p className="text-sm text-muted-foreground">Configure automated notifications</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium text-card-foreground">Booking Confirmation</p>
-                    <p className="text-sm text-muted-foreground">Send email when booking is confirmed</p>
+          {isBackofficeUser && (
+            <TabsContent value="notifications" className="space-y-6">
+              <div className="rounded-xl bg-card p-6 card-shadow">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-lg bg-accent">
+                    <Mail className="h-5 w-5 text-accent-foreground" />
                   </div>
-                  <Switch
-                    checked={notifications.emailConfirmation}
-                    onCheckedChange={(v) => setNotifications({ ...notifications, emailConfirmation: v })}
-                  />
+                  <div>
+                    <h2 className="text-lg font-semibold text-card-foreground">Notification Preferences</h2>
+                    <p className="text-sm text-muted-foreground">Configure automated notifications</p>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium text-card-foreground">Appointment Reminder</p>
-                    <p className="text-sm text-muted-foreground">Send reminder email before appointment</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      type="number"
-                      className="w-20"
-                      value={notifications.reminderHours}
-                      onChange={(e) => setNotifications({ ...notifications, reminderHours: e.target.value })}
-                    />
-                    <span className="text-sm text-muted-foreground">hours before</span>
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Booking Confirmation</p>
+                      <p className="text-sm text-muted-foreground">Send email when booking is confirmed</p>
+                    </div>
                     <Switch
-                      checked={notifications.emailReminder}
-                      onCheckedChange={(v) => setNotifications({ ...notifications, emailReminder: v })}
+                      checked={notifications.emailConfirmation}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, emailConfirmation: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Appointment Reminder</p>
+                      <p className="text-sm text-muted-foreground">Send reminder email before appointment</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="number"
+                        className="w-20"
+                        value={notifications.reminderHours}
+                        onChange={(e) => setNotifications({ ...notifications, reminderHours: e.target.value })}
+                      />
+                      <span className="text-sm text-muted-foreground">hours before</span>
+                      <Switch
+                        checked={notifications.emailReminder}
+                        onCheckedChange={(v) => setNotifications({ ...notifications, emailReminder: v })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Cancellation Notice</p>
+                      <p className="text-sm text-muted-foreground">Send email when appointment is cancelled</p>
+                    </div>
+                    <Switch
+                      checked={notifications.emailCancellation}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, emailCancellation: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">SMS Reminders</p>
+                      <p className="text-sm text-muted-foreground">Send text message reminders (requires SMS integration)</p>
+                    </div>
+                    <Switch
+                      checked={notifications.smsReminder}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, smsReminder: v })}
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium text-card-foreground">Cancellation Notice</p>
-                    <p className="text-sm text-muted-foreground">Send email when appointment is cancelled</p>
-                  </div>
-                  <Switch
-                    checked={notifications.emailCancellation}
-                    onCheckedChange={(v) => setNotifications({ ...notifications, emailCancellation: v })}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="font-medium text-card-foreground">SMS Reminders</p>
-                    <p className="text-sm text-muted-foreground">Send text message reminders (requires SMS integration)</p>
-                  </div>
-                  <Switch
-                    checked={notifications.smsReminder}
-                    onCheckedChange={(v) => setNotifications({ ...notifications, smsReminder: v })}
-                  />
+                <div className="mt-6 flex justify-end">
+                  <Button onClick={handleSaveNotifications}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Preferences
+                  </Button>
                 </div>
               </div>
-
-              <div className="mt-6 flex justify-end">
-                <Button onClick={handleSaveNotifications}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Preferences
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
+            </TabsContent>
+          )}
 
           {/* Email Service Configuration */}
-          <TabsContent value="email" className="space-y-6">
+          {isBackofficeUser && (
+            <TabsContent value="email" className="space-y-6">
             <div className="rounded-xl bg-card p-6 card-shadow">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-accent">
@@ -1265,9 +1305,11 @@ export default function SettingsPage() {
               </div>
             </div>
           </TabsContent>
+          )}
 
           {/* SMS Service Configuration */}
-          <TabsContent value="sms" className="space-y-6">
+          {isBackofficeUser && (
+            <TabsContent value="sms" className="space-y-6">
             <div className="rounded-xl bg-card p-6 card-shadow">
               <div className="flex items-center gap-3 mb-6">
                 <div className="p-2 rounded-lg bg-accent">
@@ -1336,6 +1378,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </TabsContent>
+          )}
         </Tabs>
 
         {/* Store Dialog */}

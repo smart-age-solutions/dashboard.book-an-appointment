@@ -21,8 +21,16 @@ import { parseLocalDate } from "@/lib/date";
 interface Appointment {
   id: string;
   client: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
+  title: string;
+  phone_area_code: string;
+  country_of_residence: string;
+  preferred_communication: string;
+  accepted_terms: boolean;
+  consent_communication: boolean;
   service: string;
   date: Date;
   time: string;
@@ -48,7 +56,7 @@ export default function AppointmentsPage() {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [editFormData, setEditFormData] = useState<Partial<Appointment>>({});
+  const [editFormData, setEditFormData] = useState<Partial<Appointment & { first_name: string; last_name: string }>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -63,14 +71,22 @@ export default function AppointmentsPage() {
       };
       if (statusFilter !== "all") params.status = statusFilter;
       
-      const data = await api.get("/appointments", params); 
+      const data = await api.get("/appointments", params);
       
       // Transform backend format to frontend format
       const transformed: Appointment[] = data.appointments.map((apt: any) => ({
         id: apt.id,
+        first_name: apt.first_name,
+        last_name: apt.last_name || "",
         client: `${apt.first_name} ${apt.last_name || ""}`.trim(),
         email: apt.email,
         phone: apt.phone || "",
+        title: apt.title || "",
+        phone_area_code: apt.phone_area_code || "",
+        country_of_residence: apt.country_of_residence || "",
+        preferred_communication: apt.preferred_communication || "email",
+        accepted_terms: apt.accepted_terms || false,
+        consent_communication: apt.consent_communication || false,
         service: apt.purpose || "General",
         date: parseLocalDate(apt.date),
         time: apt.time, // HH:MM format from backend
@@ -111,8 +127,16 @@ export default function AppointmentsPage() {
     setSelectedAppointment(apt);
     setEditFormData({
       client: apt.client,
+      first_name: apt.first_name,
+      last_name: apt.last_name,
       email: apt.email,
       phone: apt.phone,
+      title: apt.title,
+      phone_area_code: apt.phone_area_code,
+      country_of_residence: apt.country_of_residence,
+      preferred_communication: apt.preferred_communication,
+      accepted_terms: apt.accepted_terms,
+      consent_communication: apt.consent_communication,
       service: apt.service,
       date: apt.date,
       time: apt.time,
@@ -129,17 +153,20 @@ export default function AppointmentsPage() {
 
     try {
       const payload: any = {};
-      if (editFormData.client) {
-        const names = editFormData.client.split(" ");
-        payload.first_name = names[0];
-        payload.last_name = names.slice(1).join(" ");
-      }
+      if (editFormData.first_name) payload.first_name = editFormData.first_name;
+      if (editFormData.last_name !== undefined) payload.last_name = editFormData.last_name;
       if (editFormData.email) payload.email = editFormData.email;
       if (editFormData.phone) payload.phone = editFormData.phone;
       if (editFormData.service) payload.purpose = editFormData.service;
       if (editFormData.status) payload.status = editFormData.status;
       if (editFormData.notes !== undefined) payload.notes = editFormData.notes;
       if (editFormData.storeId) payload.store_id = editFormData.storeId;
+      if (editFormData.title) payload.title = editFormData.title;
+      if (editFormData.phone_area_code) payload.phone_area_code = editFormData.phone_area_code;
+      if (editFormData.country_of_residence) payload.country_of_residence = editFormData.country_of_residence;
+      if (editFormData.preferred_communication) payload.preferred_communication = editFormData.preferred_communication;
+      payload.accepted_terms = editFormData.accepted_terms;
+      payload.consent_communication = editFormData.consent_communication;
       if (editFormData.date) payload.date = format(editFormData.date, "yyyy-MM-dd");
       if (editFormData.time) payload.time = editFormData.time;
 
@@ -421,14 +448,43 @@ export default function AppointmentsPage() {
               <DialogTitle>Edit Appointment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Client Name</Label>
-                  <Input
-                    value={editFormData.client || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, client: e.target.value })}
-                  />
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-1 space-y-2">
+                  <Label>Title</Label>
+                  <Select
+                    value={editFormData.title || ""}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, title: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Title" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mr">Mr.</SelectItem>
+                      <SelectItem value="Mrs">Mrs.</SelectItem>
+                      <SelectItem value="Ms">Ms.</SelectItem>
+                      <SelectItem value="Dr">Dr.</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                <div className="col-span-3 grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name</Label>
+                    <Input
+                      value={editFormData.first_name || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name</Label>
+                    <Input
+                      value={editFormData.last_name || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Service</Label>
                   <Input
@@ -436,18 +492,43 @@ export default function AppointmentsPage() {
                     onChange={(e) => setEditFormData({ ...editFormData, service: e.target.value })}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={editFormData.status}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, status: v as Appointment["status"] })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Email</Label>
+              <div className="space-y-2">
+                <Label>Email</Label>
                   <Input
                     type="email"
                     value={editFormData.email || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-1 space-y-2">
+                  <Label>Phone Area Code</Label>
+                  <Input
+                    value={editFormData.phone_area_code || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, phone_area_code: e.target.value })}
+                    placeholder="+1"
+                  />
+                </div>
+                <div className="col-span-3 space-y-2">
                   <Label>Phone</Label>
                   <Input
                     value={editFormData.phone || ""}
@@ -456,7 +537,34 @@ export default function AppointmentsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Country of Residence</Label>
+                  <Input
+                    value={editFormData.country_of_residence || ""}
+                    onChange={(e) => setEditFormData({ ...editFormData, country_of_residence: e.target.value })}
+                    placeholder="USA"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Preferred Communication</Label>
+                  <Select
+                    value={editFormData.preferred_communication || "email"}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, preferred_communication: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select preference" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Date</Label>
                   <Input
@@ -475,30 +583,25 @@ export default function AppointmentsPage() {
                     onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Input
-                    value={editFormData.duration || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, duration: e.target.value })}
-                  />
-                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Status</Label>
+                  <Label>Duration</Label>
                   <Select
-                    value={editFormData.status}
-                    onValueChange={(v) => setEditFormData({ ...editFormData, status: v as Appointment["status"] })}
+                    value={editFormData.duration || "60"}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, duration: v })}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder="Duration" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="15">15 min</SelectItem>
+                      <SelectItem value="30">30 min</SelectItem>
+                      <SelectItem value="45">45 min</SelectItem>
+                      <SelectItem value="60">1 hour</SelectItem>
+                      <SelectItem value="90">1.5 hours</SelectItem>
+                      <SelectItem value="120">2 hours</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -520,6 +623,28 @@ export default function AppointmentsPage() {
                     </Select>
                   </div>
                 )}
+              </div>
+
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="edit-terms"
+                  checked={editFormData.accepted_terms || false}
+                  onChange={(e) => setEditFormData({ ...editFormData, accepted_terms: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="edit-terms" className="text-sm font-normal">Accepted Terms</Label>
+              </div>
+
+              <div className="flex items-center space-x-2 pb-2">
+                 <input
+                  type="checkbox"
+                  id="edit-consent"
+                  checked={editFormData.consent_communication || false}
+                  onChange={(e) => setEditFormData({ ...editFormData, consent_communication: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="edit-consent" className="text-sm font-normal">Consent to Communication</Label>
               </div>
 
               <div className="space-y-2">

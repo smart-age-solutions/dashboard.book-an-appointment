@@ -1,6 +1,15 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Eye, UserCog, ToggleLeft, ToggleRight, Building2, UserPlus } from "lucide-react";
+import {
+  Search,
+  Eye,
+  UserCog,
+  ToggleLeft,
+  ToggleRight,
+  Building2,
+  UserPlus,
+  Plus,
+} from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,9 +65,18 @@ export default function BackofficePage() {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newClient, setNewClient] = useState({
+    companyName: "",
+    email: "",
+    password: "",
+  });
 
   const { toast } = useToast();
   const { startImpersonation } = useImpersonation();
@@ -69,7 +87,8 @@ export default function BackofficePage() {
       const matchesSearch =
         client.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         client.email.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === "all" || client.status === statusFilter;
+      const matchesStatus =
+        statusFilter === "all" || client.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [clients, searchQuery, statusFilter]);
@@ -80,17 +99,27 @@ export default function BackofficePage() {
     setIsLoading(true);
     try {
       const data = await api.get("/backoffice/clients");
-      setClients(data.clients.map((c: any) => ({
-        id: c.id,
-        companyName: c.company_name,
-        email: c.email || "N/A",
-        status: c.is_active ? "active" : "inactive",
-        createdAt: c.created_at,
-        branding: { primaryColor: c.brand_color, logo: c.logo_url },
-        settings: { timezone: c.timezone, language: c.language, bookingWindowDays: c.booking_window_days },
-      })));
+      setClients(
+        data.clients.map((c: any) => ({
+          id: c.id,
+          companyName: c.company_name,
+          email: c.email || "N/A",
+          status: c.is_active ? "active" : "inactive",
+          createdAt: c.created_at,
+          branding: { primaryColor: c.brand_color, logo: c.logo_url },
+          settings: {
+            timezone: c.timezone,
+            language: c.language,
+            bookingWindowDays: c.booking_window_days,
+          },
+        })),
+      );
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -109,7 +138,11 @@ export default function BackofficePage() {
       });
       fetchClients();
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -123,11 +156,19 @@ export default function BackofficePage() {
         status: data.is_active ? "active" : "inactive",
         createdAt: data.created_at,
         branding: { primaryColor: data.brand_color, logo: data.logo_url },
-        settings: { timezone: data.timezone, language: data.language, bookingWindowDays: data.booking_window_days },
+        settings: {
+          timezone: data.timezone,
+          language: data.language,
+          bookingWindowDays: data.booking_window_days,
+        },
       });
       setIsDetailsOpen(true);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -137,6 +178,33 @@ export default function BackofficePage() {
       title: "Impersonation Started",
       description: `You are now acting as ${client.companyName}.`,
     });
+  };
+
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsCreating(true);
+    try {
+      await api.post("/backoffice/clients", {
+        company_name: newClient.companyName,
+        email: newClient.email,
+        password: newClient.password,
+      });
+      toast({
+        title: "Success",
+        description: "Client account created successfully.",
+      });
+      setIsCreateOpen(false);
+      setNewClient({ companyName: "", email: "", password: "" });
+      fetchClients();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -150,19 +218,27 @@ export default function BackofficePage() {
               Manage all tenants and clients in the system.
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setIsCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Client
+            </Button>
             <Button onClick={() => navigate("/backoffice/invite")}>
               <UserPlus className="h-4 w-4 mr-2" />
-              Invite User
+              Invite Backoffice User
             </Button>
             {/* Employee Badge */}
             <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
               <Building2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               <div className="text-sm">
-                <span className="text-blue-700 dark:text-blue-300 font-medium">Smart Age Solutions</span>
+                <span className="text-blue-700 dark:text-blue-300 font-medium">
+                  Smart Age Solutions
+                </span>
                 {user && (
-                  <span className="text-blue-600 dark:text-blue-400 ml-2">• {user.name}</span>
+                  <span className="text-blue-600 dark:text-blue-400 ml-2">
+                    • {user.name}
+                  </span>
                 )}
               </div>
             </div>
@@ -182,7 +258,9 @@ export default function BackofficePage() {
           </div>
           <Select
             value={statusFilter}
-            onValueChange={(value) => setStatusFilter(value as "all" | "active" | "inactive")}
+            onValueChange={(value) =>
+              setStatusFilter(value as "all" | "active" | "inactive")
+            }
           >
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Filter by status" />
@@ -210,11 +288,15 @@ export default function BackofficePage() {
             <TableBody>
               {filteredClients.map((client) => (
                 <TableRow key={client.id}>
-                  <TableCell className="font-medium">{client.companyName}</TableCell>
+                  <TableCell className="font-medium">
+                    {client.companyName}
+                  </TableCell>
                   <TableCell>{client.email}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={client.status === "active" ? "default" : "secondary"}
+                      variant={
+                        client.status === "active" ? "default" : "secondary"
+                      }
                       className={
                         client.status === "active"
                           ? "bg-green-100 text-green-800 hover:bg-green-100"
@@ -224,7 +306,9 @@ export default function BackofficePage() {
                       {client.status === "active" ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{new Date(client.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {new Date(client.createdAt).toLocaleDateString()}
+                  </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       <Button
@@ -239,7 +323,9 @@ export default function BackofficePage() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleToggleStatus(client.id)}
-                        title={client.status === "active" ? "Deactivate" : "Activate"}
+                        title={
+                          client.status === "active" ? "Deactivate" : "Activate"
+                        }
                       >
                         {client.status === "active" ? (
                           <ToggleRight className="h-4 w-4 text-green-600" />
@@ -261,7 +347,10 @@ export default function BackofficePage() {
               ))}
               {filteredClients.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-muted-foreground"
+                  >
                     No clients found matching your criteria.
                   </TableCell>
                 </TableRow>
@@ -284,7 +373,11 @@ export default function BackofficePage() {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <span className="text-muted-foreground">Status:</span>
                     <Badge
-                      variant={selectedClient.status === "active" ? "default" : "secondary"}
+                      variant={
+                        selectedClient.status === "active"
+                          ? "default"
+                          : "secondary"
+                      }
                       className={
                         selectedClient.status === "active"
                           ? "bg-green-100 text-green-800 w-fit"
@@ -294,7 +387,9 @@ export default function BackofficePage() {
                       {selectedClient.status}
                     </Badge>
                     <span className="text-muted-foreground">Created:</span>
-                    <span>{new Date(selectedClient.createdAt).toLocaleDateString()}</span>
+                    <span>
+                      {new Date(selectedClient.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
 
@@ -302,11 +397,16 @@ export default function BackofficePage() {
                   <div>
                     <h4 className="text-sm font-medium mb-2">Branding</h4>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <span className="text-muted-foreground">Primary Color:</span>
+                      <span className="text-muted-foreground">
+                        Primary Color:
+                      </span>
                       <div className="flex items-center gap-2">
                         <div
                           className="h-4 w-4 rounded border"
-                          style={{ backgroundColor: selectedClient.branding.primaryColor }}
+                          style={{
+                            backgroundColor:
+                              selectedClient.branding.primaryColor,
+                          }}
                         />
                         <span>{selectedClient.branding.primaryColor}</span>
                       </div>
@@ -324,13 +424,80 @@ export default function BackofficePage() {
                       <span>{selectedClient.settings.timezone}</span>
                       <span className="text-muted-foreground">Language:</span>
                       <span>{selectedClient.settings.language}</span>
-                      <span className="text-muted-foreground">Booking Window:</span>
-                      <span>{selectedClient.settings.bookingWindowDays} days</span>
+                      <span className="text-muted-foreground">
+                        Booking Window:
+                      </span>
+                      <span>
+                        {selectedClient.settings.bookingWindowDays} days
+                      </span>
                     </div>
                   </div>
                 )}
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Client Dialog */}
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create New Client</DialogTitle>
+              <DialogDescription>
+                Create a new client account and a corresponding owner user.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateClient} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Company Name</label>
+                <Input
+                  required
+                  placeholder="Acme Inc."
+                  value={newClient.companyName}
+                  onChange={(e) =>
+                    setNewClient({ ...newClient, companyName: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Admin Email</label>
+                <Input
+                  required
+                  type="email"
+                  placeholder="admin@acme.com"
+                  value={newClient.email}
+                  onChange={(e) =>
+                    setNewClient({ ...newClient, email: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Admin Password</label>
+                <Input
+                  required
+                  type="password"
+                  placeholder="••••••••"
+                  minLength={8}
+                  value={newClient.password}
+                  onChange={(e) =>
+                    setNewClient({ ...newClient, password: e.target.value })
+                  }
+                />
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCreateOpen(false)}
+                  disabled={isCreating}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isCreating}>
+                  {isCreating ? "Creating..." : "Create Account"}
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

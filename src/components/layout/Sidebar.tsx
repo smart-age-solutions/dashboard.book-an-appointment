@@ -9,6 +9,7 @@ import {
   
   Building2,
   FileText,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,7 +31,7 @@ const backofficeNavigation = [
 
 export function Sidebar() {
   const location = useLocation();
-  const { user, isBackofficeUser } = useAuth();
+  const { user, isBackofficeUser, logout } = useAuth();
   const { isImpersonating } = useImpersonation();
 
   const getInitials = (name?: string) => {
@@ -128,6 +129,13 @@ export function Sidebar() {
                 {user?.email || ""}
               </p>
             </div>
+            <button
+              onClick={() => logout()}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+              title="Log out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

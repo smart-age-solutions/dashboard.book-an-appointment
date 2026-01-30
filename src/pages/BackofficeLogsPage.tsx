@@ -91,7 +91,7 @@ export default function BackofficeLogsPage() {
         },
         client: l.client_id ? { 
           id: l.client_id, 
-          name: l.details?.company_name || `Client #${l.client_id.slice(0,8)}` 
+          name: l.client_name || l.details?.company_name || `Client #${l.client_id.slice(0,8)}` 
         } : undefined
       })));
     } catch (error: any) {

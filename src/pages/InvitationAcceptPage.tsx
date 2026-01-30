@@ -239,7 +239,7 @@ export default function InvitationAcceptPage() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © 2025 SmartAppointment. All rights reserved.
+          © 2026 Smart Age Solutions. All rights reserved.
         </p>
       </div>
     </div>

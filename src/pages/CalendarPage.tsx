@@ -48,17 +48,26 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useStores } from "@/contexts/StoreContext";
 
 interface Appointment {
   id: string;
-  title: string;
-  client: string;
+  title: string; // Personal title (Mr, Mrs)
+  first_name: string;
+  last_name: string;
+  client: string; // Computed for display
   email: string;
   phone: string;
+  phone_area_code: string;
+  country_of_residence: string;
+  preferred_communication: string;
+  accepted_terms: boolean;
+  consent_communication: boolean;
   notes: string;
   date: Date;
   time: string;
-  service: string;
+  service: string; // Purpose/Service title
+  storeId?: string;
 }
 
 interface BlockedDay {
@@ -71,6 +80,7 @@ import { parseLocalDate } from "@/lib/date";
 const initialAppointments: Appointment[] = [];
 
 export default function CalendarPage() {
+  const { stores } = useStores();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>(initialAppointments);
@@ -83,13 +93,20 @@ export default function CalendarPage() {
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [formData, setFormData] = useState({
-    title: "",
-    client: "",
+    title: "", // Personal title
+    first_name: "",
+    last_name: "",
     email: "",
     phone: "",
+    phone_area_code: "",
+    country_of_residence: "",
+    preferred_communication: "email",
+    accepted_terms: false,
+    consent_communication: false,
     notes: "",
     time: "09:00",
-    service: "",
+    service: "", // Purpose/Service title
+    storeId: "",
   });
 
   const fetchData = useCallback(async () => {
@@ -105,14 +122,22 @@ export default function CalendarPage() {
 
       const transformedApts: Appointment[] = aptData.appointments.map((apt: any) => ({
         id: apt.id,
-        title: apt.purpose || "Appointment",
+        title: apt.title || "", // Mr/Mrs
+        first_name: apt.first_name,
+        last_name: apt.last_name || "",
         client: `${apt.first_name} ${apt.last_name || ""}`.trim(),
         email: apt.email,
         phone: apt.phone || "",
+        phone_area_code: apt.phone_area_code || "",
+        country_of_residence: apt.country_of_residence || "",
+        preferred_communication: apt.preferred_communication || "email",
+        accepted_terms: apt.accepted_terms || false,
+        consent_communication: apt.consent_communication || false,
         notes: apt.notes || "",
         date: parseLocalDate(apt.date),
         time: apt.time,
         service: apt.purpose || "General",
+        storeId: apt.store_id
       }));
 
       // In real backend, block-day marks all slots as blocked. 
@@ -192,7 +217,7 @@ export default function CalendarPage() {
   };
 
   const handleAddAppointment = async () => {
-    if (!selectedDate || !formData.title || !formData.client) {
+    if (!selectedDate || !formData.service || !formData.first_name) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -202,17 +227,24 @@ export default function CalendarPage() {
     }
 
     try {
-      const names = formData.client.split(" ");
-      const payload = {
-        first_name: names[0],
-        last_name: names.slice(1).join(" "),
+      const payload: any = {
+        title: formData.title,
+        first_name: formData.first_name,
+        last_name: formData.last_name,
         email: formData.email,
         phone: formData.phone,
+        phone_area_code: formData.phone_area_code,
+        country_of_residence: formData.country_of_residence,
+        preferred_communication: formData.preferred_communication,
+        accepted_terms: formData.accepted_terms,
+        consent_communication: formData.consent_communication,
         date: format(selectedDate, "yyyy-MM-dd"),
         time: formData.time,
-        purpose: formData.title,
+        purpose: formData.service,
         notes: formData.notes,
       };
+
+      if (formData.storeId) payload.store_id = formData.storeId;
 
       if (editingAppointment) {
         await api.put(`/appointments/${editingAppointment.id}`, payload);
@@ -233,12 +265,19 @@ export default function CalendarPage() {
     setEditingAppointment(apt);
     setFormData({
       title: apt.title,
-      client: apt.client,
+      first_name: apt.first_name,
+      last_name: apt.last_name,
       email: apt.email,
       phone: apt.phone,
+      phone_area_code: apt.phone_area_code,
+      country_of_residence: apt.country_of_residence,
+      preferred_communication: apt.preferred_communication,
+      accepted_terms: apt.accepted_terms,
+      consent_communication: apt.consent_communication,
       notes: apt.notes,
       time: apt.time,
       service: apt.service,
+      storeId: apt.storeId || "",
     });
     setSelectedDate(apt.date);
     setIsDialogOpen(true);
@@ -268,12 +307,19 @@ export default function CalendarPage() {
     setEditingAppointment(null);
     setFormData({
       title: "",
-      client: "",
+      first_name: "",
+      last_name: "",
       email: "",
       phone: "",
+      phone_area_code: "",
+      country_of_residence: "",
+      preferred_communication: "email",
+      accepted_terms: false,
+      consent_communication: false,
       notes: "",
       time: "09:00",
       service: "",
+      storeId: "",
     });
     setIsDialogOpen(true);
   };
@@ -476,7 +522,7 @@ export default function CalendarPage() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <p className="font-medium text-card-foreground">
-                            {apt.title}
+                            {apt.service}
                           </p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
                             <User className="h-3 w-3" /> {apt.client}
@@ -546,7 +592,7 @@ export default function CalendarPage() {
                         {viewingAppointment.client}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {viewingAppointment.title}
+                        {viewingAppointment.service}
                       </p>
                     </div>
                   </div>
@@ -660,59 +706,15 @@ export default function CalendarPage() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Date *</Label>
-                <Input
-                  type="date"
-                  value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-                  onChange={(e) => setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Service / Title *</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., Ring Consultation"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Client Name *</Label>
-                <Input
-                  value={formData.client}
-                  onChange={(e) =>
-                    setFormData({ ...formData, client: e.target.value })
-                  }
-                  placeholder="e.g., John Doe"
-                />
-              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>Date *</Label>
                   <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="client@email.com"
+                    type="date"
+                    value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
+                    onChange={(e) => setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Time</Label>
                   <Select
@@ -736,6 +738,130 @@ export default function CalendarPage() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Service *</Label>
+                <Input
+                  value={formData.service}
+                  onChange={(e) =>
+                    setFormData({ ...formData, service: e.target.value })
+                  }
+                  placeholder="e.g., Ring Consultation"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-1 space-y-2">
+                  <Label>Title</Label>
+                  <Select
+                    value={formData.title}
+                    onValueChange={(v) => setFormData({ ...formData, title: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Title" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mr">Mr.</SelectItem>
+                      <SelectItem value="Mrs">Mrs.</SelectItem>
+                      <SelectItem value="Ms">Ms.</SelectItem>
+                      <SelectItem value="Dr">Dr.</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-3 grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name *</Label>
+                    <Input
+                      value={formData.first_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, first_name: e.target.value })
+                      }
+                      placeholder="e.g., John"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name</Label>
+                    <Input
+                      value={formData.last_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, last_name: e.target.value })
+                      }
+                      placeholder="e.g., Doe"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    placeholder="client@email.com"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="col-span-1 space-y-2">
+                  <Label>Phone Area Code</Label>
+                  <Input
+                    value={formData.phone_area_code}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone_area_code: e.target.value })
+                    }
+                    placeholder="+1"
+                  />
+                </div>
+                <div className="col-span-3 space-y-2">
+                  <Label>Phone</Label>
+                  <Input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    placeholder="(555) 123-4567"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Country of Residence</Label>
+                  <Input
+                    value={formData.country_of_residence}
+                    onChange={(e) =>
+                      setFormData({ ...formData, country_of_residence: e.target.value })
+                    }
+                    placeholder="USA"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Preferred Communication</Label>
+                  <Select
+                    value={formData.preferred_communication}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, preferred_communication: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select preference" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Service Type</Label>
                   <Select
@@ -764,7 +890,47 @@ export default function CalendarPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {stores.length > 1 && (
+                  <div className="space-y-2">
+                    <Label>Store</Label>
+                    <Select
+                      value={formData.storeId}
+                      onValueChange={(v) => setFormData({ ...formData, storeId: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Store" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stores.map(store => (
+                          <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
+              <div className="flex items-center space-x-2 pt-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={formData.accepted_terms}
+                  onChange={(e) => setFormData({ ...formData, accepted_terms: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="terms" className="text-sm font-normal">Accepted Terms</Label>
+              </div>
+
+              <div className="flex items-center space-x-2 pb-2">
+                 <input
+                  type="checkbox"
+                  id="consent"
+                  checked={formData.consent_communication}
+                  onChange={(e) => setFormData({ ...formData, consent_communication: e.target.checked })}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="consent" className="text-sm font-normal">Consent to Communication</Label>
+              </div>
+
               <div className="space-y-2">
                 <Label>Notes</Label>
                 <Textarea
