@@ -12,6 +12,7 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 import {
   ChevronLeft,
   ChevronRight,
@@ -68,6 +69,7 @@ interface Appointment {
   date: Date;
   time: string;
   service: string; // Purpose/Service title
+  status: "confirmed" | "pending" | "completed" | "cancelled";
   storeId?: string;
 }
 
@@ -77,6 +79,13 @@ interface BlockedDay {
 }
 
 import { parseLocalDate } from "@/lib/date";
+
+const statusStyles: Record<string, string> = {
+  confirmed: "bg-success/10 text-success border-success/20",
+  pending: "bg-warning/10 text-warning border-warning/20",
+  completed: "bg-primary/10 text-primary border-primary/20",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+};
 
 const initialAppointments: Appointment[] = [];
 
@@ -138,6 +147,7 @@ export default function CalendarPage() {
         date: parseLocalDate(apt.date),
         time: apt.time,
         service: apt.purpose || "General",
+        status: apt.status || "confirmed",
         storeId: apt.store_id
       }));
 
@@ -445,7 +455,11 @@ export default function CalendarPage() {
                                     e.stopPropagation();
                                     handleViewAppointment(apt);
                                   }}
-                                  className="text-xs bg-primary/10 text-primary rounded px-1.5 py-0.5 truncate cursor-pointer hover:bg-primary/20"
+                                  className={cn(
+                                    "text-xs rounded px-1.5 py-0.5 truncate cursor-pointer",
+                                    statusStyles[apt.status] || "bg-primary/10 text-primary",
+                                    apt.status === "cancelled" && "opacity-60 line-through"
+                                  )}
                                 >
                                   {apt.time} {apt.client}
                                 </div>
@@ -544,6 +558,11 @@ export default function CalendarPage() {
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {apt.time}
                           </p>
+                          <div className="pt-1">
+                            <Badge variant="outline" className={cn("text-[10px] h-4 px-1 capitalize", statusStyles[apt.status])}>
+                              {apt.status}
+                            </Badge>
+                          </div>
                         </div>
                         <div className="flex gap-1">
                           <Button
@@ -609,6 +628,9 @@ export default function CalendarPage() {
                         {viewingAppointment.service}
                       </p>
                     </div>
+                    <Badge variant="outline" className={cn("ml-auto capitalize", statusStyles[viewingAppointment.status])}>
+                      {viewingAppointment.status}
+                    </Badge>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -697,6 +719,7 @@ export default function CalendarPage() {
                       <Button
                         variant="destructive"
                         size="icon"
+                        disabled={viewingAppointment.status === "cancelled"}
                         onClick={() =>
                           handleDeleteAppointment(viewingAppointment.id)
                         }

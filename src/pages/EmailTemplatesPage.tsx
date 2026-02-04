@@ -68,7 +68,7 @@ export default function EmailTemplatesPage() {
         {
           id: "confirmation",
           name: "Booking Confirmation",
-          subject: "Your appointment has been confirmed",
+          subject: backendTemplates.confirmation_subject || "Your appointment has been confirmed",
           body: backendTemplates.confirmation || "",
           type: "confirmation",
           isActive: !!backendTemplates.confirmation,
@@ -77,7 +77,7 @@ export default function EmailTemplatesPage() {
         {
           id: "update",
           name: "Appointment Update",
-          subject: "Your appointment has been updated",
+          subject: backendTemplates.update_subject || "Your appointment has been updated",
           body: backendTemplates.update || "",
           type: "update",
           isActive: !!backendTemplates.update,
@@ -86,7 +86,7 @@ export default function EmailTemplatesPage() {
         {
           id: "cancellation",
           name: "Cancellation Notice",
-          subject: "Appointment Cancelled",
+          subject: backendTemplates.cancellation_subject || "Appointment Cancelled",
           body: backendTemplates.cancellation || "",
           type: "cancellation",
           isActive: !!backendTemplates.cancellation,
@@ -95,7 +95,7 @@ export default function EmailTemplatesPage() {
         {
           id: "thank_you",
           name: "Thank You Message",
-          subject: "Thank you for visiting",
+          subject: backendTemplates.thank_you_subject || "Thank you for visiting",
           body: backendTemplates.thank_you || "",
           type: "thank_you",
           isActive: !!backendTemplates.thank_you,
@@ -104,7 +104,7 @@ export default function EmailTemplatesPage() {
         {
           id: "reminder",
           name: "Appointment Reminder",
-          subject: "Reminder: Your upcoming appointment",
+          subject: backendTemplates.reminder_subject || "Reminder: Your upcoming appointment",
           body: backendTemplates.reminder || "",
           type: "reminder",
           isActive: !!backendTemplates.reminder,
@@ -135,22 +135,27 @@ export default function EmailTemplatesPage() {
       const payload: any = {};
       if (formData.type === "confirmation") {
         payload.confirmation_template = formData.body;
+        payload.confirmation_subject = formData.subject;
         payload.confirmation_cc = formData.ccRecipients;
       }
       if (formData.type === "update") {
         payload.update_template = formData.body;
+        payload.update_subject = formData.subject;
         payload.update_cc = formData.ccRecipients;
       }
       if (formData.type === "cancellation") {
         payload.cancellation_template = formData.body;
+        payload.cancellation_subject = formData.subject;
         payload.cancellation_cc = formData.ccRecipients;
       }
       if (formData.type === "thank_you") {
         payload.thank_you_template = formData.body;
+        payload.thank_you_subject = formData.subject;
         payload.thank_you_cc = formData.ccRecipients;
       }
       if (formData.type === "reminder") {
         payload.reminder_template = formData.body;
+        payload.reminder_subject = formData.subject;
         payload.reminder_cc = formData.ccRecipients;
       }
 
@@ -476,7 +481,7 @@ export default function EmailTemplatesPage() {
 
         {/* Preview Dialog */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>Email Preview</DialogTitle>
             </DialogHeader>
