@@ -117,8 +117,13 @@ export default function SettingsPage() {
     description: "",
     editAppointmentUrl: "",
     cancelAppointmentUrl: "",
+    phone: "",
+    email: "",
+    mapUrl: "",
+    mapImageUrl: "",
     primaryColor: "#a6cd39",
     logoUrl: "",
+    companyName: "",
     timezone: "America/New_York",
     bookingWindowDays: "30",
     slotDuration: "60",
@@ -174,8 +179,13 @@ export default function SettingsPage() {
         ...globalSettings,
         primaryColor: brandingData.branding.brand_color || "#a6cd39",
         logoUrl: brandingData.branding.logo_url || "",
+        companyName: profileData.profile.company_name || "",
         website: profileData.profile.website || "",
         description: profileData.profile.description || "",
+        phone: profileData.profile.phone || "",
+        email: profileData.profile.email || "",
+        mapUrl: profileData.profile.map_url || "",
+        mapImageUrl: profileData.profile.map_image_url || "",
         bookingWindowDays: String(profileData.profile.booking_window_days || "30"),
         timezone: profileData.profile.timezone || "America/New_York",
         editAppointmentUrl: profileData.profile.edit_appointment_url || "",
@@ -231,7 +241,13 @@ export default function SettingsPage() {
           logo_url: globalSettings.logoUrl.startsWith("blob:") ? undefined : globalSettings.logoUrl,
         }),
         api.put("/auth/settings/profile", {
-          company_name: "SmartAppointment Client",
+          company_name: globalSettings.companyName,
+          website: globalSettings.website,
+          description: globalSettings.description,
+          phone: globalSettings.phone,
+          email: globalSettings.email,
+          map_url: globalSettings.mapUrl,
+          map_image_url: globalSettings.mapImageUrl,
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
           timezone: globalSettings.timezone,
           edit_appointment_url: globalSettings.editAppointmentUrl,
@@ -947,6 +963,18 @@ export default function SettingsPage() {
 
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-2">
+                  <Label>Store Name</Label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.companyName}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, companyName: e.target.value })}
+                      placeholder="Your Company Name"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
                   <Label>Website</Label>
                   <div className="relative">
                     <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -954,6 +982,32 @@ export default function SettingsPage() {
                       className="pl-9"
                       value={globalSettings.website}
                       onChange={(e) => setGlobalSettings({ ...globalSettings, website: e.target.value })}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      type="email"
+                      value={globalSettings.email}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, email: e.target.value })}
+                      placeholder="company@example.com"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.phone}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, phone: e.target.value })}
+                      placeholder="+1 (555) 000-0000"
                     />
                   </div>
                 </div>
@@ -963,7 +1017,34 @@ export default function SettingsPage() {
                     rows={3}
                     value={globalSettings.description}
                     onChange={(e) => setGlobalSettings({ ...globalSettings, description: e.target.value })}
+                    placeholder="Describe your business..."
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Map URL</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.mapUrl}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, mapUrl: e.target.value })}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Map Image URL</Label>
+                  <div className="relative">
+                    <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.mapImageUrl}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, mapImageUrl: e.target.value })}
+                      placeholder="https://example.com/map.png"
+                    />
+                  </div>
                 </div>
 
                 {/* Appointment Action URLs */}

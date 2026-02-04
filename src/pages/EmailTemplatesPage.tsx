@@ -31,7 +31,7 @@ const templateTypes = [
   { value: "update", label: "Appointment Update" },
   { value: "reminder", label: "Appointment Reminder" },
   { value: "cancellation", label: "Cancellation Notice" },
-  { value: "follow-up", label: "Follow-up" },
+  { value: "thank_you", label: "Thank You / Follow-up" },
   { value: "custom", label: "Custom" },
 ];
 
@@ -220,23 +220,23 @@ export default function EmailTemplatesPage() {
 
   const getPreviewContent = (content: string) => {
     return content
-      .replace(/{{name}}/g, "John Doe")
-      .replace(/{{client_name}}/g, "John Doe")
-      .replace(/{{service}}/g, "Hair Styling")
-      .replace(/{{date}}/g, "January 15, 2026")
-      .replace(/{{time}}/g, "10:00 AM")
-      .replace(/{{company_name}}/g, "Smart Age Solutions")
-      .replace(/{{store_address}}/g, "123 Main Street, City")
-      .replace(/{{schedule_id}}/g, "apt_123456")
-      .replace(/{{edit_url}}/g, "#")
-      .replace(/{{cancel_url}}/g, "#")
-      .replace(/{{logo_url}}/g, "https://placehold.co/200x50")
-      .replace(/{{brand_color}}/g, "#a6cd39")
-      .replace(/{{first_name}}/g, "John")
-      .replace(/{{last_name}}/g, "Doe")
-      .replace(/{{title}}/g, "Mr.")
-      .replace(/{{store_url}}/g, "#")
-      .replace(/{{store_phone}}/g, "555-0123");
+      .replace(/{{ *name *}}/g, "John Doe")
+      .replace(/{{ *client_name *}}/g, "John Doe")
+      .replace(/{{ *service *}}/g, "Hair Styling")
+      .replace(/{{ *date *}}/g, "January 15, 2026")
+      .replace(/{{ *time *}}/g, "10:00 AM")
+      .replace(/{{ *company_name *}}/g, "Smart Age Solutions")
+      .replace(/{{ *store_address *}}/g, "123 Main Street, City")
+      .replace(/{{ *schedule_id *}}/g, "apt_123456")
+      .replace(/{{ *edit_url *}}/g, "#")
+      .replace(/{{ *cancel_url *}}/g, "#")
+      .replace(/{{ *logo_url *}}/g, "https://placehold.co/200x50")
+      .replace(/{{ *brand_color *}}/g, "#a6cd39")
+      .replace(/{{ *first_name *}}/g, "John")
+      .replace(/{{ *last_name *}}/g, "Doe")
+      .replace(/{{ *title *}}/g, "Mr.")
+      .replace(/{{ *store_url *}}/g, "#")
+      .replace(/{{ *store_phone *}}/g, "555-0123");
   };
 
   const stripHtml = (html: string) => {
