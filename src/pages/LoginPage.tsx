@@ -110,7 +110,11 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-end">
-              <button type="button" className="text-sm text-primary hover:underline">
+              <button 
+                type="button" 
+                onClick={() => navigate("/forgot-password")}
+                className="text-sm text-primary hover:underline"
+              >
                 Forgot password?
               </button>
             </div>
