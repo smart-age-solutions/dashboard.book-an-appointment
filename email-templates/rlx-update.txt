@@ -153,8 +153,8 @@
                     <div class="small" style="font:400 13px/1.6 'Open Sans', Arial, sans-serif; color:#5A5A5A; padding-bottom:12px;">
                         Kindly find below a map to help you locate our boutique:
                     </div>
-                    <a href="{{AppointmentMapUrl}}" target="_blank">
-                        <img src="{{AppointmentMapImage}}" width="560" alt="Map to {{company_name}}" style="width:100%; max-width:560px; height:auto; background: #fff;">
+                    <a href="{{map_url}}" target="_blank">
+                        <img src="{{map_image_url}}" width="560" alt="Map to {{company_name}}" style="width:100%; max-width:560px; height:auto; background: #fff;">
                     </a>
                     </td>
                 </tr>
@@ -181,7 +181,7 @@
 
                 <tr>
                     <td align="center" style="padding:6px 0 8px;">
-                        <img src="https://cdn.shopify.com/s/files/1/0872/1288/4267/files/rolex-plaque-footer.png?v=1756940665" width="120" alt="{{company_name}}" title="{{RetaileLogo}}">
+                        <img src="https://sas-rolex-images.s3.us-east-1.amazonaws.com/smartappointment/rolex-plaque-footer.png" width="120" alt="{{company_name}}" title="{{company_name}}">
                     </td>
                 </tr>
 

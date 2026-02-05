@@ -56,6 +56,7 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Appointment & { first_name: string; last_name: string }>>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -152,6 +153,7 @@ export default function AppointmentsPage() {
   const handleSaveEdit = async () => {
     if (!selectedAppointment) return;
 
+    setIsSubmitting(true);
     try {
       const payload: any = {};
       if (editFormData.first_name) payload.first_name = editFormData.first_name;
@@ -179,16 +181,23 @@ export default function AppointmentsPage() {
       fetchAppointments();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCancel = async (apt: Appointment) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+    setIsSubmitting(true);
     try {
       await api.delete(`/appointments/${apt.id}`);
       toast({ title: "Cancelled", description: "Appointment has been cancelled" });
+      setIsViewDialogOpen(false);
       fetchAppointments();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -435,8 +444,8 @@ export default function AppointmentsPage() {
                     <Button 
                       variant="destructive" 
                       className="flex-1" 
+                      isLoading={isSubmitting}
                       onClick={() => {
-                        setIsViewDialogOpen(false);
                         handleCancel(selectedAppointment);
                       }}
                     >
@@ -676,7 +685,7 @@ export default function AppointmentsPage() {
                 <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={handleSaveEdit}>
+                <Button className="flex-1" onClick={handleSaveEdit} isLoading={isSubmitting}>
                   Save Changes
                 </Button>
               </div>

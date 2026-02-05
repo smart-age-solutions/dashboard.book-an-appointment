@@ -53,6 +53,7 @@ export default function EmailTemplatesPage() {
     ccRecipients: [] as string[],
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
   const fetchTemplates = useCallback(async () => {
@@ -131,6 +132,7 @@ export default function EmailTemplatesPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const payload: any = {};
       if (formData.type === "confirmation") {
@@ -166,6 +168,8 @@ export default function EmailTemplatesPage() {
       setEditingTemplate(null);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -475,7 +479,7 @@ export default function EmailTemplatesPage() {
                 <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={handleSave}>
+                <Button className="flex-1" onClick={handleSave} isLoading={isSubmitting}>
                   {editingTemplate ? "Update" : "Create"}
                 </Button>
               </div>

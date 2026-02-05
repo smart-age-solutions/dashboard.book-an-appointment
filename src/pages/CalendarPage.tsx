@@ -103,6 +103,7 @@ export default function CalendarPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "", // Personal title
     first_name: "",
@@ -200,6 +201,7 @@ export default function CalendarPage() {
 
   const handleBlockDay = async () => {
     if (!selectedDate) return;
+    setIsSubmitting(true);
     try {
       await api.post("/slots/override/block-day", {
         date: format(selectedDate, "yyyy-MM-dd")
@@ -213,10 +215,13 @@ export default function CalendarPage() {
       setIsBlockDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleUnblockDay = async (date: Date) => {
+    setIsSubmitting(true);
     try {
       await api.delete("/slots/override/reset-day", {
         date: format(date, "yyyy-MM-dd")
@@ -228,6 +233,8 @@ export default function CalendarPage() {
       fetchData();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -241,6 +248,7 @@ export default function CalendarPage() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const payload: any = {
         title: formData.title,
@@ -274,6 +282,8 @@ export default function CalendarPage() {
       setIsDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -307,6 +317,7 @@ export default function CalendarPage() {
   };
 
   const handleDeleteAppointment = async (id: string) => {
+    setIsSubmitting(true);
     try {
       await api.delete(`/appointments/${id}`);
       toast({
@@ -317,6 +328,8 @@ export default function CalendarPage() {
       setIsViewDialogOpen(false);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -728,6 +741,7 @@ export default function CalendarPage() {
                       <Button
                         variant="destructive"
                         size="icon"
+                        isLoading={isSubmitting}
                         disabled={viewingAppointment.status === "cancelled"}
                         onClick={() =>
                           handleDeleteAppointment(viewingAppointment.id)
@@ -1009,7 +1023,7 @@ export default function CalendarPage() {
                 >
                   Cancel
                 </Button>
-                <Button className="flex-1" onClick={handleAddAppointment}>
+                <Button className="flex-1" onClick={handleAddAppointment} isLoading={isSubmitting}>
                   {editingAppointment ? "Update" : "Create"}
                 </Button>
               </div>
@@ -1048,6 +1062,7 @@ export default function CalendarPage() {
                   className="flex-1"
                   variant="destructive"
                   onClick={handleBlockDay}
+                  isLoading={isSubmitting}
                 >
                   <Ban className="h-4 w-4 mr-1" />
                   Block Day
