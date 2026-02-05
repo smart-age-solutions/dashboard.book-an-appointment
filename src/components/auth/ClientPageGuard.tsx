@@ -14,8 +14,12 @@ interface ClientPageGuardProps {
  * DashboardLayout will handle showing the "Impersonation Required" UI.
  */
 export function ClientPageGuard({ children }: ClientPageGuardProps) {
-  const { isBackofficeUser } = useAuth();
+  const { isAuthenticated, isBackofficeUser } = useAuth();
   const { isImpersonating } = useImpersonation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   // If backoffice user is NOT impersonating, don't render children
   // DashboardLayout will detect this state and show the guard UI.

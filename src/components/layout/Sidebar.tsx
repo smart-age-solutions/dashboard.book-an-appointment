@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Calendar,
@@ -33,6 +33,7 @@ export function Sidebar() {
   const location = useLocation();
   const { user, isBackofficeUser, logout } = useAuth();
   const { isImpersonating } = useImpersonation();
+  const navigate = useNavigate();
 
   const getInitials = (name?: string) => {
     if (!name) return "??";
@@ -130,7 +131,10 @@ export function Sidebar() {
               </p>
             </div>
             <button
-              onClick={() => logout()}
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
               title="Log out"
             >

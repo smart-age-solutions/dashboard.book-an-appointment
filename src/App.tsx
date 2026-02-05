@@ -24,6 +24,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import NotFound from "./pages/NotFound";
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
+import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
 
 const queryClient = new QueryClient();
 
@@ -52,9 +53,9 @@ const App = () => (
                 <Route path="/settings" element={<ClientPageGuard><SettingsPage /></ClientPageGuard>} />
                 
                 {/* Backoffice Routes */}
-                <Route path="/backoffice" element={<BackofficePage />} />
-                <Route path="/backoffice/logs" element={<BackofficeLogsPage />} />
-                <Route path="/backoffice/invite" element={<BackofficeInvitationPage />} />
+                <Route path="/backoffice" element={<BackofficeGuard><BackofficePage /></BackofficeGuard>} />
+                <Route path="/backoffice/logs" element={<BackofficeGuard><BackofficeLogsPage /></BackofficeGuard>} />
+                <Route path="/backoffice/invite" element={<BackofficeGuard><BackofficeInvitationPage /></BackofficeGuard>} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
