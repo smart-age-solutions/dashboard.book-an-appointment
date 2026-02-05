@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
+import { useAuth } from "./AuthContext";
 
 export interface StoreHours {
   day: string;
@@ -72,7 +73,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     ] : defaultHours,
   });
 
+  const { isAuthenticated } = useAuth();
+
   const fetchStores = useCallback(async () => {
+    if (!isAuthenticated) return;
+    
     try {
       const data = await api.get("/auth/stores");
       setStores(data.stores.map(transformStore));
@@ -81,7 +86,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchStores();
