@@ -1,0 +1,163 @@
+<style>
+    * { 
+        -ms-text-size-adjust:100%; 
+        -webkit-text-size-adjust:100%; 
+    }
+    body{
+        color: #333;            
+        font-family: 'Open Sans', Arial, sans-serif;
+    }        
+
+    html, 
+    body {
+        margin:0; 
+        padding:0; 
+        height:100%; 
+        width:100%;
+    }
+    img { 
+        border:0; 
+        outline:none; 
+        text-decoration:none; 
+        display:block; 
+        line-height:100%; 
+    }
+    table { 
+        border-collapse:collapse; 
+    }
+    a { 
+        text-decoration:none; 
+    }
+    .bg-ivory { 
+        background:#F6F3EA; 
+    }
+    .brand-green { 
+        color:#0B513A; 
+    }
+    .btn-green { 
+        background:#0B513A; 
+    }
+    .btn-ghost { 
+        background:#E8EFEA; 
+    }
+    .gold { 
+        color:#452c1e; 
+    }
+    .h1 { font:700 28px/1.25 'Open Sans', Arial, sans-serif; }
+    .h2 { font:700 18px/1.4 'Open Sans', Arial, sans-serif; color:#2B2B2B; }
+    .body { font:400 15px/1.6 'Open Sans', Arial, sans-serif; color:#404040; }
+    .small { font:400 12px/1.6 'Open Sans', Arial, sans-serif; color:#707070; }
+
+    .btn {
+        font:600 14px/1 'Open Sans', Arial, sans-serif;
+        color:#ffffff;
+        border-radius:24px;
+        padding:14px 18px;
+        display:inline-block;
+    }
+    .btn-outline {
+        color:#0B513A ;
+        background:#ffffff ;
+        border:1px solid #0B513A;
+    }
+
+    @media screen and (max-width:640px) {
+        .container { 
+            width:100%; 
+        }
+        .px { 
+            padding-left:20px; 
+            padding-right:20px; 
+        }
+        .card { 
+            padding:18px; 
+        }
+        .stack { 
+            display:block; 
+            width:100%; 
+        }
+        .w-full { 
+            width:100%; 
+        }
+        .center { 
+            text-align:center; 
+        }
+    }
+</style>
+
+<table width="100%" bgcolor="#F6F3EA">
+    <tr>
+        <td align="center" style="padding:28px 14px;">
+            <table role="presentation" width="640" class="container" style="width:640px; max-width:640px;" bgcolor="#F6F3EA">
+                <tr>
+                    <td align="center" style="padding:6px 0 20px;">
+                        <a href="{{store_url}}/rolex" target="_blank">
+                            <img src="https://sas-rolex-images.s3.us-east-1.amazonaws.com/smartappointment/Rolex-jeweler-plaque-500x250_en-us.jpg" width="120" height="60" alt="Rolex Logo">
+                        </a>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" class="px" style="padding:0 40px 12px;">
+                        <div class="small brand-green" style="font:600 13px 'Open Sans', Arial, sans-serif; color:#0B513A; letter-spacing:.2px;">{{company_name}}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td align="center" class="px" style="padding:0 40px;">
+                        <div class="h1 gold" style="font:700 28px/1.25 'Open Sans', Arial, sans-serif;">
+                            Your Rolex appointment <br/> has been cancelled
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" class="px" style="padding:18px 40px 6px;">
+                        <div class="body" style="font:400 15px/1.7 'Open Sans', Arial, sans-serif; color:#404040;">
+                            Dear {{title}} {{client_name}},<br><br>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" class="px" style="padding:18px 40px 6px;">
+                        <div class="body" style="font:400 15px/1.7 'Open Sans', Arial, sans-serif; color:#404040;">
+                            We confirm the cancellation of your appointment with <br />
+                            the Rolex team at {{company_name}}.<br />
+                            We thank you for notifying us and look forward to welcoming <br />
+                            you on a future occasion at<br />
+                            {{company_name}}.<br />
+                            <br />
+                            Warmest regards
+                        </div>
+                    </td>
+                </tr>                
+
+                <tr>
+                    <td align="center" class="px" style="padding:10px 30px 20px;">
+                    <div class="small" style="font:400 13px/1.7 'Open Sans', Arial, sans-serif; color:#404040;">
+                        <strong>{{company_name}}</strong><br>
+                        {{store_address}}
+                        {{store_phone}}<br>
+                        <a href="{{RetailerUrlBookAnAppointment}}" target="_blank" style="color:#0B513A;">{{store_url}}/rolex</a>
+                    </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" style="padding:6px 0 8px;">
+                        <img src="https://cdn.shopify.com/s/files/1/0872/1288/4267/files/rolex-plaque-footer.png?v=1756940665" width="120" alt="{{company_name}}" title="{{RetaileLogo}}">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" class="px" style="padding:6px 24px 30px;">
+                        <div class="small" style="font:400 11px/1.7 'Open Sans', Arial, sans-serif; color:#8C8C8C;">
+                            This is an automatic message from <a href="{{store_url}}/rolex" target="_blank" style="color:#0B513A;">{{store_url}}</a> to inform you on the status of your Rolex Appointment at {{company_name}}. The content of this email as well as the information provided in the included links are for private use only. If you are not the intended recipient, please advise the sender by return e-mail, then delete this message and any attachments. {{company_name}} respects your right to privacy and is committed to maintaining your confidence and trust.
+                        </div>
+                    </td>
+                </tr>
+            </table>
+            <!-- /container -->
+        </td>
+    </tr>
+</table>

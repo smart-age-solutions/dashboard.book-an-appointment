@@ -36,14 +36,21 @@ export function RecentActivity() {
   };
 
   const getMessage = (log: any) => {
-    const actor = log.actor_id || "System";
+    const actor = log.actor_name || "System";
     switch (log.action) {
-      case "create_appointment": return `New appointment booked by ${log.details.client_name || "a client"}`;
-      case "update_appointment": return `Appointment updated: ${log.details.appointment_id}`;
-      case "cancel_appointment": return `Appointment cancelled`;
-      case "login": return `User logged in`;
-      case "update_settings": return `Settings updated: ${log.details.updated_fields?.join(", ")}`;
-      default: return log.action.replace("_", " ");
+      case "create_appointment": return `${actor} booked a new appointment for ${log.details.client_name || "a client"}`;
+      case "appointment_created": return `${actor} created a new appointment`;
+      case "update_appointment": 
+      case "appointment_updated":
+        return `${actor} updated appointment: ${log.details.appointment_id || log.entity_id}`;
+      case "cancel_appointment":
+      case "appointment_cancelled":
+        return `${actor} cancelled an appointment`;
+      case "login":
+      case "login_success":
+        return `${actor} logged in`;
+      case "update_settings": return `${actor} updated settings: ${log.details.updated_fields?.join(", ")}`;
+      default: return `${actor}: ${log.action.replace("_", " ")}`;
     }
   };
 

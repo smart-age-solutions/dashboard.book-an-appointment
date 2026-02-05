@@ -241,7 +241,9 @@ export default function EmailTemplatesPage() {
       .replace(/{{ *last_name *}}/g, "Doe")
       .replace(/{{ *title *}}/g, "Mr.")
       .replace(/{{ *store_url *}}/g, "#")
-      .replace(/{{ *store_phone *}}/g, "555-0123");
+      .replace(/{{ *store_phone *}}/g, "555-0123")
+      .replace(/{{ *map_url *}}/g, "https://maps.google.com/q=123+Main+St")
+      .replace(/{{ *map_image_url *}}/g, "https://placehold.co/600x400?text=Map+Preview");
   };
 
   const stripHtml = (html: string) => {
@@ -287,7 +289,9 @@ export default function EmailTemplatesPage() {
               "{{last_name}}",
               "{{title}}",
               "{{store_url}}",
-              "{{store_phone}}"
+              "{{store_phone}}",
+              "{{map_url}}",
+              "{{map_image_url}}"
             ].map((v) => (
               <code key={v} className="px-2 py-1 rounded bg-muted text-xs text-muted-foreground font-mono">
                 {v}

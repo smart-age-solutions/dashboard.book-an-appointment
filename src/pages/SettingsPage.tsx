@@ -107,6 +107,8 @@ export default function SettingsPage() {
     isActive: true,
     hours: [...defaultHours],
     slotDuration: "60",
+    mapUrl: "",
+    mapImageUrl: "",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -284,6 +286,8 @@ export default function SettingsPage() {
       isActive: true,
       hours: [...defaultHours],
       slotDuration: globalSettings.slotDuration,
+      mapUrl: "",
+      mapImageUrl: "",
     });
     setIsStoreDialogOpen(true);
   };
@@ -301,6 +305,8 @@ export default function SettingsPage() {
       isActive: store.isActive,
       hours: [...store.hours],
       slotDuration: (store as any).slotDuration || globalSettings.slotDuration,
+      mapUrl: store.mapUrl || "",
+      mapImageUrl: store.mapImageUrl || "",
     });
     setIsStoreDialogOpen(true);
   };
@@ -1572,6 +1578,32 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">Appointment slot duration for this store</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Map URL</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="pl-9"
+                        value={storeFormData.mapUrl}
+                        onChange={(e) => setStoreFormData({ ...storeFormData, mapUrl: e.target.value })}
+                        placeholder="https://maps.google.com/..."
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Map Image URL</Label>
+                    <div className="relative">
+                      <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="pl-9"
+                        value={storeFormData.mapImageUrl}
+                        onChange={(e) => setStoreFormData({ ...storeFormData, mapImageUrl: e.target.value })}
+                        placeholder="https://example.com/map_image.png"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

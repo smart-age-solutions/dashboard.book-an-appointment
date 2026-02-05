@@ -19,6 +19,8 @@ export interface Store {
   zip: string;
   isActive: boolean;
   hours: StoreHours[];
+  mapUrl?: string;
+  mapImageUrl?: string;
 }
 
 interface StoreContextType {
@@ -57,6 +59,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     state: "",
     zip: "",
     isActive: s.is_active,
+    mapUrl: s.map_url || "",
+    mapImageUrl: s.map_image_url || "",
     hours: s.business_hours ? [
       { day: "Monday", isOpen: s.business_hours.working_days.includes(0), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
       { day: "Tuesday", isOpen: s.business_hours.working_days.includes(1), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
@@ -90,6 +94,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         email: store.email,
         phone: store.phone,
         address: store.address,
+        map_url: store.mapUrl,
+        map_image_url: store.mapImageUrl,
         business_hours_start: store.hours[0].openTime,
         business_hours_end: store.hours[0].closeTime,
         working_days: store.hours.filter(h => h.isOpen).map(h => {
@@ -112,6 +118,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (updates.phone) payload.phone = updates.phone;
       if (updates.address) payload.address = updates.address;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+      if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
+      if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;
       
       if (updates.hours) {
         payload.business_hours_start = updates.hours[0].openTime;

@@ -30,17 +30,13 @@ export default function Dashboard() {
       }
       
       try {
-        const today = format(new Date(), "yyyy-MM-dd");
-        const [aptData, userData] = await Promise.all([
-          api.get("/appointments", { start_date: today, end_date: today }),
-          api.get("/teams/all-members")
-        ]);
+        const data = await api.get("/auth/stats/dashboard");
 
         setStats({
-          todayAppointments: aptData.pagination.total_items,
-          totalClients: userData.pagination.total_items,
-          availableSlots: 0, // Need backend support for availability calculation
-          bookingRate: "0%", // Need backend support for stats calculation
+          todayAppointments: data.todayAppointments,
+          totalClients: data.totalClients,
+          availableSlots: data.availableSlots,
+          bookingRate: data.bookingRate,
         });
       } catch (error) {
         console.error("Failed to fetch dashboard stats", error);
