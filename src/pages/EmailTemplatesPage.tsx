@@ -485,7 +485,7 @@ export default function EmailTemplatesPage() {
 
         {/* Preview Dialog */}
         <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Email Preview</DialogTitle>
             </DialogHeader>

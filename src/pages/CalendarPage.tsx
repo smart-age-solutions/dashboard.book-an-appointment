@@ -70,6 +70,7 @@ interface Appointment {
   time: string;
   service: string; // Purpose/Service title
   status: "confirmed" | "pending" | "completed" | "cancelled";
+  duration: string;
   storeId?: string;
 }
 
@@ -116,6 +117,8 @@ export default function CalendarPage() {
     notes: "",
     time: "09:00",
     service: "", // Purpose/Service title
+    status: "confirmed" as Appointment["status"],
+    duration: "60",
     storeId: "",
   });
 
@@ -148,6 +151,7 @@ export default function CalendarPage() {
         time: apt.time,
         service: apt.purpose || "General",
         status: apt.status || "confirmed",
+        duration: "60", // Backend doesn't store duration yet
         storeId: apt.store_id
       }));
 
@@ -252,6 +256,7 @@ export default function CalendarPage() {
         date: format(selectedDate, "yyyy-MM-dd"),
         time: formData.time,
         purpose: formData.service,
+        status: formData.status,
         notes: formData.notes,
       };
 
@@ -288,6 +293,8 @@ export default function CalendarPage() {
       notes: apt.notes,
       time: apt.time,
       service: apt.service,
+      status: apt.status,
+      duration: apt.duration,
       storeId: apt.storeId || "",
     });
     setSelectedDate(apt.date);
@@ -330,6 +337,8 @@ export default function CalendarPage() {
       notes: "",
       time: "09:00",
       service: "",
+      status: "confirmed" as Appointment["status"],
+      duration: "60",
       storeId: "",
     });
     setIsDialogOpen(true);
@@ -777,15 +786,36 @@ export default function CalendarPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label>Service *</Label>
-                <Input
-                  value={formData.service}
-                  onChange={(e) =>
-                    setFormData({ ...formData, service: e.target.value })
-                  }
-                  placeholder="e.g., Ring Consultation"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Service *</Label>
+                  <Input
+                    value={formData.service}
+                    onChange={(e) =>
+                      setFormData({ ...formData, service: e.target.value })
+                    }
+                    placeholder="e.g., Ring Consultation"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, status: v as Appointment["status"] })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="grid grid-cols-4 gap-4">
@@ -842,7 +872,27 @@ export default function CalendarPage() {
                     placeholder="client@email.com"
                   />
                 </div>
+                <div className="space-y-2">
+                   <Label>Duration</Label>
+                   <Select
+                     value={formData.duration || "60"}
+                     onValueChange={(v) => setFormData({ ...formData, duration: v })}
+                   >
+                     <SelectTrigger>
+                       <SelectValue placeholder="Duration" />
+                     </SelectTrigger>
+                     <SelectContent>
+                       <SelectItem value="15">15 min</SelectItem>
+                       <SelectItem value="30">30 min</SelectItem>
+                       <SelectItem value="45">45 min</SelectItem>
+                       <SelectItem value="60">1 hour</SelectItem>
+                       <SelectItem value="90">1.5 hours</SelectItem>
+                       <SelectItem value="120">2 hours</SelectItem>
+                     </SelectContent>
+                   </Select>
+                 </div>
               </div>
+
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-1 space-y-2">
                   <Label>Phone Area Code</Label>
@@ -899,34 +949,6 @@ export default function CalendarPage() {
               </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Service Type</Label>
-                  <Select
-                    value={formData.service}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, service: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select service" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="discovery">Discovery</SelectItem>
-                      <SelectItem value="consultation">Consultation</SelectItem>
-                      <SelectItem value="custom-design">
-                        Custom Design
-                      </SelectItem>
-                      <SelectItem value="repair">
-                        Repair & Restoration
-                      </SelectItem>
-                      <SelectItem value="appraisal">Appraisal</SelectItem>
-                      <SelectItem value="cleaning">
-                        Cleaning & Maintenance
-                      </SelectItem>
-                      <SelectItem value="engraving">Engraving</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 {stores.length > 1 && (
                   <div className="space-y-2">
                     <Label>Store</Label>
