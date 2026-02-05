@@ -344,7 +344,7 @@ export default function EmailTemplatesPage() {
                 <div className="mb-4">
                   <p className="text-sm font-medium text-card-foreground mb-2 flex items-center gap-1">
                     <Users className="h-3.5 w-3.5" />
-                    CC Recipients:
+                    BCC Recipients:
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {getRecipientNames(template.ccRecipients).map((name, idx) => (
@@ -445,7 +445,7 @@ export default function EmailTemplatesPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-muted-foreground" />
-                  <Label>Send Copy To (CC)</Label>
+                  <Label>Send Copy To (BCC)</Label>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Select team members who will receive a copy of this email
