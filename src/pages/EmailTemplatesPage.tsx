@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface EmailTemplate {
   id: string;
@@ -254,6 +255,16 @@ export default function EmailTemplatesPage() {
     const doc = new DOMParser().parseFromString(html, "text/html");
     return doc.body.textContent || "";
   };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex h-[80vh] items-center justify-center">
+          <LoadingSpinner size={48} />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

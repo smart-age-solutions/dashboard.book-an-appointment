@@ -550,7 +550,7 @@ export default function CalendarPage() {
                 <p className="text-sm text-muted-foreground">Loading schedule...</p>
               </div>
             ) : selectedDate ? (
-              <div className="space-y-3 max-h-48 overflow-auto">
+              <div className="space-y-3 h-full max-h-[640px] overflow-auto">
                 {isBlockedDate(selectedDate) ? (
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                     <div className="flex items-center gap-2 text-destructive mb-2">
@@ -765,7 +765,7 @@ export default function CalendarPage() {
                 {editingAppointment ? "Edit Appointment" : "New Appointment"}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="space-y-4 py-4 max-h-[640px] overflow-y-auto">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Date *</Label>
