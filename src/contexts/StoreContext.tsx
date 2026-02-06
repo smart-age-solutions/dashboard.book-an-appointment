@@ -76,7 +76,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useAuth();
 
   const fetchStores = useCallback(async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const data = await api.get("/auth/stores");
