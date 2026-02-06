@@ -83,10 +83,10 @@ export default function SettingsPage() {
   
   const [notifications, setNotifications] = useState({
     emailConfirmation: true,
-    emailReminder: true,
     emailCancellation: true,
     smsReminder: false,
-    reminderHours: "24",
+    reminder1h: false,
+    reminder24h: false,
   });
 
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(initialEmailConfig);
@@ -148,8 +148,16 @@ export default function SettingsPage() {
     ));
   };
 
-  const handleSaveNotifications = () => {
-    toast({ title: "Saved", description: "Notification settings updated successfully" });
+  const handleSaveNotifications = async () => {
+    try {
+      await api.put("/auth/settings/reminder-settings", {
+        reminder_1h_enabled: notifications.reminder1h,
+        reminder_24h_enabled: notifications.reminder24h,
+      });
+      toast({ title: "Saved", description: "Notification settings updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to save notification settings", variant: "destructive" });
+    }
   };
 
   const handleSaveEmailConfig = async () => {
@@ -196,9 +204,10 @@ export default function SettingsPage() {
 
       // Fetch Email & SMS configs
       try {
-        const [emailRes, smsRes] = await Promise.all([
+        const [emailRes, smsRes, reminderRes] = await Promise.all([
           api.get("/auth/settings/email-config"),
-          api.get("/auth/settings/sms-config")
+          api.get("/auth/settings/sms-config"),
+          api.get("/auth/settings/reminder-settings")
         ]);
         
         if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
@@ -206,6 +215,13 @@ export default function SettingsPage() {
         }
         if (smsRes.sms_config && Object.keys(smsRes.sms_config).length > 0) {
           setSmsConfig({ ...initialSmsConfig, ...smsRes.sms_config });
+        }
+        if (reminderRes.reminder_settings) {
+          setNotifications(prev => ({
+            ...prev,
+            reminder1h: reminderRes.reminder_settings.reminder_1h_enabled || false,
+            reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
+          }));
         }
       } catch (e) {
         console.error("Failed to fetch service configs", e);
@@ -1187,22 +1203,24 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
                     <div>
-                      <p className="font-medium text-card-foreground">Appointment Reminder</p>
-                      <p className="text-sm text-muted-foreground">Send reminder email before appointment</p>
+                      <p className="font-medium text-card-foreground">Appointment Reminder (24 Hours)</p>
+                      <p className="text-sm text-muted-foreground">Send reminder email 24 hours before appointment</p>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="number"
-                        className="w-20"
-                        value={notifications.reminderHours}
-                        onChange={(e) => setNotifications({ ...notifications, reminderHours: e.target.value })}
-                      />
-                      <span className="text-sm text-muted-foreground">hours before</span>
-                      <Switch
-                        checked={notifications.emailReminder}
-                        onCheckedChange={(v) => setNotifications({ ...notifications, emailReminder: v })}
-                      />
+                    <Switch
+                      checked={notifications.reminder24h}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, reminder24h: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Appointment Reminder (1 Hour)</p>
+                      <p className="text-sm text-muted-foreground">Send reminder email 1 hour before appointment</p>
                     </div>
+                    <Switch
+                      checked={notifications.reminder1h}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, reminder1h: v })}
+                    />
                   </div>
 
                   <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
