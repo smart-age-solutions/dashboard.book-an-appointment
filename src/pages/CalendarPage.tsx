@@ -550,7 +550,7 @@ export default function CalendarPage() {
                 <p className="text-sm text-muted-foreground">Loading schedule...</p>
               </div>
             ) : selectedDate ? (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-48 overflow-auto">
                 {isBlockedDate(selectedDate) ? (
                   <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
                     <div className="flex items-center gap-2 text-destructive mb-2">

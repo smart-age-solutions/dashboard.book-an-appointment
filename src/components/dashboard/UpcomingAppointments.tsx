@@ -13,7 +13,7 @@ export function UpcomingAppointments() {
     const fetchAppointments = async () => {
       try {
         const today = format(new Date(), "yyyy-MM-dd");
-        const data = await api.get("/appointments", { start_date: today, per_page: 5 });
+        const data = await api.get("/appointments", { start_date: today, per_page: 10 });
         setAppointments(data.appointments);
       } catch (error) {
         console.error("Failed to fetch upcoming appointments", error);

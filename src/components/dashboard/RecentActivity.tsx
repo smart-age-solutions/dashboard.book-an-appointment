@@ -10,7 +10,7 @@ export function RecentActivity() {
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const data = await api.get("/auth/activity-logs", { per_page: 5 });
+        const data = await api.get("/auth/activity-logs", { per_page: 10 });
         setActivities(data.logs);
       } catch (error) {
         console.error("Failed to fetch activity logs", error);
