@@ -79,7 +79,9 @@ const initialSmsConfig: SmsConfig = {
 
 export default function SettingsPage() {
   const { stores, addStore, updateStore, deleteStore } = useStores();
-  const { isBackofficeUser } = useAuth();
+  const { isBackofficeUser, client } = useAuth();
+  const widgetClientId = client?.id ?? null;
+  const widgetUrl = widgetClientId ? `${window.location.origin}/book/${widgetClientId}` : "";
   
   const [notifications, setNotifications] = useState({
     emailConfirmation: true,
@@ -837,6 +839,8 @@ export default function SettingsPage() {
 
           {/* General Settings */}
           <TabsContent value="general" className="space-y-6">
+            
+
             {/* Branding Section */}
             <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
               <div className="flex items-center gap-3 mb-4 md:mb-6">
@@ -1173,6 +1177,55 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div> */}
+
+            {/* Booking Widget URL */}
+            {widgetUrl && (
+              <div className="rounded-xl bg-card p-4 md:p-6 card-shadow border border-primary/20">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <Link className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-card-foreground">Booking Widget URL</h2>
+                    <p className="text-sm text-muted-foreground">Share this link so customers can book appointments directly</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      readOnly
+                      value={widgetUrl}
+                      className="pl-9 pr-3 bg-muted/40 font-mono text-sm cursor-default"
+                      onFocus={(e) => e.target.select()}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Copy URL"
+                    onClick={() => copyToClipboard(widgetUrl, "widget-url")}
+                  >
+                    {copiedField === "widget-url" ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    title="Open widget in new tab"
+                    onClick={() => window.open(widgetUrl, "_blank")}
+                  >
+                    <Link className="h-4 w-4" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  💡 Embed this URL in an iframe on your website, or share it directly in emails and social media.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           {/* Notifications */}

@@ -22,6 +22,8 @@ import InvitationAcceptPage from "./pages/InvitationAcceptPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import NotFound from "./pages/NotFound";
+import BookingPage from "./pages/BookingPage";
+import ManageAppointmentPage from "./pages/ManageAppointmentPage";
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
 import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
@@ -43,6 +45,10 @@ const App = () => (
                 <Route path="/invitation/accept" element={<InvitationAcceptPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+                {/* Public Booking Routes (no auth required) */}
+                <Route path="/book/:clientId" element={<BookingPage />} />
+                <Route path="/manage/:appointmentId" element={<ManageAppointmentPage />} />
                 
                 {/* Protected Client Routes */}
                 <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />

@@ -71,6 +71,7 @@ interface Appointment {
   service: string; // Purpose/Service title
   status: "confirmed" | "pending" | "completed" | "cancelled";
   duration: string;
+  customData?: Record<string, any>;
   storeId?: string;
 }
 
@@ -153,6 +154,7 @@ export default function CalendarPage() {
         service: apt.purpose || "General",
         status: apt.status || "confirmed",
         duration: "60", // Backend doesn't store duration yet
+        customData: apt.custom_data || {},
         storeId: apt.store_id
       }));
 

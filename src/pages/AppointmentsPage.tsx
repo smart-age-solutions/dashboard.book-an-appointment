@@ -38,6 +38,7 @@ interface Appointment {
   status: "confirmed" | "pending" | "completed" | "cancelled";
   duration: string;
   notes: string;
+  customData?: Record<string, any>;
   storeId: string;
 }
 
@@ -95,6 +96,7 @@ export default function AppointmentsPage() {
         status: apt.status,
         duration: "1 hour", // Backend doesn't store duration yet
         notes: apt.notes || "",
+        customData: apt.custom_data || {},
         storeId: apt.store_id || "",
       }));
       
