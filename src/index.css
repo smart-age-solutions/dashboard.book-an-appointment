@@ -111,6 +111,12 @@
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
   }
+
+  @media (max-width: 640px) {
+    body {
+      font-size: 0.9375rem; /* slightly smaller base font on mobile */
+    }
+  }
 }
 
 @layer utilities {

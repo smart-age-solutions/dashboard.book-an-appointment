@@ -1,21 +1,10 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  LayoutDashboard,
-  Calendar,
-  List,
-  Mail,
-  Users,
-  Settings,
-  
-  Building2,
-  FileText,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 
-const clientNavigation = [
+export const clientNavigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Calendar", href: "/calendar", icon: Calendar },
   { name: "Appointments", href: "/appointments", icon: List },
@@ -24,7 +13,7 @@ const clientNavigation = [
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-const backofficeNavigation = [
+export const backofficeNavigation = [
   { name: "Client Management", href: "/backoffice", icon: Building2 },
   { name: "Global Logs", href: "/backoffice/logs", icon: FileText },
 ];
@@ -47,7 +36,7 @@ export function Sidebar() {
   const showBackofficeNav = isBackofficeUser;
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border hidden md:block">
       <div className="flex h-full flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">

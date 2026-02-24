@@ -143,16 +143,16 @@ export default function UsersPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Users</h1>
             <p className="mt-1 text-muted-foreground">
               Manage team members and their permissions
             </p>
           </div>
-          <Button onClick={openNewUser}>
+          <Button className="w-full sm:w-auto" onClick={openNewUser}>
             <Plus className="h-4 w-4 mr-2" />
             Add User
           </Button>
@@ -174,53 +174,117 @@ export default function UsersPage() {
           <div className="flex h-[50vh] items-center justify-center">
             <LoadingSpinner size={48} />
           </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="rounded-xl bg-card card-shadow p-6 text-center text-sm text-muted-foreground">
+            No users found
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredUsers.map((user) => (
-              <div key={user.id} className="rounded-xl bg-card p-6 card-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarFallback className="bg-accent text-accent-foreground">
-                        {getInitials(user.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-semibold text-card-foreground">{user.name}</h3>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
+          <>
+            {/* Desktop grid */}
+            <div className="hidden md:grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="rounded-xl bg-card p-6 card-shadow">
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-accent text-accent-foreground">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-0.5 min-w-0">
+                        <h3 className="font-semibold text-card-foreground truncate">{user.name}</h3>
+                        <p className="text-sm text-muted-foreground truncate max-w-xs">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 -mt-2 -mr-2">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(user)}>
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className={cn("capitalize", roleStyles[user.role])}>
+                      {user.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                      {user.role}
+                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <div className={`h-2 w-2 rounded-full ${user.status === "active" ? "bg-success" : "bg-muted-foreground"}`} />
+                      <span className="text-xs text-muted-foreground">{user.lastActive}</span>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(user)}>
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className={cn("capitalize", roleStyles[user.role])}>
-                    {user.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
-                    {user.role}
-                  </Badge>
-                  <div className="flex items-center gap-2">
-                    <div className={`h-2 w-2 rounded-full ${user.status === "active" ? "bg-success" : "bg-muted-foreground"}`} />
-                    <span className="text-xs text-muted-foreground">{user.lastActive}</span>
+              ))}
+            </div>
+
+            {/* Mobile list */}
+            <div className="space-y-3 md:hidden">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="rounded-xl bg-card p-4 card-shadow">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                          {getInitials(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-0.5">
+                        <h3 className="text-sm font-semibold text-card-foreground">{user.name}</h3>
+                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={cn("capitalize text-xs px-2 py-0.5", roleStyles[user.role])}>
+                      {user.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                      {user.role}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "h-2 w-2 rounded-full",
+                          user.status === "active" ? "bg-success" : "bg-muted-foreground",
+                        )}
+                      />
+                      <span className="capitalize">{user.status}</span>
+                    </div>
+                    <span>{user.lastActive}</span>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => handleEdit(user)}
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => handleDelete(user.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Dialog */}

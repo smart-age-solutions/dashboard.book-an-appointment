@@ -368,9 +368,9 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Calendar</h1>
             <p className="mt-1 text-muted-foreground">
@@ -381,10 +381,10 @@ export default function CalendarPage() {
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Calendar */}
-          <div className="lg:col-span-2 rounded-xl bg-card p-6 card-shadow">
+          <div className="lg:col-span-2 rounded-2xl bg-card p-4 md:p-6 card-shadow">
             {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-card-foreground">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
+              <h2 className="text-lg md:text-xl font-semibold text-card-foreground">
                 {format(currentMonth, "MMMM yyyy")}
               </h2>
               <div className="flex items-center gap-2">
@@ -410,7 +410,7 @@ export default function CalendarPage() {
               {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                 <div
                   key={day}
-                  className="py-2 text-center text-sm font-medium text-muted-foreground"
+                  className="py-1 text-center text-xs md:text-sm font-medium text-muted-foreground"
                 >
                   {day}
                 </div>
@@ -418,15 +418,15 @@ export default function CalendarPage() {
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-1.5 md:gap-2">
               {isLoading ? (
-                <div className="col-span-7 h-96 flex items-center justify-center">
+                <div className="col-span-7 h-64 md:h-96 flex items-center justify-center">
                   <LoadingSpinner size={48} />
                 </div>
               ) : (
                 <>
                   {Array.from({ length: startDay }).map((_, i) => (
-                    <div key={`empty-${i}`} className="h-24" />
+                    <div key={`empty-${i}`} className="h-20 md:h-24" />
                   ))}
                   {days.map((day) => {
                     const dayAppointments = getAppointmentsForDate(day);
@@ -438,7 +438,7 @@ export default function CalendarPage() {
                         key={day.toISOString()}
                         onClick={() => setSelectedDate(day)}
                         className={cn(
-                          "h-24 rounded-lg border border-border p-2 cursor-pointer transition-all",
+                          "h-20 md:h-24 rounded-xl border border-border p-1.5 md:p-2 cursor-pointer transition-all bg-background",
                           !isSameMonth(day, currentMonth) && "opacity-50",
                           isToday(day) && "bg-accent",
                           isSelected && "ring-2 ring-primary",
@@ -450,7 +450,7 @@ export default function CalendarPage() {
                       >
                         <div
                           className={cn(
-                            "text-sm font-medium mb-1 flex items-center gap-1",
+                            "text-xs md:text-sm font-medium mb-0.5 flex items-center gap-1",
                             isToday(day)
                               ? "text-primary"
                               : isPast
@@ -463,9 +463,9 @@ export default function CalendarPage() {
                           {format(day, "d")}
                           {isBlocked && <Ban className="h-3 w-3" />}
                         </div>
-                        <div className="space-y-1 overflow-hidden">
+                        <div className="space-y-0.5 overflow-hidden">
                           {isBlocked ? (
-                            <div className="text-xs text-destructive truncate">
+                            <div className="text-[11px] md:text-xs text-destructive truncate">
                               {getBlockedReason(day) || "Blocked"}
                             </div>
                           ) : (
@@ -477,8 +477,8 @@ export default function CalendarPage() {
                                     e.stopPropagation();
                                     handleViewAppointment(apt);
                                   }}
-                                  className={cn(
-                                    "text-xs rounded px-1.5 py-0.5 truncate cursor-pointer",
+                                    className={cn(
+                                      "text-[11px] md:text-xs rounded px-1 py-0.5 truncate cursor-pointer",
                                     statusStyles[apt.status] || "bg-primary/10 text-primary",
                                     apt.status === "cancelled" && "opacity-60 line-through"
                                   )}
@@ -487,7 +487,7 @@ export default function CalendarPage() {
                                 </div>
                               ))}
                               {dayAppointments.length > 2 && (
-                                <div className="text-xs text-muted-foreground">
+                                <div className="text-[11px] md:text-xs text-muted-foreground">
                                   +{dayAppointments.length - 2} more
                                 </div>
                               )}
@@ -503,8 +503,8 @@ export default function CalendarPage() {
           </div>
 
           {/* Selected Date Appointments */}
-          <div className="rounded-xl bg-card p-6 card-shadow">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-2xl bg-card p-4 md:p-6 card-shadow">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h3 className="text-lg font-semibold text-card-foreground">
                 {selectedDate
                   ? format(selectedDate, "MMMM d, yyyy")

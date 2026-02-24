@@ -754,8 +754,8 @@ export default function SettingsPage() {
 
           {/* Stores Tab */}
           <TabsContent value="stores" className="space-y-6">
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center justify-between mb-6">
+            <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4 md:mb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-accent">
                     <Building2 className="h-5 w-5 text-accent-foreground" />
@@ -765,7 +765,7 @@ export default function SettingsPage() {
                     <p className="text-sm text-muted-foreground">Manage multiple store locations with individual hours</p>
                   </div>
                 </div>
-                <Button onClick={openNewStore}>
+                <Button className="w-full sm:w-auto" onClick={openNewStore}>
                   <Plus className="h-4 w-4 mr-2" />
                   Add Store
                 </Button>
@@ -779,8 +779,8 @@ export default function SettingsPage() {
                       store.isActive ? "bg-accent/30 border-border" : "bg-muted/30 border-border/50"
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <h3 className={`font-semibold ${store.isActive ? "text-card-foreground" : "text-muted-foreground"}`}>
                             {store.name}
@@ -795,12 +795,12 @@ export default function SettingsPage() {
                           <MapPin className="h-3 w-3" />
                           {store.address}, {store.city}, {store.state} {store.zip}
                         </p>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="flex items-center gap-1">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                          <span className="flex items-center gap-1 min-w-0">
                             <Mail className="h-3 w-3" />
                             {store.email}
                           </span>
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 min-w-0">
                             <Phone className="h-3 w-3" />
                             {store.phone}
                           </span>
@@ -813,7 +813,7 @@ export default function SettingsPage() {
                           ))}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 md:self-start">
                         <Button variant="outline" size="sm" onClick={() => openEditStore(store)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -838,8 +838,8 @@ export default function SettingsPage() {
           {/* General Settings */}
           <TabsContent value="general" className="space-y-6">
             {/* Branding Section */}
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <div className="p-2 rounded-lg bg-accent">
                   <Palette className="h-5 w-5 text-accent-foreground" />
                 </div>
@@ -972,8 +972,8 @@ export default function SettingsPage() {
             </div>
 
             {/* Global Settings */}
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <div className="p-2 rounded-lg bg-accent">
                   <Store className="h-5 w-5 text-accent-foreground" />
                 </div>
@@ -1259,8 +1259,8 @@ export default function SettingsPage() {
           {/* Email Service Configuration */}
           {isBackofficeUser && (
             <TabsContent value="email" className="space-y-6">
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
+            <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <div className="p-2 rounded-lg bg-accent">
                   <Server className="h-5 w-5 text-accent-foreground" />
                 </div>

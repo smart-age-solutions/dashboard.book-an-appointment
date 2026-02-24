@@ -208,9 +208,9 @@ export default function AppointmentsPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header */}
-        <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-bold text-foreground">Appointments</h1>
           <p className="mt-1 text-muted-foreground">
             View and manage all your appointments
@@ -243,8 +243,8 @@ export default function AppointmentsPage() {
           </Select>
         </div>
 
-        {/* Table */}
-        <div className="rounded-xl bg-card card-shadow overflow-hidden">
+        {/* Desktop Table */}
+        <div className="hidden md:block rounded-xl bg-card card-shadow overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -328,10 +328,88 @@ export default function AppointmentsPage() {
           </Table>
         </div>
 
+        {/* Mobile List */}
+        <div className="space-y-3 md:hidden">
+          {isLoading ? (
+            <div className="flex h-32 items-center justify-center rounded-xl bg-card card-shadow">
+              <LoadingSpinner />
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <div className="rounded-xl bg-card card-shadow p-4 text-center text-sm text-muted-foreground">
+              No appointments found
+            </div>
+          ) : (
+            filteredAppointments.map((apt) => (
+              <div
+                key={apt.id}
+                className="rounded-xl bg-card card-shadow p-4 flex flex-col gap-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-card-foreground">{apt.client}</p>
+                    <p className="text-xs text-muted-foreground">{apt.email}</p>
+                  </div>
+                  <Badge variant="outline" className={cn("capitalize", statusStyles[apt.status])}>
+                    {apt.status}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {format(apt.date, "MMM d, yyyy")}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {apt.time}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    {apt.service}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {apt.duration}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleViewDetails(apt)}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEdit(apt)}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  {apt.status !== "cancelled" && apt.status !== "completed" && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-destructive"
+                      onClick={() => handleCancel(apt)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
         {/* Pagination */}
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <p>Showing {filteredAppointments.length} of {totalItems} appointments</p>
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm text-muted-foreground">
+          <p>
+            Showing {filteredAppointments.length} of {totalItems} appointments
+          </p>
+          <div className="flex gap-2 items-center self-start sm:self-auto">
             <Button
               variant="outline"
               size="sm"
