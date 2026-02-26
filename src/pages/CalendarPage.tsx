@@ -146,7 +146,7 @@ export default function CalendarPage() {
         phone: apt.phone || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
-        preferred_communication: apt.preferred_communication || "email",
+        preferred_communication: (apt.preferred_communication || "email").toLowerCase(),
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
         notes: apt.notes || "",
@@ -651,8 +651,9 @@ export default function CalendarPage() {
             <DialogHeader>
               <DialogTitle>Appointment Details</DialogTitle>
             </DialogHeader>
-            {viewingAppointment && (
-              <div className="space-y-4 py-4">
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              {viewingAppointment && (
+                <div className="space-y-4 py-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10">
                     <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
@@ -797,11 +798,12 @@ export default function CalendarPage() {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </DialogContent>
         </Dialog>
 

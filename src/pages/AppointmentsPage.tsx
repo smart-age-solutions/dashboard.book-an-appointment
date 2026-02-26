@@ -88,7 +88,7 @@ export default function AppointmentsPage() {
         title: apt.title || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
-        preferred_communication: apt.preferred_communication || "email",
+        preferred_communication: (apt.preferred_communication || "email").toLowerCase(),
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
         service: apt.purpose || "General",
@@ -454,8 +454,9 @@ export default function AppointmentsPage() {
             <DialogHeader>
               <DialogTitle>Appointment Details</DialogTitle>
             </DialogHeader>
-            {selectedAppointment && (
-              <div className="space-y-4 py-4">
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              {selectedAppointment && (
+                <div className="space-y-4 py-4">
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/10">
                   <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
                     <User className="h-5 w-5 text-primary" />
@@ -587,6 +588,7 @@ export default function AppointmentsPage() {
                 </div>
               </div>
             )}
+          </div>
           </DialogContent>
         </Dialog>
 
@@ -596,7 +598,8 @@ export default function AppointmentsPage() {
             <DialogHeader>
               <DialogTitle>Edit Appointment</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4">
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-4 py-4">
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-1 space-y-2">
                   <Label>Title</Label>
@@ -825,6 +828,7 @@ export default function AppointmentsPage() {
                 </Button>
               </div>
             </div>
+          </div>
           </DialogContent>
         </Dialog>
       </div>
