@@ -105,6 +105,7 @@ export default function CalendarPage() {
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [blockReason, setBlockReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [customDataText, setCustomDataText] = useState("");
   const [formData, setFormData] = useState({
     title: "", // Personal title
     first_name: "",
@@ -272,6 +273,18 @@ export default function CalendarPage() {
 
       if (formData.storeId) payload.store_id = formData.storeId;
 
+      if (customDataText.trim()) {
+        try {
+          payload.custom_data = JSON.parse(customDataText);
+        } catch (e) {
+          toast({ title: "Invalid JSON", description: "Custom Data must be valid JSON", variant: "destructive" });
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        payload.custom_data = {};
+      }
+
       if (editingAppointment) {
         await api.put(`/appointments/${editingAppointment.id}`, payload);
         toast({ title: "Updated", description: "Appointment updated successfully" });
@@ -309,6 +322,7 @@ export default function CalendarPage() {
       duration: apt.duration,
       storeId: apt.storeId || "",
     });
+    setCustomDataText(apt.customData ? JSON.stringify(apt.customData, null, 2) : "");
     setSelectedDate(apt.date);
     setIsDialogOpen(true);
   };
@@ -646,7 +660,7 @@ export default function CalendarPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-card-foreground">
-                        {viewingAppointment.client}
+                        {viewingAppointment.title ? `${viewingAppointment.title}. ` : ""}{viewingAppointment.client}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {viewingAppointment.service}
@@ -706,6 +720,26 @@ export default function CalendarPage() {
                     </div>
                   )}
 
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Preferred Communication</p>
+                      <p className="text-sm font-medium text-card-foreground capitalize">
+                        {viewingAppointment.preferred_communication}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Country of Residence</p>
+                      <p className="text-sm font-medium text-card-foreground">
+                        {viewingAppointment.country_of_residence || "Not specified"}
+                      </p>
+                    </div>
+                  </div>
+
                   {viewingAppointment.notes && (
                     <div className="p-3 rounded-lg bg-muted/50">
                       <div className="flex items-center gap-2 mb-2">
@@ -715,6 +749,18 @@ export default function CalendarPage() {
                       <p className="text-sm text-card-foreground">
                         {viewingAppointment.notes}
                       </p>
+                    </div>
+                  )}
+
+                  {viewingAppointment.customData && Object.keys(viewingAppointment.customData).length > 0 && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <p className="text-xs text-muted-foreground">Custom Data</p>
+                      </div>
+                      <pre className="text-xs text-card-foreground bg-background/50 p-2 rounded overflow-auto max-h-32">
+                        {JSON.stringify(viewingAppointment.customData, null, 2)}
+                      </pre>
                     </div>
                   )}
                 </div>
@@ -910,7 +956,7 @@ export default function CalendarPage() {
               </div>
 
               <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-1 space-y-2">
+                <div className="col-span-2 space-y-2">
                   <Label>Phone Area Code</Label>
                   <Input
                     value={formData.phone_area_code}
@@ -920,7 +966,7 @@ export default function CalendarPage() {
                     placeholder="+1"
                   />
                 </div>
-                <div className="col-span-3 space-y-2">
+                <div className="col-span-2 space-y-2">
                   <Label>Phone</Label>
                   <Input
                     type="tel"
@@ -1015,6 +1061,17 @@ export default function CalendarPage() {
                   }
                   placeholder="Additional notes about the appointment..."
                   rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Custom Data (JSON)</Label>
+                <Textarea
+                  placeholder='{"key": "value"}'
+                  value={customDataText}
+                  onChange={(e) => setCustomDataText(e.target.value)}
+                  rows={4}
+                  className="font-mono text-xs"
                 />
               </div>
               <div className="flex gap-2 pt-4">

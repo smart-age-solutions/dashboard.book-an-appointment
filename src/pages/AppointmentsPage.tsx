@@ -59,6 +59,7 @@ export default function AppointmentsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [customDataText, setCustomDataText] = useState("");
   const [editFormData, setEditFormData] = useState<Partial<Appointment & { first_name: string; last_name: string }>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -94,7 +95,7 @@ export default function AppointmentsPage() {
         date: parseLocalDate(apt.date),
         time: apt.time, // HH:MM format from backend
         status: apt.status,
-        duration: "1 hour", // Backend doesn't store duration yet
+        duration: "60", // Backend doesn't store duration yet, using "60" to match Select value
         notes: apt.notes || "",
         customData: apt.custom_data || {},
         storeId: apt.store_id || "",
@@ -149,6 +150,7 @@ export default function AppointmentsPage() {
       notes: apt.notes,
       storeId: apt.storeId,
     });
+    setCustomDataText(apt.customData ? JSON.stringify(apt.customData, null, 2) : "");
     setIsEditDialogOpen(true);
   };
 
@@ -174,6 +176,18 @@ export default function AppointmentsPage() {
       payload.consent_communication = editFormData.consent_communication;
       if (editFormData.date) payload.date = format(editFormData.date, "yyyy-MM-dd");
       if (editFormData.time) payload.time = editFormData.time;
+
+      if (customDataText.trim()) {
+        try {
+          payload.custom_data = JSON.parse(customDataText);
+        } catch (e) {
+          toast({ title: "Invalid JSON", description: "Custom Data must be valid JSON", variant: "destructive" });
+          setIsSubmitting(false);
+          return;
+        }
+      } else {
+        payload.custom_data = {};
+      }
 
       await api.put(`/appointments/${selectedAppointment.id}`, payload);
       
@@ -447,7 +461,9 @@ export default function AppointmentsPage() {
                     <User className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold text-card-foreground">{selectedAppointment.client}</p>
+                    <p className="font-semibold text-card-foreground">
+                      {selectedAppointment.title ? `${selectedAppointment.title}. ` : ""}{selectedAppointment.client}
+                    </p>
                     <p className="text-sm text-muted-foreground">{selectedAppointment.service}</p>
                   </div>
                   <Badge variant="outline" className={cn("ml-auto capitalize", statusStyles[selectedAppointment.status])}>
@@ -496,6 +512,22 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
 
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Preferred Communication</p>
+                    <p className="text-sm font-medium text-card-foreground capitalize">{selectedAppointment.preferred_communication}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Country of Residence</p>
+                    <p className="text-sm font-medium text-card-foreground">{selectedAppointment.country_of_residence || "Not specified"}</p>
+                  </div>
+                </div>
+
                 {stores.length > 1 && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -513,6 +545,18 @@ export default function AppointmentsPage() {
                       <p className="text-xs text-muted-foreground">Notes</p>
                     </div>
                     <p className="text-sm text-card-foreground">{selectedAppointment.notes}</p>
+                  </div>
+                )}
+
+                {selectedAppointment.customData && Object.keys(selectedAppointment.customData).length > 0 && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <div className="flex items-center gap-2 mb-2">
+                      <FileText className="h-3 w-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Custom Data</p>
+                    </div>
+                    <pre className="text-xs text-card-foreground bg-background/50 p-2 rounded overflow-auto max-h-32">
+                      {JSON.stringify(selectedAppointment.customData, null, 2)}
+                    </pre>
                   </div>
                 )}
 
@@ -625,7 +669,7 @@ export default function AppointmentsPage() {
                   />
                 </div>
               <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-1 space-y-2">
+                <div className="col-span-2 space-y-2">
                   <Label>Phone Area Code</Label>
                   <Input
                     value={editFormData.phone_area_code || ""}
@@ -633,7 +677,7 @@ export default function AppointmentsPage() {
                     placeholder="+1"
                   />
                 </div>
-                <div className="col-span-3 space-y-2">
+                <div className="col-span-2 space-y-2">
                   <Label>Phone</Label>
                   <Input
                     value={editFormData.phone || ""}
@@ -758,6 +802,17 @@ export default function AppointmentsPage() {
                   rows={3}
                   value={editFormData.notes || ""}
                   onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Custom Data (JSON)</Label>
+                <Textarea
+                  rows={4}
+                  className="font-mono text-xs"
+                  placeholder='{"key": "value"}'
+                  value={customDataText}
+                  onChange={(e) => setCustomDataText(e.target.value)}
                 />
               </div>
 

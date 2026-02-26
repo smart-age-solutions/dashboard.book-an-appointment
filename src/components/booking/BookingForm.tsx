@@ -12,6 +12,9 @@ export interface BookingFormData {
   customData?: Record<string, any>;
   accepted_terms: boolean;
   consent_communication: boolean;
+  preferred_communication: string;
+  title: string;
+  country_of_residence: string;
 }
 
 interface BookingFormProps {
@@ -50,8 +53,12 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
     customData: {},
     accepted_terms: false,
     consent_communication: false,
+    preferred_communication: "email",
+    title: "",
+    country_of_residence: "",
   });
-  const [errors, setErrors] = useState<Partial<Record<keyof BookingFormData, string>>>({});
+  const [customDataText, setCustomDataText] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof BookingFormData | "customDataText", string>>>({});
 
   const set = (key: keyof BookingFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value;
@@ -64,6 +71,13 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
     if (!form.first_name.trim()) errs.first_name = "First name is required";
     if (!form.email.trim() || !form.email.includes("@")) errs.email = "Valid email is required";
     if (!form.accepted_terms) errs.accepted_terms = "You must accept the terms";
+    if (customDataText.trim()) {
+      try {
+        JSON.parse(customDataText);
+      } catch (e) {
+        (errs as any).customDataText = "Invalid JSON format";
+      }
+    }
     return errs;
   };
 
@@ -71,7 +85,17 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
-    onSubmit(form);
+    
+    const finalData = { ...form };
+    if (customDataText.trim()) {
+      try {
+        finalData.customData = JSON.parse(customDataText);
+      } catch (e) {
+        // Should be caught by validate, but for safety:
+        return;
+      }
+    }
+    onSubmit(finalData);
   };
 
   const inputClass = "w-full px-3 py-2.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 transition-shadow bg-white placeholder-gray-400";
@@ -92,32 +116,52 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
       </div>
 
       {/* Name row */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label>
+      <div className="grid grid-cols-4 gap-3">
+        <div className="col-span-1">
+          <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              value={form.title}
+              onChange={set("title")}
+              className={`${inputClass} appearance-none`}
+              style={focusStyle}
+            >
+              <option value="">Title</option>
+              <option value="Mr">Mr.</option>
+              <option value="Mrs">Mrs.</option>
+              <option value="Ms">Ms.</option>
+              <option value="Dr">Dr.</option>
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+        <div className="col-span-3 grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">First Name *</label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="John"
+                value={form.first_name}
+                onChange={set("first_name")}
+                className={`${inputClass} pl-9`}
+                style={focusStyle}
+              />
+            </div>
+            {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Last Name</label>
             <input
               type="text"
-              placeholder="John"
-              value={form.first_name}
-              onChange={set("first_name")}
-              className={`${inputClass} pl-9`}
+              placeholder="Doe"
+              value={form.last_name}
+              onChange={set("last_name")}
+              className={inputClass}
               style={focusStyle}
             />
           </div>
-          {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name}</p>}
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Last Name</label>
-          <input
-            type="text"
-            placeholder="Doe"
-            value={form.last_name}
-            onChange={set("last_name")}
-            className={inputClass}
-            style={focusStyle}
-          />
         </div>
       </div>
 
@@ -164,6 +208,37 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
         </div>
       </div>
 
+      {/* Communication & Location */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Preferred Communication</label>
+          <div className="relative">
+            <select
+              value={form.preferred_communication}
+              onChange={set("preferred_communication")}
+              className={`${inputClass} appearance-none pr-9`}
+              style={focusStyle}
+            >
+              <option value="email">Email</option>
+              <option value="phone">Phone</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Country of Residence</label>
+          <input
+            type="text"
+            placeholder="e.g. USA"
+            value={form.country_of_residence}
+            onChange={set("country_of_residence")}
+            className={inputClass}
+            style={focusStyle}
+          />
+        </div>
+      </div>
+
       {/* Purpose */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Purpose of visit</label>
@@ -179,6 +254,26 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
+      </div>
+
+      {/* Custom Data */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Additional Data (JSON)</label>
+        <div className="relative">
+          <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+          <textarea
+            placeholder='{"key": "value"}'
+            value={customDataText}
+            onChange={(e) => {
+              setCustomDataText(e.target.value);
+              if (errors.customDataText) setErrors(er => ({ ...er, customDataText: undefined }));
+            }}
+            rows={2}
+            className={`${inputClass} pl-9 font-mono text-xs resize-none`}
+            style={focusStyle}
+          />
+        </div>
+        {(errors as any).customDataText && <p className="text-xs text-red-500 mt-1">{(errors as any).customDataText}</p>}
       </div>
 
       {/* Notes */}
