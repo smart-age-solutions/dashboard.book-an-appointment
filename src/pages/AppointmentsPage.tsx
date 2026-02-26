@@ -673,7 +673,7 @@ export default function AppointmentsPage() {
                 </div>
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Phone Area Code</Label>
+                  <Label>Phone Country Code</Label>
                   <Input
                     value={editFormData.phone_area_code || ""}
                     onChange={(e) => setEditFormData({ ...editFormData, phone_area_code: e.target.value })}

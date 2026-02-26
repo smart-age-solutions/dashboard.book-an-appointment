@@ -1,29 +1,21 @@
-import { useState, useEffect } from "react";
+import { memo } from "react";
 import { Clock, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { format, isToday, isTomorrow } from "date-fns";
 import { parseLocalDate } from "@/lib/date";
+import { useQuery } from "@tanstack/react-query";
 
-export function UpcomingAppointments() {
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const today = format(new Date(), "yyyy-MM-dd");
-        const data = await api.get("/appointments", { start_date: today, per_page: 10 });
-        setAppointments(data.appointments);
-      } catch (error) {
-        console.error("Failed to fetch upcoming appointments", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAppointments();
-  }, []);
+export const UpcomingAppointments = memo(function UpcomingAppointments() {
+  const { data: appointments = [], isLoading } = useQuery({
+    queryKey: ["upcoming-appointments"],
+    queryFn: async () => {
+      const today = format(new Date(), "yyyy-MM-dd");
+      const data = await api.get("/appointments", { start_date: today, per_page: 10 });
+      return data.appointments;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
 
   const getDateLabel = (dateStr: string) => {
     const d = parseLocalDate(dateStr);
@@ -45,7 +37,7 @@ export function UpcomingAppointments() {
         ) : appointments.length === 0 ? (
           <div className="px-6 py-4 text-sm text-muted-foreground italic">No upcoming appointments</div>
         ) : (
-          appointments.map((appointment) => (
+          appointments.map((appointment: any) => (
             <div
               key={appointment.id}
               className="flex items-center justify-between px-6 py-4 transition-colors hover:bg-muted/50"
@@ -59,7 +51,7 @@ export function UpcomingAppointments() {
                     {appointment.first_name} {appointment.last_name}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {appointment.purpose}
+                    {appointment.purpose || appointment.service}
                   </p>
                 </div>
               </div>
@@ -92,4 +84,4 @@ export function UpcomingAppointments() {
       </div>
     </div>
   );
-}
+});

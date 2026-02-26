@@ -1,26 +1,18 @@
-import { useState, useEffect } from "react";
+import { memo } from "react";
 import { Calendar, Check, X, Mail, Settings, UserPlus, UserMinus, Clock } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 
-export function RecentActivity() {
-  const [activities, setActivities] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        const data = await api.get("/auth/activity-logs", { per_page: 10 });
-        setActivities(data.logs);
-      } catch (error) {
-        console.error("Failed to fetch activity logs", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, []);
+export const RecentActivity = memo(function RecentActivity() {
+  const { data: activities = [], isLoading } = useQuery({
+    queryKey: ["activity-logs"],
+    queryFn: async () => {
+      const data = await api.get("/auth/activity-logs", { per_page: 10 });
+      return data.logs;
+    },
+    staleTime: 1000 * 60 * 1, // 1 minute
+  });
 
   const getIcon = (action: string) => {
     switch (action) {
@@ -67,7 +59,7 @@ export function RecentActivity() {
         ) : activities.length === 0 ? (
           <div className="px-6 py-4 text-sm text-muted-foreground italic">No recent activity</div>
         ) : (
-          activities.map((activity) => {
+          activities.map((activity: any) => {
             const Icon = getIcon(activity.action);
             return (
               <div
@@ -98,4 +90,4 @@ export function RecentActivity() {
       </div>
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,28 +8,38 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ImpersonationProvider } from "@/contexts/ImpersonationContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
-import Dashboard from "./pages/Dashboard";
-import CalendarPage from "./pages/CalendarPage";
-import AppointmentsPage from "./pages/AppointmentsPage";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-import EmailTemplatesPage from "./pages/EmailTemplatesPage";
-import UsersPage from "./pages/UsersPage";
-import SettingsPage from "./pages/SettingsPage";
-import LoginPage from "./pages/LoginPage";
-import BackofficePage from "./pages/BackofficePage";
-import BackofficeLogsPage from "./pages/BackofficeLogsPage";
-import BackofficeInvitationPage from "./pages/BackofficeInvitationPage";
-import InvitationAcceptPage from "./pages/InvitationAcceptPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import NotFound from "./pages/NotFound";
-import BookingPage from "./pages/BookingPage";
-import ManageAppointmentPage from "./pages/ManageAppointmentPage";
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CalendarPage = lazy(() => import("./pages/CalendarPage"));
+const AppointmentsPage = lazy(() => import("./pages/AppointmentsPage"));
+const EmailTemplatesPage = lazy(() => import("./pages/EmailTemplatesPage"));
+const UsersPage = lazy(() => import("./pages/UsersPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const BackofficePage = lazy(() => import("./pages/BackofficePage"));
+const BackofficeLogsPage = lazy(() => import("./pages/BackofficeLogsPage"));
+const BackofficeInvitationPage = lazy(() => import("./pages/BackofficeInvitationPage"));
+const InvitationAcceptPage = lazy(() => import("./pages/InvitationAcceptPage"));
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
+const BookingPage = lazy(() => import("./pages/BookingPage"));
+const ManageAppointmentPage = lazy(() => import("./pages/ManageAppointmentPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
 import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 30, // 30 minutes
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -40,31 +51,37 @@ const App = () => (
             <Sonner />
             <ImpersonationBanner />
             <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/invitation/accept" element={<InvitationAcceptPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Suspense fallback={
+                <div className="flex h-screen items-center justify-center bg-background">
+                  <LoadingSpinner size={48} />
+                </div>
+              }>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/invitation/accept" element={<InvitationAcceptPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                {/* Public Booking Routes (no auth required) */}
-                <Route path="/book/:clientId" element={<BookingPage />} />
-                <Route path="/manage/:appointmentId" element={<ManageAppointmentPage />} />
-                
-                {/* Protected Client Routes */}
-                <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
-                <Route path="/calendar" element={<ClientPageGuard><CalendarPage /></ClientPageGuard>} />
-                <Route path="/appointments" element={<ClientPageGuard><AppointmentsPage /></ClientPageGuard>} />
-                <Route path="/email-templates" element={<ClientPageGuard><EmailTemplatesPage /></ClientPageGuard>} />
-                <Route path="/users" element={<ClientPageGuard><UsersPage /></ClientPageGuard>} />
-                <Route path="/settings" element={<ClientPageGuard><SettingsPage /></ClientPageGuard>} />
-                
-                {/* Backoffice Routes */}
-                <Route path="/backoffice" element={<BackofficeGuard><BackofficePage /></BackofficeGuard>} />
-                <Route path="/backoffice/logs" element={<BackofficeGuard><BackofficeLogsPage /></BackofficeGuard>} />
-                <Route path="/backoffice/invite" element={<BackofficeGuard><BackofficeInvitationPage /></BackofficeGuard>} />
-                
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+                  {/* Public Booking Routes (no auth required) */}
+                  <Route path="/book/:clientId" element={<BookingPage />} />
+                  <Route path="/manage/:appointmentId" element={<ManageAppointmentPage />} />
+                  
+                  {/* Protected Client Routes */}
+                  <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
+                  <Route path="/calendar" element={<ClientPageGuard><CalendarPage /></ClientPageGuard>} />
+                  <Route path="/appointments" element={<ClientPageGuard><AppointmentsPage /></ClientPageGuard>} />
+                  <Route path="/email-templates" element={<ClientPageGuard><EmailTemplatesPage /></ClientPageGuard>} />
+                  <Route path="/users" element={<ClientPageGuard><UsersPage /></ClientPageGuard>} />
+                  <Route path="/settings" element={<ClientPageGuard><SettingsPage /></ClientPageGuard>} />
+                  
+                  {/* Backoffice Routes */}
+                  <Route path="/backoffice" element={<BackofficeGuard><BackofficePage /></BackofficeGuard>} />
+                  <Route path="/backoffice/logs" element={<BackofficeGuard><BackofficeLogsPage /></BackofficeGuard>} />
+                  <Route path="/backoffice/invite" element={<BackofficeGuard><BackofficeInvitationPage /></BackofficeGuard>} />
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </StoreProvider>
         </ImpersonationProvider>

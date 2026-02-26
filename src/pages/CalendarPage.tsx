@@ -959,7 +959,7 @@ export default function CalendarPage() {
 
               <div className="grid grid-cols-4 gap-4">
                 <div className="col-span-2 space-y-2">
-                  <Label>Phone Area Code</Label>
+                  <Label>Phone Country Code</Label>
                   <Input
                     value={formData.phone_area_code}
                     onChange={(e) =>
