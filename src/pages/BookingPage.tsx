@@ -92,7 +92,7 @@ export default function BookingPage() {
     if (!clientId) return;
     setIsSlotsLoading(true);
     try {
-      const params = new URLSearchParams({ range: "2m" });
+      const params = new URLSearchParams({ range: "12m" });
       if (selectedStoreId) params.set("store_id", selectedStoreId);
       const res = await fetch(`${API_URL}/public/slots/${clientId}?${params}`);
       const data = await res.json();
