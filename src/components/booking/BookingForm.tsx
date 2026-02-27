@@ -257,7 +257,7 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
       </div>
 
       {/* Custom Data */}
-      <div>
+      {/* <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">Additional Data (JSON)</label>
         <div className="relative">
           <FileText className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
@@ -274,7 +274,7 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
           />
         </div>
         {(errors as any).customDataText && <p className="text-xs text-red-500 mt-1">{(errors as any).customDataText}</p>}
-      </div>
+      </div> */}
 
       {/* Notes */}
       <div>
