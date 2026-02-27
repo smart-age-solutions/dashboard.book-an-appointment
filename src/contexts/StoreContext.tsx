@@ -20,6 +20,7 @@ export interface Store {
   zip: string;
   isActive: boolean;
   hours: StoreHours[];
+  slotDuration: string;
   mapUrl?: string;
   mapImageUrl?: string;
 }
@@ -60,6 +61,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     state: "",
     zip: "",
     isActive: s.is_active,
+    slotDuration: String(s.slot_duration_minutes || "60"),
     mapUrl: s.map_url || "",
     mapImageUrl: s.map_image_url || "",
     hours: s.business_hours ? [
@@ -104,6 +106,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         address: store.address,
         map_url: store.mapUrl,
         map_image_url: store.mapImageUrl,
+        slot_duration: parseInt(store.slotDuration),
         business_hours_start: store.hours[0].openTime,
         business_hours_end: store.hours[0].closeTime,
         working_days: store.hours.filter(h => h.isOpen).map(h => {
@@ -128,6 +131,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
       if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
       if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;
+      if (updates.slotDuration) payload.slot_duration = parseInt(updates.slotDuration);
       
       if (updates.hours) {
         payload.business_hours_start = updates.hours[0].openTime;

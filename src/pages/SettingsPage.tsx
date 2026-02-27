@@ -206,10 +206,11 @@ export default function SettingsPage() {
 
       // Fetch Email & SMS configs
       try {
-        const [emailRes, smsRes, reminderRes] = await Promise.all([
+        const [emailRes, smsRes, reminderRes, businessHoursRes] = await Promise.all([
           api.get("/auth/settings/email-config"),
           api.get("/auth/settings/sms-config"),
-          api.get("/auth/settings/reminder-settings")
+          api.get("/auth/settings/reminder-settings"),
+          api.get("/auth/settings/business-hours")
         ]);
         
         if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
@@ -223,6 +224,12 @@ export default function SettingsPage() {
             ...prev,
             reminder1h: reminderRes.reminder_settings.reminder_1h_enabled || false,
             reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
+          }));
+        }
+        if (businessHoursRes.business_hours) {
+          setGlobalSettings(prev => ({
+            ...prev,
+            slotDuration: String(businessHoursRes.business_hours.slot_duration || "60"),
           }));
         }
       } catch (e) {
@@ -269,9 +276,12 @@ export default function SettingsPage() {
           map_url: globalSettings.mapUrl,
           map_image_url: globalSettings.mapImageUrl,
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
-          timezone: globalSettings.timezone,
+           timezone: globalSettings.timezone,
           edit_appointment_url: globalSettings.editAppointmentUrl,
           cancel_appointment_url: globalSettings.cancelAppointmentUrl,
+        }),
+        api.put("/auth/settings/business-hours", {
+          slot_duration: parseInt(globalSettings.slotDuration)
         })
       ]);
       toast({ title: "Saved", description: "Global settings updated successfully" });
