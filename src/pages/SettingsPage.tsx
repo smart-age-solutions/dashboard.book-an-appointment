@@ -135,6 +135,7 @@ export default function SettingsPage() {
     timezone: "America/New_York",
     bookingWindowDays: "30",
     slotDuration: "60",
+    showMapInEmail: true,
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -208,6 +209,7 @@ export default function SettingsPage() {
         timezone: profileData.profile.timezone || "America/New_York",
         editAppointmentUrl: profileData.profile.edit_appointment_url || "",
         cancelAppointmentUrl: profileData.profile.cancel_appointment_url || "",
+        showMapInEmail: profileData.profile.show_map_in_email !== undefined ? profileData.profile.show_map_in_email : true,
       });
 
       // Fetch Email & SMS configs
@@ -287,6 +289,7 @@ export default function SettingsPage() {
            timezone: globalSettings.timezone,
           edit_appointment_url: globalSettings.editAppointmentUrl,
           cancel_appointment_url: globalSettings.cancelAppointmentUrl,
+          show_map_in_email: globalSettings.showMapInEmail,
         }),
         api.put("/auth/settings/business-hours", {
           slot_duration: parseInt(globalSettings.slotDuration)
@@ -1121,7 +1124,19 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Appointment Action URLs */}
+                {/* Show Map in Email Toggle */}
+                <div className="flex items-center justify-between p-4 rounded-lg bg-accent/20 border border-primary/10 md:col-span-2">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Show Map in Emails</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable or disable the location map in automated emails sent to clients.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={globalSettings.showMapInEmail}
+                    onCheckedChange={(checked) => setGlobalSettings({ ...globalSettings, showMapInEmail: checked })}
+                  />
+
                 <div className="md:col-span-2 pt-4 border-t">
                   <h3 className="text-sm font-medium mb-4">Appointment Action URLs</h3>
                   <p className="text-sm text-muted-foreground mb-4">

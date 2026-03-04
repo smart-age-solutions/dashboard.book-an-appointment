@@ -310,7 +310,8 @@ export default function EmailTemplatesPage() {
               "{{map_url}}",
               "{{map_image_url}}",
               "{{lat}}",
-              "{{lng}}"
+              "{{lng}}",
+              "{{show_map}}"
             ].map((v) => (
               <code key={v} className="px-2 py-1 rounded bg-muted text-xs text-muted-foreground font-mono">
                 {v}
