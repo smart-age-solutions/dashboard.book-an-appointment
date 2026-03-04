@@ -237,7 +237,7 @@ export default function EmailTemplatesPage() {
       .replace(/{{ *time *}}/g, "10:00 AM")
       .replace(/{{ *company_name *}}/g, "Smart Age Solutions")
       .replace(/{{ *store_address *}}/g, "123 Main Street, City")
-      .replace(/{{ *schedule_id *}}/g, "apt_123456")
+      .replace(/{{ *appointment_id *}}/g, "apt_123456")
       .replace(/{{ *edit_url *}}/g, "#")
       .replace(/{{ *cancel_url *}}/g, "#")
       .replace(/{{ *logo_url *}}/g, "https://placehold.co/200x50")
@@ -295,7 +295,7 @@ export default function EmailTemplatesPage() {
               "{{time}}", 
               "{{company_name}}", 
               "{{store_address}}",
-              "{{schedule_id}}",
+              "{{appointment_id}}",
               "{{edit_url}}",
               "{{cancel_url}}",
               "{{logo_url}}",

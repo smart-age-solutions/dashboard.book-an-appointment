@@ -111,6 +111,8 @@ export default function SettingsPage() {
     slotDuration: "60",
     mapUrl: "",
     mapImageUrl: "",
+    lat: "",
+    lng: "",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -125,6 +127,8 @@ export default function SettingsPage() {
     email: "",
     mapUrl: "",
     mapImageUrl: "",
+    lat: "",
+    lng: "",
     primaryColor: "#a6cd39",
     logoUrl: "",
     companyName: "",
@@ -198,6 +202,8 @@ export default function SettingsPage() {
         email: profileData.profile.email || "",
         mapUrl: profileData.profile.map_url || "",
         mapImageUrl: profileData.profile.map_image_url || "",
+        lat: profileData.profile.lat || "",
+        lng: profileData.profile.lng || "",
         bookingWindowDays: String(profileData.profile.booking_window_days || "30"),
         timezone: profileData.profile.timezone || "America/New_York",
         editAppointmentUrl: profileData.profile.edit_appointment_url || "",
@@ -275,6 +281,8 @@ export default function SettingsPage() {
           email: globalSettings.email,
           map_url: globalSettings.mapUrl,
           map_image_url: globalSettings.mapImageUrl,
+          lat: globalSettings.lat,
+          lng: globalSettings.lng,
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
            timezone: globalSettings.timezone,
           edit_appointment_url: globalSettings.editAppointmentUrl,
@@ -316,6 +324,8 @@ export default function SettingsPage() {
       slotDuration: globalSettings.slotDuration,
       mapUrl: "",
       mapImageUrl: "",
+      lat: "",
+      lng: "",
     });
     setIsStoreDialogOpen(true);
   };
@@ -332,9 +342,11 @@ export default function SettingsPage() {
       zip: store.zip,
       isActive: store.isActive,
       hours: [...store.hours],
-      slotDuration: (store as any).slotDuration || globalSettings.slotDuration,
+      slotDuration: store.slotDuration,
       mapUrl: store.mapUrl || "",
       mapImageUrl: store.mapImageUrl || "",
+      lat: store.lat || "",
+      lng: store.lng || "",
     });
     setIsStoreDialogOpen(true);
   };
@@ -1083,6 +1095,32 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>Latitude</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.lat}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, lat: e.target.value })}
+                      placeholder="e.g. 40.7128"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Longitude</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={globalSettings.lng}
+                      onChange={(e) => setGlobalSettings({ ...globalSettings, lng: e.target.value })}
+                      placeholder="e.g. -74.0060"
+                    />
+                  </div>
+                </div>
+
                 {/* Appointment Action URLs */}
                 <div className="md:col-span-2 pt-4 border-t">
                   <h3 className="text-sm font-medium mb-4">Appointment Action URLs</h3>
@@ -1682,6 +1720,33 @@ export default function SettingsPage() {
                         value={storeFormData.mapImageUrl}
                         onChange={(e) => setStoreFormData({ ...storeFormData, mapImageUrl: e.target.value })}
                         placeholder="https://example.com/map_image.png"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Latitude</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="pl-9"
+                        value={storeFormData.lat}
+                        onChange={(e) => setStoreFormData({ ...storeFormData, lat: e.target.value })}
+                        placeholder="e.g. 40.7128"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Longitude</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        className="pl-9"
+                        value={storeFormData.lng}
+                        onChange={(e) => setStoreFormData({ ...storeFormData, lng: e.target.value })}
+                        placeholder="e.g. -74.0060"
                       />
                     </div>
                   </div>

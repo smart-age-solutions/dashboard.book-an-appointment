@@ -23,6 +23,8 @@ export interface Store {
   slotDuration: string;
   mapUrl?: string;
   mapImageUrl?: string;
+  lat?: string;
+  lng?: string;
 }
 
 interface StoreContextType {
@@ -64,6 +66,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     slotDuration: String(s.slot_duration_minutes || "60"),
     mapUrl: s.map_url || "",
     mapImageUrl: s.map_image_url || "",
+    lat: s.lat || "",
+    lng: s.lng || "",
     hours: s.business_hours ? [
       { day: "Monday", isOpen: s.business_hours.working_days.includes(0), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
       { day: "Tuesday", isOpen: s.business_hours.working_days.includes(1), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
@@ -106,6 +110,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         address: store.address,
         map_url: store.mapUrl,
         map_image_url: store.mapImageUrl,
+        lat: store.lat,
+        lng: store.lng,
         slot_duration: parseInt(store.slotDuration),
         business_hours_start: store.hours[0].openTime,
         business_hours_end: store.hours[0].closeTime,
@@ -131,6 +137,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
       if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
       if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;
+      if (updates.lat !== undefined) payload.lat = updates.lat;
+      if (updates.lng !== undefined) payload.lng = updates.lng;
       if (updates.slotDuration) payload.slot_duration = parseInt(updates.slotDuration);
       
       if (updates.hours) {
