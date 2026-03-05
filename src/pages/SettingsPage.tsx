@@ -113,6 +113,7 @@ export default function SettingsPage() {
     mapImageUrl: "",
     lat: "",
     lng: "",
+    showMapInEmail: true,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -329,6 +330,7 @@ export default function SettingsPage() {
       mapImageUrl: "",
       lat: "",
       lng: "",
+      showMapInEmail: true,
     });
     setIsStoreDialogOpen(true);
   };
@@ -350,6 +352,7 @@ export default function SettingsPage() {
       mapImageUrl: store.mapImageUrl || "",
       lat: store.lat || "",
       lng: store.lng || "",
+      showMapInEmail: store.showMapInEmail !== undefined ? store.showMapInEmail : true,
     });
     setIsStoreDialogOpen(true);
   };
@@ -1073,6 +1076,22 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Show Map in Emails</Label>
+                  <Select 
+                    value={globalSettings.showMapInEmail ? "true" : "false"} 
+                    onValueChange={(v) => setGlobalSettings({ ...globalSettings, showMapInEmail: v === "true" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Enabled</SelectItem>
+                      <SelectItem value="false">Disabled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label>Map URL</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -1124,18 +1143,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Show Map in Email Toggle */}
-                <div className="flex items-center justify-between p-4 rounded-lg bg-accent/20 border border-primary/10 md:col-span-2">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Show Map in Emails</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable or disable the location map in automated emails sent to clients.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={globalSettings.showMapInEmail}
-                    onCheckedChange={(checked) => setGlobalSettings({ ...globalSettings, showMapInEmail: checked })}
-                  />
 
                 <div className="md:col-span-2 pt-4 border-t">
                   <h3 className="text-sm font-medium mb-4">Appointment Action URLs</h3>
@@ -1714,6 +1721,21 @@ export default function SettingsPage() {
                   <p className="text-xs text-muted-foreground">Appointment slot duration for this store</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Show Map in Emails</Label>
+                    <Select 
+                      value={storeFormData.showMapInEmail ? "true" : "false"} 
+                      onValueChange={(v) => setStoreFormData({ ...storeFormData, showMapInEmail: v === "true" })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true">Enabled</SelectItem>
+                        <SelectItem value="false">Disabled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label>Map URL</Label>
                     <div className="relative">

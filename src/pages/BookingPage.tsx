@@ -147,6 +147,16 @@ export default function BookingPage() {
       setStep("success");
     } catch (err: any) {
       setError(err.message || "Failed to book appointment");
+      // If slot is no longer available, refresh slots and go back
+      if (err.message && (
+        err.message.includes("no longer available") || 
+        err.message.includes("not available") ||
+        err.message.includes("being processed")
+      )) {
+        fetchSlots();
+        setStep("datetime");
+        setSelectedTime(null);
+      }
     } finally {
       setIsSubmitting(false);
     }
