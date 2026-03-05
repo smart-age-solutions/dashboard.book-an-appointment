@@ -229,33 +229,63 @@ export default function EmailTemplatesPage() {
   };
 
   const getPreviewContent = (content: string) => {
-    return content
-      .replace(/{{ *name *}}/g, "John Doe")
-      .replace(/{{ *client_name *}}/g, "John Doe")
-      .replace(/{{ *service *}}/g, "Hair Styling")
-      .replace(/{{ *date *}}/g, "January 15, 2026")
-      .replace(/{{ *time *}}/g, "10:00 AM")
-      .replace(/{{ *company_name *}}/g, "Smart Age Solutions")
-      .replace(/{{ *store_address *}}/g, "123 Main Street, City")
-      .replace(/{{ *appointment_id *}}/g, "apt_123456")
-      .replace(/{{ *edit_url *}}/g, "#")
-      .replace(/{{ *cancel_url *}}/g, "#")
-      .replace(/{{ *logo_url *}}/g, "https://placehold.co/200x50")
-      .replace(/{{ *brand_color *}}/g, "#a6cd39")
-      .replace(/{{ *first_name *}}/g, "John")
-      .replace(/{{ *last_name *}}/g, "Doe")
-      .replace(/{{ *title *}}/g, "Mr.")
-      .replace(/{{ *store_url *}}/g, "#")
-      .replace(/{{ *store_phone *}}/g, "555-0123")
-      .replace(/{{ *map_url *}}/g, "https://maps.google.com/q=123+Main+St")
-      .replace(/{{ *map_image_url *}}/g, "https://placehold.co/600x400?text=Map+Preview")
-      .replace(/{{ *lat *}}/g, "40.7128")
-      .replace(/{{ *lng *}}/g, "-74.0060")
-      .replace(/{{ *latitude *}}/g, "40.7128")
-      .replace(/{{ *longitude *}}/g, "-74.0060")
-      .replace(/{{ *show_map *}}/g, "Yes")
-      .replace(/{{ *preferred_communication *}}/g, "Email")
-      .replace(/{{ *cancellation_reason *}}/g, "Schedule conflict");
+    const mockContext: any = {
+      name: "John Doe",
+      client_name: "John Doe",
+      service: "Hair Styling",
+      date: "January 15, 2026",
+      time: "10:00 AM",
+      company_name: "Smart Age Solutions",
+      store_address: "123 Main Street, City",
+      appointment_id: "apt_123456",
+      edit_url: "#",
+      cancel_url: "#",
+      logo_url: "https://placehold.co/200x50",
+      brand_color: "#a6cd39",
+      first_name: "John",
+      last_name: "Doe",
+      title: "Mr.",
+      store_url: "#",
+      store_phone: "555-0123",
+      map_url: "https://maps.google.com/q=123+Main+St",
+      map_image_url: "https://placehold.co/600x400?text=Map+Preview",
+      lat: "40.7128",
+      lng: "-74.0060",
+      latitude: "40.7128",
+      longitude: "-74.0060",
+      show_map: true,
+      preferred_communication: "Email",
+      cancellation_reason: "Schedule conflict",
+      notes: "Please be on time.",
+      show_previous_details: true,
+      old_date: "January 14, 2026",
+      old_time: "09:00 AM",
+      inviter_name: "Jane Smith",
+      invite_url: "#",
+      reset_url: "#"
+    };
+
+    let processed = content;
+
+    // 1. Handle {% if ... %} blocks (Simple implementation for preview)
+    const ifBlockRegex = /{% *if +([^%]+) *%}([\s\S]*?){% *endif *%}/g;
+    processed = processed.replace(ifBlockRegex, (_, condition, body) => {
+      const trimmedCondition = condition.trim();
+      const isNot = trimmedCondition.startsWith("not ");
+      const varName = isNot ? trimmedCondition.substring(4).trim() : trimmedCondition;
+      
+      // Check if variable exists and is truthy in mock context
+      const value = mockContext[varName];
+      const isTrue = isNot ? !value : !!value;
+      
+      return isTrue ? body : "";
+    });
+
+    // 2. Handle {{ variable }} replacements
+    return processed.replace(/{{ *([\w_.]+) *}}/g, (match, varName) => {
+      // Handle simple property access if needed, but for now just flat mapping
+      return mockContext[varName] !== undefined ? String(mockContext[varName]) : match;
+    });
   };
 
   const stripHtml = (html: string) => {
