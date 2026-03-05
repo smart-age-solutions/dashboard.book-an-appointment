@@ -392,7 +392,7 @@ export default function EmailTemplatesPage() {
               <div className="mb-4">
                 <p className="text-sm font-medium text-card-foreground mb-1">Preview:</p>
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {stripHtml(template.body).slice(0, 120)}...
+                  {stripHtml(getPreviewContent(template.body)).slice(0, 120)}...
                 </p>
               </div>
               {template.ccRecipients.length > 0 && (
