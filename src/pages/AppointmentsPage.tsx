@@ -710,6 +710,7 @@ export default function AppointmentsPage() {
                     <SelectContent>
                       <SelectItem value="email">Email</SelectItem>
                       <SelectItem value="phone">Phone</SelectItem>
+                      <SelectItem value="text">Text message</SelectItem>
                       <SelectItem value="whatsapp">WhatsApp</SelectItem>
                     </SelectContent>
                   </Select>

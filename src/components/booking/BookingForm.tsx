@@ -221,6 +221,7 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
             >
               <option value="email">Email</option>
               <option value="phone">Phone</option>
+              <option value="text">Text message</option>
               <option value="whatsapp">WhatsApp</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
