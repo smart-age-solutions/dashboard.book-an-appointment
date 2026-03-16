@@ -4,18 +4,26 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 
+const ROLE_ORDER: Record<string, number> = { staff: 0, manager: 1, admin: 2 };
+
+function hasMinRole(userRole: string | undefined, minRole: string): boolean {
+  const userLevel = ROLE_ORDER[userRole ?? "staff"] ?? 0;
+  const minLevel = ROLE_ORDER[minRole] ?? 0;
+  return userLevel >= minLevel;
+}
+
 export const clientNavigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Calendar", href: "/calendar", icon: Calendar },
-  { name: "Appointments", href: "/appointments", icon: List },
-  { name: "Email Templates", href: "/email-templates", icon: Mail },
-  { name: "Users", href: "/users", icon: Users },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Dashboard",       href: "/",               icon: LayoutDashboard, minRole: "staff"   },
+  { name: "Calendar",        href: "/calendar",        icon: Calendar,        minRole: "staff"   },
+  { name: "Appointments",    href: "/appointments",    icon: List,            minRole: "staff"   },
+  { name: "Email Templates", href: "/email-templates", icon: Mail,            minRole: "manager" },
+  { name: "Users",           href: "/users",           icon: Users,           minRole: "admin"   },
+  { name: "Settings",        href: "/settings",        icon: Settings,        minRole: "admin"   },
 ];
 
 export const backofficeNavigation = [
-  { name: "Client Management", href: "/backoffice", icon: Building2 },
-  { name: "Global Logs", href: "/backoffice/logs", icon: FileText },
+  { name: "Client Management", href: "/backoffice",      icon: Building2 },
+  { name: "Global Logs",       href: "/backoffice/logs", icon: FileText },
 ];
 
 export function Sidebar() {
@@ -23,6 +31,7 @@ export function Sidebar() {
   const { user, isBackofficeUser, logout } = useAuth();
   const { isImpersonating } = useImpersonation();
   const navigate = useNavigate();
+  const userRole = user?.role ?? "staff";
 
   const getInitials = (name?: string) => {
     if (!name) return "??";
@@ -55,7 +64,7 @@ export function Sidebar() {
           {/* Client Navigation - shown for clients or during impersonation */}
           {showClientNav && (
             <>
-              {clientNavigation.map((item) => {
+              {clientNavigation.filter(item => hasMinRole(userRole, item.minRole)).map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <NavLink

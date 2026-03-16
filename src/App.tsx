@@ -29,6 +29,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
 import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
+import { RoleGuard } from "@/components/auth/RoleGuard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,9 +71,9 @@ const App = () => (
                   <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
                   <Route path="/calendar" element={<ClientPageGuard><CalendarPage /></ClientPageGuard>} />
                   <Route path="/appointments" element={<ClientPageGuard><AppointmentsPage /></ClientPageGuard>} />
-                  <Route path="/email-templates" element={<ClientPageGuard><EmailTemplatesPage /></ClientPageGuard>} />
-                  <Route path="/users" element={<ClientPageGuard><UsersPage /></ClientPageGuard>} />
-                  <Route path="/settings" element={<ClientPageGuard><SettingsPage /></ClientPageGuard>} />
+                  <Route path="/email-templates" element={<ClientPageGuard><RoleGuard allowedRoles={["admin", "manager"]}><EmailTemplatesPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/users" element={<ClientPageGuard><RoleGuard allowedRoles={["admin"]}><UsersPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/settings" element={<ClientPageGuard><RoleGuard allowedRoles={["admin"]}><SettingsPage /></RoleGuard></ClientPageGuard>} />
                   
                   {/* Backoffice Routes */}
                   <Route path="/backoffice" element={<BackofficeGuard><BackofficePage /></BackofficeGuard>} />
