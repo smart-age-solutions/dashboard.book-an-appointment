@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { UserCog, Plus, Search, Trash2, Building2, ShieldAlert, ArrowRightCircle, CheckCircle2, XCircle, MoreHorizontal, ShieldFlash } from "lucide-react";
+import { UserCog, Plus, Search, Trash2, Building2, ShieldAlert, ArrowRightCircle, CheckCircle2, XCircle, MoreHorizontal, Shield } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -401,7 +401,7 @@ export default function BackofficeUsersPage() {
                               {user.email.endsWith("@smartagesolutions.com") && (
                                 <>
                                   <DropdownMenuItem onClick={() => { setUserToPromote(user); setIsPromoteOpen(true); }}>
-                                    <ShieldFlash className="h-4 w-4 mr-2 text-orange-500" />
+                                    <Shield className="h-4 w-4 mr-2 text-orange-500" />
                                     Promote to Backoffice
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
@@ -618,7 +618,7 @@ export default function BackofficeUsersPage() {
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">
-                <ShieldFlash className="h-5 w-5" /> Promote to Backoffice
+                <Shield className="h-5 w-5" /> Promote to Backoffice
               </DialogTitle>
               <DialogDescription>
                 You are about to give <strong>{userToPromote?.name}</strong> full Super Admin access to the platform.
