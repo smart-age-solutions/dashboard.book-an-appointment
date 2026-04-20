@@ -19,13 +19,6 @@ export interface Store {
   state: string;
   zip: string;
   isActive: boolean;
-  hours: StoreHours[];
-  slotDuration: string;
-  mapUrl?: string;
-  mapImageUrl?: string;
-  lat?: string;
-  lng?: string;
-  showMapInEmail: boolean;
 }
 
 interface StoreContextType {
@@ -60,25 +53,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     email: s.email || "",
     phone: s.phone || "",
     address: s.address || "",
-    city: "", // Backend address is just a string, we might need to parse or update schema
+    city: "", 
     state: "",
     zip: "",
     isActive: s.is_active,
-    slotDuration: String(s.slot_duration_minutes || "60"),
-    mapUrl: s.map_url || "",
-    mapImageUrl: s.map_image_url || "",
-    lat: s.lat || "",
-    lng: s.lng || "",
-    showMapInEmail: s.show_map_in_email !== undefined ? s.show_map_in_email : true,
-    hours: s.business_hours ? [
-      { day: "Monday", isOpen: s.business_hours.working_days.includes(0), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Tuesday", isOpen: s.business_hours.working_days.includes(1), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Wednesday", isOpen: s.business_hours.working_days.includes(2), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Thursday", isOpen: s.business_hours.working_days.includes(3), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Friday", isOpen: s.business_hours.working_days.includes(4), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Saturday", isOpen: s.business_hours.working_days.includes(5), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-      { day: "Sunday", isOpen: s.business_hours.working_days.includes(6), openTime: s.business_hours.start || "09:00", closeTime: s.business_hours.end || "18:00" },
-    ] : defaultHours,
   });
 
   const { isAuthenticated } = useAuth();
@@ -110,18 +88,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         email: store.email,
         phone: store.phone,
         address: store.address,
-        map_url: store.mapUrl,
-        map_image_url: store.mapImageUrl,
-        lat: store.lat,
-        lng: store.lng,
-        show_map_in_email: store.showMapInEmail,
-        slot_duration: parseInt(store.slotDuration),
-        business_hours_start: store.hours[0].openTime,
-        business_hours_end: store.hours[0].closeTime,
-        working_days: store.hours.filter(h => h.isOpen).map(h => {
-          const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-          return days.indexOf(h.day);
-        })
       };
       await api.post("/auth/stores", payload);
       fetchStores();
@@ -138,21 +104,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (updates.phone) payload.phone = updates.phone;
       if (updates.address) payload.address = updates.address;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
-      if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
-      if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;
-      if (updates.lat !== undefined) payload.lat = updates.lat;
-      if (updates.lng !== undefined) payload.lng = updates.lng;
-      if (updates.showMapInEmail !== undefined) payload.show_map_in_email = updates.showMapInEmail;
-      if (updates.slotDuration) payload.slot_duration = parseInt(updates.slotDuration);
-      
-      if (updates.hours) {
-        payload.business_hours_start = updates.hours[0].openTime;
-        payload.business_hours_end = updates.hours[0].closeTime;
-        payload.working_days = updates.hours.filter(h => h.isOpen).map(h => {
-          const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-          return days.indexOf(h.day);
-        });
-      }
 
       await api.put(`/auth/stores/${id}`, payload);
       fetchStores();

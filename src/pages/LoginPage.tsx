@@ -124,10 +124,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground space-y-1">
-            <p>Demo: Use any email to login as a client</p>
-            <p className="text-xs">Use email containing "@smartage" or "backoffice" for backoffice access</p>
-          </div>
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">

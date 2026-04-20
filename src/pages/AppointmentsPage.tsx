@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2 } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ export default function AppointmentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [customDataText, setCustomDataText] = useState("");
@@ -65,6 +66,58 @@ export default function AppointmentsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const perPage = 50;
+
+  const [newAppointment, setNewAppointment] = useState({
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    phone_area_code: "",
+    title: "",
+    date: "",
+    time: "",
+    purpose: "",
+    notes: "",
+    store_id: "",
+  });
+
+  const resetNewAppointment = () => setNewAppointment({
+    first_name: "", last_name: "", email: "", phone: "",
+    phone_area_code: "", title: "", date: "", time: "",
+    purpose: "", notes: "", store_id: "",
+  });
+
+  const handleCreateAppointment = async () => {
+    if (!newAppointment.first_name || !newAppointment.email || !newAppointment.date || !newAppointment.time) {
+      toast({ title: "Missing Fields", description: "First name, email, date, and time are required.", variant: "destructive" });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const payload: any = {
+        first_name: newAppointment.first_name,
+        last_name: newAppointment.last_name || undefined,
+        email: newAppointment.email,
+        phone: newAppointment.phone || undefined,
+        phone_area_code: newAppointment.phone_area_code || undefined,
+        title: newAppointment.title || undefined,
+        date: newAppointment.date,
+        time: newAppointment.time,
+        purpose: newAppointment.purpose || undefined,
+        notes: newAppointment.notes || undefined,
+      };
+      if (newAppointment.store_id) payload.store_id = newAppointment.store_id;
+      await api.post("/appointments", payload);
+      toast({ title: "Created", description: "Appointment created successfully." });
+      setIsCreateDialogOpen(false);
+      resetNewAppointment();
+      fetchAppointments(currentPage);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchAppointments = async (page = 1) => {
     setIsLoading(true);
@@ -227,10 +280,16 @@ export default function AppointmentsPage() {
       <div className="space-y-6 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Appointments</h1>
-          <p className="mt-1 text-muted-foreground">
-            View and manage all your appointments
-          </p>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Appointments</h1>
+            <p className="mt-1 text-muted-foreground">
+              View and manage all your appointments
+            </p>
+          </div>
+          <Button onClick={() => { resetNewAppointment(); setIsCreateDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Appointment
+          </Button>
         </div>
 
         {/* Filters */}
@@ -830,6 +889,153 @@ export default function AppointmentsPage() {
               </div>
             </div>
           </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Appointment Dialog */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>New Appointment</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-1 space-y-2">
+                    <Label>Title</Label>
+                    <Select
+                      value={newAppointment.title}
+                      onValueChange={(v) => setNewAppointment({ ...newAppointment, title: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Title" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Mr">Mr.</SelectItem>
+                        <SelectItem value="Mrs">Mrs.</SelectItem>
+                        <SelectItem value="Ms">Ms.</SelectItem>
+                        <SelectItem value="Dr">Dr.</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-3 grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>First Name *</Label>
+                      <Input
+                        placeholder="John"
+                        value={newAppointment.first_name}
+                        onChange={(e) => setNewAppointment({ ...newAppointment, first_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Last Name</Label>
+                      <Input
+                        placeholder="Doe"
+                        value={newAppointment.last_name}
+                        onChange={(e) => setNewAppointment({ ...newAppointment, last_name: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Email *</Label>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={newAppointment.email}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, email: e.target.value })}
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Country Code</Label>
+                    <Input
+                      placeholder="+1"
+                      value={newAppointment.phone_area_code}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, phone_area_code: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-2">
+                    <Label>Phone</Label>
+                    <Input
+                      placeholder="555 123-4567"
+                      value={newAppointment.phone}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, phone: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Date *</Label>
+                    <Input
+                      type="date"
+                      value={newAppointment.date}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time *</Label>
+                    <Input
+                      type="time"
+                      value={newAppointment.time}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Service / Purpose</Label>
+                    <Input
+                      placeholder="Consultation"
+                      value={newAppointment.purpose}
+                      onChange={(e) => setNewAppointment({ ...newAppointment, purpose: e.target.value })}
+                    />
+                  </div>
+                  {stores.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Store</Label>
+                      <Select
+                        value={newAppointment.store_id}
+                        onValueChange={(v) => setNewAppointment({ ...newAppointment, store_id: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select store" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stores.map(store => (
+                            <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Textarea
+                    rows={3}
+                    placeholder="Any additional notes..."
+                    value={newAppointment.notes}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => setIsCreateDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1" onClick={handleCreateAppointment} isLoading={isSubmitting}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Appointment
+                  </Button>
+                </div>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
       </div>

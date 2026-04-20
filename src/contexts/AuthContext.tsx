@@ -10,6 +10,17 @@ export interface BackofficeUser {
   role?: string;
 }
 
+/** Represents a client-side user (team member, admin, or owner). */
+export interface ClientUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "owner" | "admin" | "manager" | "member" | "staff";
+  client_id: string;
+  status: string;
+  is_active: boolean;
+}
+
 export interface Client {
   id: string;
   companyName: string;
@@ -20,7 +31,7 @@ export interface Client {
 interface AuthState {
   isAuthenticated: boolean;
   identityType: IdentityType | null;
-  user: BackofficeUser | null; // For backoffice users
+  user: BackofficeUser | ClientUser | null; // backoffice OR client user
   client: Client | null; // For client users
   accessToken: string | null;
 }
@@ -35,7 +46,7 @@ interface AuthContextType extends AuthState {
 export interface LoginResponse {
   access_token: string;
   identity_type: IdentityType;
-  user?: BackofficeUser;
+  user?: BackofficeUser | ClientUser;
   client?: Client;
 }
 

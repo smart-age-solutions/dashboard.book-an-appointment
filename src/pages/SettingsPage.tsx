@@ -80,9 +80,7 @@ const initialSmsConfig: SmsConfig = {
 export default function SettingsPage() {
   const { stores, addStore, updateStore, deleteStore } = useStores();
   const { isBackofficeUser, client } = useAuth();
-  const widgetClientId = client?.id ?? null;
-  const widgetUrl = widgetClientId ? `${window.location.origin}/book/${widgetClientId}` : "";
-  
+
   const [notifications, setNotifications] = useState({
     emailConfirmation: true,
     emailCancellation: true,
@@ -107,13 +105,6 @@ export default function SettingsPage() {
     state: "",
     zip: "",
     isActive: true,
-    hours: [...defaultHours],
-    slotDuration: "60",
-    mapUrl: "",
-    mapImageUrl: "",
-    lat: "",
-    lng: "",
-    showMapInEmail: true,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -122,21 +113,14 @@ export default function SettingsPage() {
   const [globalSettings, setGlobalSettings] = useState({
     website: "",
     description: "",
-    editAppointmentUrl: "",
-    cancelAppointmentUrl: "",
     phone: "",
     email: "",
-    mapUrl: "",
-    mapImageUrl: "",
-    lat: "",
-    lng: "",
-    primaryColor: "#a6cd39",
     logoUrl: "",
     companyName: "",
+    primaryColor: "#a6cd39",
     timezone: "America/New_York",
     bookingWindowDays: "30",
     slotDuration: "60",
-    showMapInEmail: true,
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -202,15 +186,8 @@ export default function SettingsPage() {
         description: profileData.profile.description || "",
         phone: profileData.profile.phone || "",
         email: profileData.profile.email || "",
-        mapUrl: profileData.profile.map_url || "",
-        mapImageUrl: profileData.profile.map_image_url || "",
-        lat: profileData.profile.lat || "",
-        lng: profileData.profile.lng || "",
         bookingWindowDays: String(profileData.profile.booking_window_days || "30"),
         timezone: profileData.profile.timezone || "America/New_York",
-        editAppointmentUrl: profileData.profile.edit_appointment_url || "",
-        cancelAppointmentUrl: profileData.profile.cancel_appointment_url || "",
-        showMapInEmail: profileData.profile.show_map_in_email !== undefined ? profileData.profile.show_map_in_email : true,
       });
 
       // Fetch Email & SMS configs
@@ -282,15 +259,8 @@ export default function SettingsPage() {
           description: globalSettings.description,
           phone: globalSettings.phone,
           email: globalSettings.email,
-          map_url: globalSettings.mapUrl,
-          map_image_url: globalSettings.mapImageUrl,
-          lat: globalSettings.lat,
-          lng: globalSettings.lng,
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
-           timezone: globalSettings.timezone,
-          edit_appointment_url: globalSettings.editAppointmentUrl,
-          cancel_appointment_url: globalSettings.cancelAppointmentUrl,
-          show_map_in_email: globalSettings.showMapInEmail,
+          timezone: globalSettings.timezone,
         }),
         api.put("/auth/settings/business-hours", {
           slot_duration: parseInt(globalSettings.slotDuration)
@@ -324,13 +294,6 @@ export default function SettingsPage() {
       state: "",
       zip: "",
       isActive: true,
-      hours: [...defaultHours],
-      slotDuration: globalSettings.slotDuration,
-      mapUrl: "",
-      mapImageUrl: "",
-      lat: "",
-      lng: "",
-      showMapInEmail: true,
     });
     setIsStoreDialogOpen(true);
   };
@@ -346,13 +309,6 @@ export default function SettingsPage() {
       state: store.state,
       zip: store.zip,
       isActive: store.isActive,
-      hours: [...store.hours],
-      slotDuration: store.slotDuration,
-      mapUrl: store.mapUrl || "",
-      mapImageUrl: store.mapImageUrl || "",
-      lat: store.lat || "",
-      lng: store.lng || "",
-      showMapInEmail: store.showMapInEmail !== undefined ? store.showMapInEmail : true,
     });
     setIsStoreDialogOpen(true);
   };
@@ -380,20 +336,6 @@ export default function SettingsPage() {
     }
     deleteStore(storeId);
     toast({ title: "Deleted", description: "Store removed successfully" });
-  };
-
-  const toggleStoreHour = (index: number) => {
-    const newHours = storeFormData.hours.map((h, i) =>
-      i === index ? { ...h, isOpen: !h.isOpen } : h
-    );
-    setStoreFormData({ ...storeFormData, hours: newHours });
-  };
-
-  const updateStoreHour = (index: number, field: "openTime" | "closeTime", value: string) => {
-    const newHours = storeFormData.hours.map((h, i) =>
-      i === index ? { ...h, [field]: value } : h
-    );
-    setStoreFormData({ ...storeFormData, hours: newHours });
   };
 
   const getDnsRecords = () => {
@@ -835,13 +777,6 @@ export default function SettingsPage() {
                             {store.phone}
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {store.hours.filter(h => h.isOpen).map(h => (
-                            <span key={h.day} className="text-xs px-2 py-1 rounded bg-primary/10 text-primary">
-                              {h.day.slice(0, 3)}: {h.openTime}-{h.closeTime}
-                            </span>
-                          ))}
-                        </div>
                       </div>
                       <div className="flex gap-2 md:self-start">
                         <Button variant="outline" size="sm" onClick={() => openEditStore(store)}>
@@ -1074,110 +1009,6 @@ export default function SettingsPage() {
                     placeholder="Describe your business..."
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Show Map in Emails</Label>
-                  <Select 
-                    value={globalSettings.showMapInEmail ? "true" : "false"} 
-                    onValueChange={(v) => setGlobalSettings({ ...globalSettings, showMapInEmail: v === "true" })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Enabled</SelectItem>
-                      <SelectItem value="false">Disabled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Map URL</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      value={globalSettings.mapUrl}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, mapUrl: e.target.value })}
-                      placeholder="https://maps.google.com/..."
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Map Image URL</Label>
-                  <div className="relative">
-                    <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      value={globalSettings.mapImageUrl}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, mapImageUrl: e.target.value })}
-                      placeholder="https://example.com/map.png"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Latitude</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      value={globalSettings.lat}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, lat: e.target.value })}
-                      placeholder="e.g. 40.7128"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Longitude</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      className="pl-9"
-                      value={globalSettings.lng}
-                      onChange={(e) => setGlobalSettings({ ...globalSettings, lng: e.target.value })}
-                      placeholder="e.g. -74.0060"
-                    />
-                  </div>
-                </div>
-
-
-                <div className="md:col-span-2 pt-4 border-t">
-                  <h3 className="text-sm font-medium mb-4">Appointment Action URLs</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    These URLs will be used in email templates to redirect clients to your website for editing or canceling appointments.
-                  </p>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label>Edit Appointment URL</Label>
-                      <div className="relative">
-                        <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          placeholder="https://yoursite.com/edit-appointment"
-                          value={globalSettings.editAppointmentUrl}
-                          onChange={(e) => setGlobalSettings({ ...globalSettings, editAppointmentUrl: e.target.value })}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Use {"{{appointment_id}}"} as a placeholder in the URL</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Cancel Appointment URL</Label>
-                      <div className="relative">
-                        <XCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          className="pl-9"
-                          placeholder="https://yoursite.com/cancel-appointment"
-                          value={globalSettings.cancelAppointmentUrl}
-                          onChange={(e) => setGlobalSettings({ ...globalSettings, cancelAppointmentUrl: e.target.value })}
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Use {"{{appointment_id}}"} as a placeholder in the URL</p>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <div className="mt-6 flex justify-end">
@@ -1248,54 +1079,8 @@ export default function SettingsPage() {
               </div>
             </div> */}
 
-            {/* Booking Widget URL */}
-            {widgetUrl && (
-              <div className="rounded-xl bg-card p-4 md:p-6 card-shadow border border-primary/20">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Link className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-card-foreground">Booking Widget URL</h2>
-                    <p className="text-sm text-muted-foreground">Share this link so customers can book appointments directly</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1">
-                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      readOnly
-                      value={widgetUrl}
-                      className="pl-9 pr-3 bg-muted/40 font-mono text-sm cursor-default"
-                      onFocus={(e) => e.target.select()}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    title="Copy URL"
-                    onClick={() => copyToClipboard(widgetUrl, "widget-url")}
-                  >
-                    {copiedField === "widget-url" ? (
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    title="Open widget in new tab"
-                    onClick={() => window.open(widgetUrl, "_blank")}
-                  >
-                    <Link className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  💡 Embed this URL in an iframe on your website, or share it directly in emails and social media.
-                </p>
-              </div>
-            )}
+
+
           </TabsContent>
 
           {/* Notifications */}
@@ -1692,148 +1477,7 @@ export default function SettingsPage() {
                         placeholder="NY"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>ZIP Code</Label>
-                      <Input
-                        value={storeFormData.zip}
-                        onChange={(e) => setStoreFormData({ ...storeFormData, zip: e.target.value })}
-                        placeholder="10001"
-                      />
-                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Slot Duration</Label>
-                  <Select
-                    value={storeFormData.slotDuration}
-                    onValueChange={(v) => setStoreFormData({ ...storeFormData, slotDuration: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Appointment slot duration for this store</p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Show Map in Emails</Label>
-                    <Select 
-                      value={storeFormData.showMapInEmail ? "true" : "false"} 
-                      onValueChange={(v) => setStoreFormData({ ...storeFormData, showMapInEmail: v === "true" })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">Enabled</SelectItem>
-                        <SelectItem value="false">Disabled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Map URL</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        value={storeFormData.mapUrl}
-                        onChange={(e) => setStoreFormData({ ...storeFormData, mapUrl: e.target.value })}
-                        placeholder="https://maps.google.com/..."
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Map Image URL</Label>
-                    <div className="relative">
-                      <Upload className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        value={storeFormData.mapImageUrl}
-                        onChange={(e) => setStoreFormData({ ...storeFormData, mapImageUrl: e.target.value })}
-                        placeholder="https://example.com/map_image.png"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Latitude</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        value={storeFormData.lat}
-                        onChange={(e) => setStoreFormData({ ...storeFormData, lat: e.target.value })}
-                        placeholder="e.g. 40.7128"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Longitude</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        value={storeFormData.lng}
-                        onChange={(e) => setStoreFormData({ ...storeFormData, lng: e.target.value })}
-                        placeholder="e.g. -74.0060"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Business Hours */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="font-medium text-card-foreground">Business Hours</h3>
-                </div>
-                <div className="space-y-2">
-                  {storeFormData.hours.map((hour, index) => (
-                    <div
-                      key={hour.day}
-                      className={`flex items-center justify-between p-3 rounded-lg border ${
-                        hour.isOpen ? "bg-accent/30 border-border" : "bg-muted/30 border-border/50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Switch
-                          checked={hour.isOpen}
-                          onCheckedChange={() => toggleStoreHour(index)}
-                        />
-                        <span className={`font-medium w-24 text-sm ${hour.isOpen ? "text-card-foreground" : "text-muted-foreground"}`}>
-                          {hour.day}
-                        </span>
-                      </div>
-                      {hour.isOpen ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            className="w-28 text-sm"
-                            value={hour.openTime}
-                            onChange={(e) => updateStoreHour(index, "openTime", e.target.value)}
-                          />
-                          <span className="text-muted-foreground text-sm">to</span>
-                          <Input
-                            type="time"
-                            className="w-28 text-sm"
-                            value={hour.closeTime}
-                            onChange={(e) => updateStoreHour(index, "closeTime", e.target.value)}
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">Closed</span>
-                      )}
-                    </div>
-                  ))}
                 </div>
               </div>
 

@@ -18,13 +18,17 @@ const UsersPage = lazy(() => import("./pages/UsersPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const BackofficePage = lazy(() => import("./pages/BackofficePage"));
+const BackofficeRegisterClientPage = lazy(() => import("./pages/BackofficeRegisterClientPage"));
+const BackofficeUsersPage = lazy(() => import("./pages/BackofficeUsersPage"));
 const BackofficeLogsPage = lazy(() => import("./pages/BackofficeLogsPage"));
 const BackofficeInvitationPage = lazy(() => import("./pages/BackofficeInvitationPage"));
 const InvitationAcceptPage = lazy(() => import("./pages/InvitationAcceptPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const BookingPage = lazy(() => import("./pages/BookingPage"));
+const SlugBookingPage = lazy(() => import("./pages/SlugBookingPage"));
 const ManageAppointmentPage = lazy(() => import("./pages/ManageAppointmentPage"));
+const BookingPagesPage = lazy(() => import("./pages/BookingPagesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
@@ -64,19 +68,22 @@ const App = () => (
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
 
                   {/* Public Booking Routes (no auth required) */}
-                  <Route path="/book/:clientId" element={<BookingPage />} />
+                  <Route path="/book/:slug" element={<SlugBookingPage />} />
                   <Route path="/manage/:appointmentId" element={<ManageAppointmentPage />} />
                   
                   {/* Protected Client Routes */}
                   <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
                   <Route path="/calendar" element={<ClientPageGuard><CalendarPage /></ClientPageGuard>} />
                   <Route path="/appointments" element={<ClientPageGuard><AppointmentsPage /></ClientPageGuard>} />
-                  <Route path="/email-templates" element={<ClientPageGuard><RoleGuard allowedRoles={["admin", "manager"]}><EmailTemplatesPage /></RoleGuard></ClientPageGuard>} />
-                  <Route path="/users" element={<ClientPageGuard><RoleGuard allowedRoles={["admin"]}><UsersPage /></RoleGuard></ClientPageGuard>} />
-                  <Route path="/settings" element={<ClientPageGuard><RoleGuard allowedRoles={["admin"]}><SettingsPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/booking-pages" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin", "manager"]}><BookingPagesPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/email-templates" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin", "manager"]}><EmailTemplatesPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/users" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin"]}><UsersPage /></RoleGuard></ClientPageGuard>} />
+                  <Route path="/settings" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin"]}><SettingsPage /></RoleGuard></ClientPageGuard>} />
                   
                   {/* Backoffice Routes */}
                   <Route path="/backoffice" element={<BackofficeGuard><BackofficePage /></BackofficeGuard>} />
+                  <Route path="/backoffice/clients/new" element={<BackofficeGuard><BackofficeRegisterClientPage /></BackofficeGuard>} />
+                  <Route path="/backoffice/users" element={<BackofficeGuard><BackofficeUsersPage /></BackofficeGuard>} />
                   <Route path="/backoffice/logs" element={<BackofficeGuard><BackofficeLogsPage /></BackofficeGuard>} />
                   <Route path="/backoffice/invite" element={<BackofficeGuard><BackofficeInvitationPage /></BackofficeGuard>} />
                   
