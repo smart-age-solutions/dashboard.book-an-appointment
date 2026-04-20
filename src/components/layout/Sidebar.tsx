@@ -1,14 +1,27 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut } from "lucide-react";
+import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut, PlusCircle, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
 
-const ROLE_ORDER: Record<string, number> = { staff: 0, manager: 1, admin: 2 };
+/**
+ * Role hierarchy for sidebar nav visibility.
+ * Higher number = more privileges.
+ * owner > admin > manager > staff (and member)
+ */
+const ROLE_ORDER: Record<string, number> = {
+  staff:   0,
+  member:  0, // alias for staff
+  manager: 1,
+  admin:   2,
+  owner:   3, // highest privilege — can see everything
+};
 
 function hasMinRole(userRole: string | undefined, minRole: string): boolean {
+  // owner always passes
+  if (userRole === "owner") return true;
   const userLevel = ROLE_ORDER[userRole ?? "staff"] ?? 0;
-  const minLevel = ROLE_ORDER[minRole] ?? 0;
+  const minLevel  = ROLE_ORDER[minRole]            ?? 0;
   return userLevel >= minLevel;
 }
 
@@ -16,6 +29,7 @@ export const clientNavigation = [
   { name: "Dashboard",       href: "/",               icon: LayoutDashboard, minRole: "staff"   },
   { name: "Calendar",        href: "/calendar",        icon: Calendar,        minRole: "staff"   },
   { name: "Appointments",    href: "/appointments",    icon: List,            minRole: "staff"   },
+  { name: "Booking Pages",   href: "/booking-pages",   icon: FileText,        minRole: "manager" },
   { name: "Email Templates", href: "/email-templates", icon: Mail,            minRole: "manager" },
   { name: "Users",           href: "/users",           icon: Users,           minRole: "admin"   },
   { name: "Settings",        href: "/settings",        icon: Settings,        minRole: "admin"   },
@@ -23,6 +37,8 @@ export const clientNavigation = [
 
 export const backofficeNavigation = [
   { name: "Client Management", href: "/backoffice",      icon: Building2 },
+  { name: "Register Client",   href: "/backoffice/clients/new", icon: PlusCircle },
+  { name: "Global Users",      href: "/backoffice/users", icon: UserCog },
   { name: "Global Logs",       href: "/backoffice/logs", icon: FileText },
 ];
 
@@ -31,7 +47,17 @@ export function Sidebar() {
   const { user, isBackofficeUser, logout } = useAuth();
   const { isImpersonating } = useImpersonation();
   const navigate = useNavigate();
-  const userRole = user?.role ?? "staff";
+  // Cast to any because AuthContext union type doesn't surface .role directly on BackofficeUser
+  const userRole: string = (user as any)?.role ?? "staff";
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "owner":   return "bg-purple-500/20 text-purple-400";
+      case "admin":   return "bg-blue-500/20 text-blue-400";
+      case "manager": return "bg-teal-500/20 text-teal-400";
+      default:        return "bg-sidebar-accent text-sidebar-muted";
+    }
+  };
 
   const getInitials = (name?: string) => {
     if (!name) return "??";
@@ -127,6 +153,11 @@ export function Sidebar() {
               <p className="text-xs text-sidebar-muted truncate">
                 {user?.email || ""}
               </p>
+              {userRole && (
+                <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold capitalize ${getRoleBadgeColor(userRole)}`}>
+                  {userRole}
+                </span>
+              )}
             </div>
             <button
               onClick={() => {

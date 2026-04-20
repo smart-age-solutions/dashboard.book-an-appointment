@@ -30,9 +30,8 @@ interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  body: string;
+  body_html: string;
   type: string;
-  isActive: boolean;
   ccRecipients: string[];
 }
 
@@ -65,9 +64,8 @@ export default function EmailTemplatesPage() {
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
-    body: "",
+    body_html: "",
     type: "confirmation",
-    isActive: true,
     ccRecipients: [] as string[],
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -78,68 +76,15 @@ export default function EmailTemplatesPage() {
     setIsLoading(true);
     try {
       const [templateData, userData] = await Promise.all([
-        api.get("/auth/settings/email-templates"),
-        api.get("/teams/all-members"), // Use the new generic route
+        api.get("/email-templates"),
+        api.get("/teams/all-members"),
       ]);
 
       const backendTemplates = templateData.templates;
-      const mapped: EmailTemplate[] = [
-        {
-          id: "confirmation",
-          name: "Booking Confirmation",
-          subject:
-            backendTemplates.confirmation_subject ||
-            "Your appointment has been confirmed",
-          body: backendTemplates.confirmation || "",
-          type: "confirmation",
-          isActive: !!backendTemplates.confirmation,
-          ccRecipients: backendTemplates.confirmation_cc || [],
-        },
-        {
-          id: "update",
-          name: "Appointment Update",
-          subject:
-            backendTemplates.update_subject ||
-            "Your appointment has been updated",
-          body: backendTemplates.update || "",
-          type: "update",
-          isActive: !!backendTemplates.update,
-          ccRecipients: backendTemplates.update_cc || [],
-        },
-        {
-          id: "cancellation",
-          name: "Cancellation Notice",
-          subject:
-            backendTemplates.cancellation_subject || "Appointment Cancelled",
-          body: backendTemplates.cancellation || "",
-          type: "cancellation",
-          isActive: !!backendTemplates.cancellation,
-          ccRecipients: backendTemplates.cancellation_cc || [],
-        },
-        {
-          id: "thank_you",
-          name: "Thank You Message",
-          subject:
-            backendTemplates.thank_you_subject || "Thank you for visiting",
-          body: backendTemplates.thank_you || "",
-          type: "thank_you",
-          isActive: !!backendTemplates.thank_you,
-          ccRecipients: backendTemplates.thank_you_cc || [],
-        },
-        {
-          id: "reminder",
-          name: "Appointment Reminder",
-          subject:
-            backendTemplates.reminder_subject ||
-            "Reminder: Your upcoming appointment",
-          body: backendTemplates.reminder || "",
-          type: "reminder",
-          isActive: !!backendTemplates.reminder,
-          ccRecipients: backendTemplates.reminder_cc || [],
-        },
-      ].filter((t) => t.body); // Only show ones that exist or show all? Let's show all.
-
-      setTemplates(mapped);
+      setTemplates(backendTemplates.map((t: any) => ({
+        ...t,
+        ccRecipients: t.ccRecipients || []
+      })));
       setAvailableUsers(userData.users);
     } catch (error: any) {
       toast({
@@ -157,7 +102,7 @@ export default function EmailTemplatesPage() {
   }, [fetchTemplates]);
 
   const handleSave = async () => {
-    if (!formData.name || !formData.subject || !formData.body) {
+    if (!formData.name || !formData.subject || !formData.body_html) {
       toast({
         title: "Error",
         description: "Please fill all required fields",
@@ -168,35 +113,22 @@ export default function EmailTemplatesPage() {
 
     setIsSubmitting(true);
     try {
-      const payload: any = {};
-      if (formData.type === "confirmation") {
-        payload.confirmation_template = formData.body;
-        payload.confirmation_subject = formData.subject;
-        payload.confirmation_cc = formData.ccRecipients;
-      }
-      if (formData.type === "update") {
-        payload.update_template = formData.body;
-        payload.update_subject = formData.subject;
-        payload.update_cc = formData.ccRecipients;
-      }
-      if (formData.type === "cancellation") {
-        payload.cancellation_template = formData.body;
-        payload.cancellation_subject = formData.subject;
-        payload.cancellation_cc = formData.ccRecipients;
-      }
-      if (formData.type === "thank_you") {
-        payload.thank_you_template = formData.body;
-        payload.thank_you_subject = formData.subject;
-        payload.thank_you_cc = formData.ccRecipients;
-      }
-      if (formData.type === "reminder") {
-        payload.reminder_template = formData.body;
-        payload.reminder_subject = formData.subject;
-        payload.reminder_cc = formData.ccRecipients;
+      const payload = {
+        name: formData.name,
+        subject: formData.subject,
+        body_html: formData.body_html,
+        type: formData.type,
+        ccRecipients: formData.ccRecipients,
+      };
+
+      if (editingTemplate) {
+        await api.put(`/email-templates/${editingTemplate.id}`, payload);
+        toast({ title: "Success", description: "Template updated successfully" });
+      } else {
+        await api.post("/email-templates", payload);
+        toast({ title: "Success", description: "Template created successfully" });
       }
 
-      await api.put("/auth/settings/email-templates", payload);
-      toast({ title: "Success", description: "Template saved successfully" });
       fetchTemplates();
       setIsDialogOpen(false);
       setEditingTemplate(null);
@@ -216,9 +148,8 @@ export default function EmailTemplatesPage() {
     setFormData({
       name: template.name,
       subject: template.subject,
-      body: template.body,
+      body_html: template.body_html,
       type: template.type,
-      isActive: template.isActive,
       ccRecipients: template.ccRecipients,
     });
     setIsDialogOpen(true);
@@ -239,9 +170,16 @@ export default function EmailTemplatesPage() {
       .filter(Boolean);
   };
 
-  const handleDelete = (id: string) => {
-    setTemplates(templates.filter((t) => t.id !== id));
-    toast({ title: "Deleted", description: "Template deleted successfully" });
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this template?")) return;
+    
+    try {
+      await api.delete(`/email-templates/${id}`);
+      toast({ title: "Deleted", description: "Template deleted successfully" });
+      fetchTemplates();
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
   };
 
   const handlePreview = (template: EmailTemplate) => {
@@ -254,14 +192,13 @@ export default function EmailTemplatesPage() {
     setFormData({
       name: "",
       subject: "",
-      body: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      body_html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
   <h1 style="color: #a6cd39;">Your Title Here</h1>
   <p>Dear <strong>{{client_name}}</strong>,</p>
   <p>Your content here...</p>
   <p>Best regards,<br><strong>{{store_name}}</strong></p>
 </div>`,
       type: "confirmation",
-      isActive: true,
       ccRecipients: [],
     });
     setIsDialogOpen(true);
@@ -359,7 +296,7 @@ export default function EmailTemplatesPage() {
               Customize automated emails with HTML support
             </p>
           </div>
-          <Button className="hidden" onClick={openNewTemplate}>
+          <Button onClick={openNewTemplate}>
             <Plus className="h-4 w-4 mr-2" />
             New Template
           </Button>
@@ -440,9 +377,6 @@ export default function EmailTemplatesPage() {
                     <Code className="h-3 w-3 mr-1" />
                     HTML
                   </Badge>
-                  <Badge variant={template.isActive ? "default" : "secondary"}>
-                    {template.isActive ? "Active" : "Inactive"}
-                  </Badge>
                 </div>
               </div>
               <div className="mb-4">
@@ -458,7 +392,7 @@ export default function EmailTemplatesPage() {
                   Preview:
                 </p>
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {stripHtml(getPreviewContent(template.body)).slice(0, 120)}...
+                  {stripHtml(getPreviewContent(template.body_html)).slice(0, 120)}...
                 </p>
               </div>
               {template.ccRecipients.length > 0 && (
@@ -580,9 +514,9 @@ export default function EmailTemplatesPage() {
                   <Textarea
                     rows={15}
                     className="font-mono text-sm"
-                    value={formData.body}
+                    value={formData.body_html}
                     onChange={(e) =>
-                      setFormData({ ...formData, body: e.target.value })
+                      setFormData({ ...formData, body_html: e.target.value })
                     }
                     placeholder="<div>Enter your HTML email content here...</div>"
                   />
@@ -590,7 +524,7 @@ export default function EmailTemplatesPage() {
                   <div
                     className="border border-border rounded-lg p-4 min-h-[300px] bg-card overflow-auto"
                     dangerouslySetInnerHTML={{
-                      __html: getPreviewContent(formData.body),
+                      __html: getPreviewContent(formData.body_html),
                     }}
                   />
                 )}
@@ -674,7 +608,7 @@ export default function EmailTemplatesPage() {
                   <div
                     className="p-6 bg-card"
                     dangerouslySetInnerHTML={{
-                      __html: getPreviewContent(previewTemplate.body),
+                      __html: getPreviewContent(previewTemplate.body_html),
                     }}
                   />
                 </div>

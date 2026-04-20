@@ -106,6 +106,9 @@ export default function CalendarPage() {
   const [blockReason, setBlockReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customDataText, setCustomDataText] = useState("");
+  
+  const [bookingPages, setBookingPages] = useState<any[]>([]);
+  const [selectedBookingPageId, setSelectedBookingPageId] = useState<string>("all");
   const [formData, setFormData] = useState({
     title: "", // Personal title
     first_name: "",
@@ -131,10 +134,18 @@ export default function CalendarPage() {
       const start = format(startOfMonth(currentMonth), "yyyy-MM-dd");
       const end = format(endOfMonth(currentMonth), "yyyy-MM-dd");
       
-      const [aptData, overrideData] = await Promise.all([
-        api.get("/appointments", { start_date: start, end_date: end, per_page: 100 }),
-        api.get("/slots/overrides", { start_date: start, end_date: end, per_page: 100 })
+      const params: any = { start_date: start, end_date: end, per_page: 100 };
+      if (selectedBookingPageId && selectedBookingPageId !== "all") {
+        params.booking_page_id = selectedBookingPageId;
+      }
+      
+      const [aptData, overrideData, pagesRes] = await Promise.all([
+        api.get("/appointments", params),
+        api.get("/slots/overrides", { start_date: start, end_date: end, per_page: 100 }),
+        api.get("/booking-pages")
       ]);
+
+      setBookingPages(pagesRes.booking_pages || []);
 
       const transformedApts: Appointment[] = aptData.appointments.map((apt: any) => ({
         id: apt.id,
@@ -176,11 +187,11 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentMonth]);
+  }, [currentMonth, selectedBookingPageId]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [fetchData, selectedBookingPageId]);
 
   const days = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -399,25 +410,62 @@ export default function CalendarPage() {
           {/* Calendar */}
           <div className="lg:col-span-2 rounded-2xl bg-card p-4 md:p-6 card-shadow">
             {/* Calendar Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6">
-              <h2 className="text-lg md:text-xl font-semibold text-card-foreground">
-                {format(currentMonth, "MMMM yyyy")}
-              </h2>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            <div className="flex flex-col gap-4 mb-4 md:mb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg md:text-xl font-semibold text-card-foreground">
+                  {format(currentMonth, "MMMM yyyy")}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <Label className="text-xs text-muted-foreground mb-1 block">Filter by Booking Page</Label>
+                  <Select value={selectedBookingPageId} onValueChange={setSelectedBookingPageId}>
+                    <SelectTrigger className="w-full bg-muted/50">
+                      <SelectValue placeholder="All Booking Pages" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Booking Pages</SelectItem>
+                      {bookingPages.map(page => (
+                        <SelectItem key={page.id} value={page.id}>
+                          {page.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {stores.length > 0 && (
+                  <div className="w-full sm:w-48">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Store Location</Label>
+                    <Select defaultValue="all">
+                      <SelectTrigger className="w-full bg-muted/50">
+                        <SelectValue placeholder="All Stores" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Stores</SelectItem>
+                        {stores.map(store => (
+                          <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </div>
 
