@@ -16,12 +16,6 @@ import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
-interface ServiceData {
-  id: string;
-  name: string;
-  duration_minutes: number;
-  is_active: boolean;
-}
 
 interface UserData {
   id: string;
@@ -289,7 +283,6 @@ export default function BookingPagesPage() {
       widget_enabled: false,
       allowed_domains: "",
     });
-    setSelectedServiceIds([]);
     setSelectedUserIds([]);
     setCcUserIds([]);
     setSelectedStoreIds([]);

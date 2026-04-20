@@ -303,7 +303,7 @@ export default function EmailTemplatesPage() {
         </div>
 
         {/* Variables Help */}
-        {(user?.email?.endsWith("@smartagesolutions.com") || user?.email?.endsWith("@smartasolutions.com")) && (
+        {(["admin", "owner"].includes(user?.role || "") || user?.email?.endsWith("@smartagesolutions.com") || user?.email?.endsWith("@smartasolutions.com")) && (
           <div className="rounded-lg bg-accent/50 border border-primary/20 p-4">
             <p className="text-sm font-medium text-card-foreground mb-2">
               Available Variables (use in HTML):

@@ -26,6 +26,7 @@ interface UserData {
 const initialUsers: UserData[] = [];
 
 const roleStyles: Record<string, string> = {
+  owner: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   admin: "bg-primary/10 text-primary border-primary/20",
   manager: "bg-warning/10 text-warning border-warning/20",
   staff: "bg-muted text-muted-foreground border-border",
@@ -85,9 +86,13 @@ export default function UsersPage() {
 
     try {
       if (editingUser) {
-        // Only role can be updated in the existing API for now
-        await api.put(`/teams/members/${editingUser.id}/role`, { role: formData.role });
-        toast({ title: "Updated", description: "User role updated successfully" });
+        // Update user details (name and role)
+        await api.put(`/teams/members/${editingUser.id}`, { 
+          name: formData.name, 
+          role: formData.role,
+          status: formData.status
+        });
+        toast({ title: "Updated", description: "User details updated successfully" });
       } else {
         // Need a team to invite. If no team, create one first.
         let teamId = teams[0]?.id;
@@ -218,7 +223,7 @@ export default function UsersPage() {
                   </div>
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className={cn("capitalize", roleStyles[user.role])}>
-                      {user.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                      {["admin", "owner"].includes(user.role) && <Shield className="h-3 w-3 mr-1" />}
                       {user.role}
                     </Badge>
                     <div className="flex items-center gap-2">
@@ -247,7 +252,7 @@ export default function UsersPage() {
                       </div>
                     </div>
                     <Badge variant="outline" className={cn("capitalize text-xs px-2 py-0.5", roleStyles[user.role])}>
-                      {user.role === "admin" && <Shield className="h-3 w-3 mr-1" />}
+                      {["admin", "owner"].includes(user.role) && <Shield className="h-3 w-3 mr-1" />}
                       {user.role}
                     </Badge>
                   </div>
@@ -318,6 +323,7 @@ export default function UsersPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="owner">Owner</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="manager">Manager</SelectItem>
                     <SelectItem value="staff">Staff</SelectItem>
