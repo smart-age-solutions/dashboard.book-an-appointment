@@ -51,6 +51,7 @@ interface BookingPageData {
   buffer_time_minutes: number;
   description: string;
   slot_duration_minutes: number;
+  booking_window_days: number;
   hours?: BookingPageDayHours[];
   users?: any[];
 
@@ -87,6 +88,7 @@ export default function BookingPagesPage() {
     description: "",
     is_active: true,
     slot_duration_minutes: 60,
+    booking_window_days: 30,
     show_map_in_email: true,
     map_url: "",
     map_image_url: "",
@@ -226,6 +228,7 @@ export default function BookingPagesPage() {
       description: page.description || "",
       is_active: page.is_active,
       slot_duration_minutes: page.slot_duration_minutes || 60,
+      booking_window_days: page.booking_window_days || 30,
       show_map_in_email: page.show_map_in_email !== undefined ? page.show_map_in_email : true,
       map_url: page.map_url || "",
       map_image_url: page.map_image_url || "",
@@ -281,6 +284,7 @@ export default function BookingPagesPage() {
       description: "",
       is_active: true,
       slot_duration_minutes: 60,
+      booking_window_days: 30,
       show_map_in_email: true,
       map_url: "",
       map_image_url: "",
@@ -540,6 +544,27 @@ export default function BookingPagesPage() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Booking Window (days)</Label>
+                        <Select value={formData.booking_window_days.toString()} onValueChange={v => setFormData({...formData, booking_window_days: parseInt(v)})}>
+                          <SelectTrigger>
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <SelectValue placeholder="Select booking window" />
+                            </div>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="7">1 week</SelectItem>
+                            <SelectItem value="14">2 weeks</SelectItem>
+                            <SelectItem value="30">1 month</SelectItem>
+                            <SelectItem value="60">2 months</SelectItem>
+                            <SelectItem value="180">6 months</SelectItem>
+                            <SelectItem value="270">9 months</SelectItem>
+                            <SelectItem value="365">1 year</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground italic">How far in advance clients can book appointments</p>
                       </div>
                     </div>
                   </div>

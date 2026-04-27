@@ -259,11 +259,10 @@ export default function SettingsPage() {
           description: globalSettings.description,
           phone: globalSettings.phone,
           email: globalSettings.email,
-          booking_window_days: parseInt(globalSettings.bookingWindowDays),
           timezone: globalSettings.timezone,
         }),
         api.put("/auth/settings/business-hours", {
-          slot_duration: parseInt(globalSettings.slotDuration)
+          // Default Slot Duration removed from here
         })
       ]);
       toast({ title: "Saved", description: "Global settings updated successfully" });
@@ -893,48 +892,7 @@ export default function SettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>Booking Window</Label>
-                  <Select
-                    value={globalSettings.bookingWindowDays}
-                    onValueChange={(v) => setGlobalSettings({ ...globalSettings, bookingWindowDays: v })}
-                  >
-                    <SelectTrigger className="w-full">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <SelectValue placeholder="Select booking window" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7">1 week</SelectItem>
-                      <SelectItem value="14">2 weeks</SelectItem>
-                      <SelectItem value="30">1 month</SelectItem>
-                      <SelectItem value="60">2 months</SelectItem>
-                      <SelectItem value="180">6 months</SelectItem>
-                      <SelectItem value="270">9 months</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">How far in advance clients can book appointments</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Default Slot Duration</Label>
-                  <Select
-                    value={globalSettings.slotDuration}
-                    onValueChange={(v) => setGlobalSettings({ ...globalSettings, slotDuration: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">Default appointment duration for new stores</p>
-                </div>
+                {/* Removed Booking Window and Default Slot Duration from here */}
               </div>
             </div>
 
