@@ -25,6 +25,7 @@ export interface BookingPageData {
   company_name: string;
   brand_color: string;
   logo_url?: string | null;
+  extra_cc_emails?: string;
 }
 
 export interface BookingPageResponse {

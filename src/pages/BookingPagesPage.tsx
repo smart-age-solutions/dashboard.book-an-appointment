@@ -65,6 +65,7 @@ interface BookingPageData {
   cancel_appointment_url?: string;
   widget_enabled?: boolean;
   allowed_domains?: string;
+  extra_cc_emails?: string;
 }
 
 export default function BookingPagesPage() {
@@ -101,6 +102,7 @@ export default function BookingPagesPage() {
     })),
     widget_enabled: false,
     allowed_domains: "",
+    extra_cc_emails: "",
   });
   
 
@@ -239,6 +241,7 @@ export default function BookingPagesPage() {
       })),
       widget_enabled: page.widget_enabled || false,
       allowed_domains: page.allowed_domains || "",
+      extra_cc_emails: page.extra_cc_emails || "",
     });
     
 
@@ -599,17 +602,42 @@ export default function BookingPagesPage() {
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-4">
                     <Label className="flex items-center gap-2 mb-3 font-semibold text-blue-600">
                       <Mail className="h-4 w-4" /> Notification CC
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      {allUsers.map(user => (
-                        <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
-                          <Checkbox checked={ccUserIds.includes(user.id)} onCheckedChange={() => toggleArrayItem(user.id, setCcUserIds)} />
-                          <span className="text-sm">{user.name}</span>
-                        </label>
-                      ))}
+                      {allUsers.map(user => {
+                        const isBookable = selectedUserIds.includes(user.id);
+                        return (
+                          <div key={user.id} className="flex items-center justify-between hover:bg-muted p-1 rounded transition-colors">
+                            <label className={`flex items-center gap-2 ${isBookable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                              <Checkbox 
+                                checked={isBookable || ccUserIds.includes(user.id)} 
+                                disabled={isBookable}
+                                onCheckedChange={() => {
+                                  if (!isBookable) toggleArrayItem(user.id, setCcUserIds);
+                                }} 
+                              />
+                              <span className="text-sm">{user.name}</span>
+                            </label>
+                            {isBookable && (
+                              <span className="text-[10px] text-muted-foreground italic">Bookable staff are auto-notified</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="pt-2 space-y-2">
+                      <Label className="text-xs font-medium text-muted-foreground">External Emails (CC)</Label>
+                      <Textarea 
+                        placeholder="email1@example.com, email2@example.com"
+                        className="h-20 text-sm"
+                        value={formData.extra_cc_emails}
+                        onChange={e => setFormData({...formData, extra_cc_emails: e.target.value})}
+                      />
+                      <p className="text-[10px] text-muted-foreground italic">Separate multiple emails with commas.</p>
                     </div>
                   </div>
                 </div>
@@ -681,13 +709,13 @@ export default function BookingPagesPage() {
                       <div className="space-y-2">
                         <Label>Embed Code</Label>
                         <div className="p-4 bg-muted/30 border rounded-md relative text-sm font-mono break-all text-muted-foreground pr-12">
-                          {`<script src="${window.location.origin}/widget.js" data-booking-page-slug="${formData.slug}"></script>`}
+                          {`<script src="${window.location.origin}/widget.js" data-booking-page-slug="${formData.slug}" data-booking-page-id="${editingPage?.id || '[save-to-generate-id]'}"></script>`}
                           <Button 
                             variant="ghost" 
                             size="icon" 
                             className="absolute right-2 top-2 h-8 w-8"
                             onClick={() => {
-                              navigator.clipboard.writeText(`<script src="${window.location.origin}/widget.js" data-booking-page-slug="${formData.slug}"></script>`);
+                              navigator.clipboard.writeText(`<script src="${window.location.origin}/widget.js" data-booking-page-slug="${formData.slug}" data-booking-page-id="${editingPage?.id || '[save-to-generate-id]'}"></script>`);
                               toast({ title: "Copied!", description: "Embed code copied to clipboard." });
                             }}
                           >
