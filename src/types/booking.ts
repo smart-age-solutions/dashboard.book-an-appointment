@@ -65,6 +65,8 @@ export interface BookingPayload {
   phone?: string;
   notes?: string;
   accepted_terms?: boolean;
+  custom_data?: Record<string, any>;
+  country_of_residence?: string;
 }
 
 export interface BookingResult {
@@ -78,7 +80,9 @@ export interface BookingResult {
   customer_email: string;
   start_time: string;
   end_time: string;
+  duration_minutes?: number | null;
   status: string;
+  country_of_residence?: string;
   created_at: string;
 }
 
@@ -96,6 +100,8 @@ export interface CustomerData {
   phone?: string;
   notes?: string;
   accepted_terms?: boolean;
+  custom_data?: Record<string, any>;
+  country_of_residence?: string;
 }
 
 // ─── Step Union ─────────────────────────────────────────────────────────────

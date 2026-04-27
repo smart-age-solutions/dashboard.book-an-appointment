@@ -91,6 +91,8 @@ export function useSlugBooking(slug: string) {
         phone: data.phone,
         notes: data.notes,
         accepted_terms: data.accepted_terms,
+        custom_data: data.custom_data,
+        country_of_residence: data.country_of_residence,
         start_time,
       } as any);
     },

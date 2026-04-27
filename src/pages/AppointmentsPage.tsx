@@ -78,13 +78,15 @@ export default function AppointmentsPage() {
     time: "",
     purpose: "",
     notes: "",
+    country_of_residence: "",
     store_id: "",
+    custom_data: "",
   });
 
   const resetNewAppointment = () => setNewAppointment({
     first_name: "", last_name: "", email: "", phone: "",
     phone_area_code: "", title: "", date: "", time: "",
-    purpose: "", notes: "", store_id: "",
+    purpose: "", notes: "", country_of_residence: "", store_id: "", custom_data: "",
   });
 
   const handleCreateAppointment = async () => {
@@ -105,8 +107,20 @@ export default function AppointmentsPage() {
         time: newAppointment.time,
         purpose: newAppointment.purpose || undefined,
         notes: newAppointment.notes || undefined,
+        country_of_residence: newAppointment.country_of_residence || undefined,
       };
       if (newAppointment.store_id) payload.store_id = newAppointment.store_id;
+      
+      if (newAppointment.custom_data.trim()) {
+        try {
+          payload.custom_data = JSON.parse(newAppointment.custom_data);
+        } catch (e) {
+          toast({ title: "Invalid JSON", description: "Custom Data must be valid JSON", variant: "destructive" });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       await api.post("/appointments", payload);
       toast({ title: "Created", description: "Appointment created successfully." });
       setIsCreateDialogOpen(false);
@@ -1022,6 +1036,26 @@ export default function AppointmentsPage() {
                     placeholder="Any additional notes..."
                     value={newAppointment.notes}
                     onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Country of Residence</Label>
+                  <Input
+                    placeholder="e.g. USA"
+                    value={newAppointment.country_of_residence}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, country_of_residence: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Custom Data (JSON)</Label>
+                  <Textarea
+                    rows={4}
+                    className="font-mono text-xs"
+                    placeholder='{"key": "value"}'
+                    value={newAppointment.custom_data}
+                    onChange={(e) => setNewAppointment({ ...newAppointment, custom_data: e.target.value })}
                   />
                 </div>
 

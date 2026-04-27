@@ -9,6 +9,7 @@ const schema = z.object({
   customer_name: z.string().min(2, "Name must be at least 2 characters"),
   customer_email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
+  country_of_residence: z.string().optional(),
   notes: z.string().optional(),
   accepted_terms: z.boolean().optional(),
 });
@@ -150,6 +151,20 @@ export function CustomerInfoForm({
             type="tel"
             placeholder="+1 555 000 0000"
             autoComplete="tel"
+            className="w-full px-3.5 py-2.5 rounded-xl border-2 border-gray-200 focus:border-gray-400 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
+          />
+        </div>
+
+        {/* Country of Residence (optional) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Country of Residence <span className="text-gray-400 font-normal text-xs">(optional)</span>
+          </label>
+          <input
+            {...register("country_of_residence")}
+            type="text"
+            placeholder="e.g. USA"
+            autoComplete="country-name"
             className="w-full px-3.5 py-2.5 rounded-xl border-2 border-gray-200 focus:border-gray-400 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
           />
         </div>
