@@ -171,10 +171,21 @@ export default function BookingPagesPage() {
       
       if (pageId) {
         // Update users (Bookable + CC)
-        const combinedUsers = [
-          ...selectedUserIds.map(user_id => ({ user_id, is_default: false, priority: 0, is_cc: false })),
-          ...ccUserIds.map(user_id => ({ user_id, is_default: false, priority: 0, is_cc: true }))
-        ];
+        // Ensure no duplicate user IDs are sent. Prioritize bookable if a user is in both.
+        const uniqueUserIds = new Set<string>();
+        const combinedUsers: any[] = [];
+        
+        selectedUserIds.forEach(user_id => {
+          uniqueUserIds.add(user_id);
+          combinedUsers.push({ user_id, is_default: false, priority: 0, is_cc: false });
+        });
+        
+        ccUserIds.forEach(user_id => {
+          if (!uniqueUserIds.has(user_id)) {
+            uniqueUserIds.add(user_id);
+            combinedUsers.push({ user_id, is_default: false, priority: 0, is_cc: true });
+          }
+        });
 
         await api.put(`/booking-pages/${pageId}/users`, {
           users: combinedUsers
