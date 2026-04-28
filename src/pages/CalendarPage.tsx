@@ -1042,22 +1042,33 @@ export default function CalendarPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Preferred Communication</Label>
-                  <Select
-                    value={formData.preferred_communication}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, preferred_communication: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select preference" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">Email</SelectItem>
-                      <SelectItem value="phone">Phone</SelectItem>
-                      <SelectItem value="text">Text message</SelectItem>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
+                    {([
+                      { value: "email", label: "Email" },
+                      { value: "phone", label: "Phone" },
+                      { value: "text", label: "Text message" },
+                      { value: "whatsapp", label: "WhatsApp" },
+                    ] as const).map(({ value, label }) => {
+                      const parts = (formData.preferred_communication || "").split(", ").filter(Boolean);
+                      return (
+                        <div key={value} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`cal-comm-${value}`}
+                            checked={parts.includes(value)}
+                            onChange={() => {
+                              const next = [...parts];
+                              const idx = next.indexOf(value);
+                              if (idx >= 0) next.splice(idx, 1); else next.push(value);
+                              setFormData({ ...formData, preferred_communication: next.join(", ") });
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor={`cal-comm-${value}`} className="text-sm font-normal">{label}</Label>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               

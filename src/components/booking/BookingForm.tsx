@@ -212,19 +212,30 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Preferred Communication</label>
-          <div className="relative">
-            <select
-              value={form.preferred_communication}
-              onChange={set("preferred_communication")}
-              className={`${inputClass} appearance-none pr-9`}
-              style={focusStyle}
-            >
-              <option value="email">Email</option>
-              <option value="phone">Phone</option>
-              <option value="text">Text message</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
+            {([
+              { value: "email", label: "Email" },
+              { value: "phone", label: "Phone" },
+              { value: "text", label: "Text" },
+              { value: "whatsapp", label: "WhatsApp" },
+            ] as const).map(({ value, label }) => (
+              <label key={value} className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.preferred_communication.split(", ").includes(value)}
+                  onChange={() =>
+                    setForm(f => {
+                      const parts = f.preferred_communication ? f.preferred_communication.split(", ").filter(Boolean) : [];
+                      const idx = parts.indexOf(value);
+                      if (idx >= 0) parts.splice(idx, 1); else parts.push(value);
+                      return { ...f, preferred_communication: parts.join(", ") };
+                    })
+                  }
+                  className="rounded border-gray-300"
+                />
+                {label}
+              </label>
+            ))}
           </div>
         </div>
         <div>
