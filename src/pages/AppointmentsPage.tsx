@@ -162,7 +162,7 @@ export default function AppointmentsPage() {
         date: parseLocalDate(apt.date),
         time: apt.time, // HH:MM format from backend
         status: apt.status,
-        duration: "60", // Backend doesn't store duration yet, using "60" to match Select value
+        duration: apt.duration_minutes != null ? String(apt.duration_minutes) : "60",
         notes: apt.notes || "",
         customData: apt.custom_data || {},
         storeId: apt.store_id || "",

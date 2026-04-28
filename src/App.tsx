@@ -69,6 +69,7 @@ const App = () => (
 
                   {/* Public Booking Routes (no auth required) */}
                   <Route path="/book/:slug" element={<SlugBookingPage />} />
+                  <Route path="/book/:slug/manage" element={<ManageAppointmentPage />} />
                   <Route path="/manage/:appointmentId" element={<ManageAppointmentPage />} />
                   
                   {/* Protected Client Routes */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { Loader2, AlertCircle, Calendar, Clock, MapPin, User, Mail, Phone, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { CalendarPicker } from "@/components/booking/CalendarPicker";
 import { TimeSlotPicker } from "@/components/booking/TimeSlotPicker";
@@ -42,7 +42,9 @@ function formatTime(t: string) {
 }
 
 export default function ManageAppointmentPage() {
-  const { appointmentId } = useParams<{ appointmentId: string }>();
+  const { appointmentId: appointmentIdParam } = useParams<{ appointmentId: string }>();
+  const [searchParams] = useSearchParams();
+  const appointmentId = appointmentIdParam || searchParams.get("appointment_id") || undefined;
 
   const [appt, setAppt] = useState<Appointment | null>(null);
   const [branding, setBranding] = useState<ClientBranding | null>(null);
