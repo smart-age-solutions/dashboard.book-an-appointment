@@ -70,6 +70,7 @@ export default function EmailTemplatesPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
   const fetchTemplates = useCallback(async () => {
@@ -140,6 +141,39 @@ export default function EmailTemplatesPage() {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendTest = async () => {
+    if (formData.ccRecipients.length === 0) {
+      toast({
+        title: "No Recipients",
+        description: "Please select at least one BCC recipient to send a test email.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      await api.post("/email-templates/test", {
+        subject: formData.subject,
+        body_html: formData.body_html,
+        ccRecipients: formData.ccRecipients,
+      });
+
+      toast({
+        title: "Test Sent",
+        description: "A test email has been sent to the selected BCC recipients.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error Sending Test",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -579,9 +613,20 @@ export default function EmailTemplatesPage() {
                   Cancel
                 </Button>
                 <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={handleSendTest}
+                  isLoading={isTesting}
+                  disabled={isSubmitting || isTesting}
+                >
+                  <Mail className="h-4 w-4 mr-2" />
+                  Send Test
+                </Button>
+                <Button
                   className="flex-1"
                   onClick={handleSave}
                   isLoading={isSubmitting}
+                  disabled={isTesting}
                 >
                   {editingTemplate ? "Update" : "Create"}
                 </Button>
