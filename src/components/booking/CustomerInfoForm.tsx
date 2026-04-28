@@ -155,20 +155,6 @@ export function CustomerInfoForm({
           />
         </div>
 
-        {/* Country of Residence (optional) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Country of Residence <span className="text-gray-400 font-normal text-xs">(optional)</span>
-          </label>
-          <input
-            {...register("country_of_residence")}
-            type="text"
-            placeholder="e.g. USA"
-            autoComplete="country-name"
-            className="w-full px-3.5 py-2.5 rounded-xl border-2 border-gray-200 focus:border-gray-400 text-sm text-gray-900 placeholder-gray-400 outline-none transition-all"
-          />
-        </div>
-
         {/* Notes (optional) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
