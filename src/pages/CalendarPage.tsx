@@ -147,7 +147,7 @@ export default function CalendarPage() {
 
       setBookingPages(pagesRes.booking_pages || []);
 
-      const transformedApts: Appointment[] = aptData.appointments.map((apt: any) => ({
+      const transformedApts: Appointment[] = aptData.appointments.filter((apt: any) => apt.date).map((apt: any) => ({
         id: apt.id,
         title: apt.title || "", // Mr/Mrs
         first_name: apt.first_name,
