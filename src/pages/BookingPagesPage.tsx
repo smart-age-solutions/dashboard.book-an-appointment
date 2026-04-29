@@ -11,6 +11,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -108,7 +109,7 @@ export default function BookingPagesPage() {
   });
   
 
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [ccUserIds, setCcUserIds] = useState<string[]>([]);
   const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
   const [emailTriggers, setEmailTriggers] = useState({
@@ -155,8 +156,8 @@ export default function BookingPagesPage() {
       return;
     }
 
-    if (selectedUserIds.length === 0) {
-      toast({ title: "Validation Error", description: "At least one Bookable Staff must be assigned.", variant: "destructive" });
+    if (!selectedUserId) {
+      toast({ title: "Validation Error", description: "A Bookable Staff member must be assigned.", variant: "destructive" });
       return;
     }
 
@@ -174,22 +175,16 @@ export default function BookingPagesPage() {
       }
       
       if (pageId) {
-        // Update users (Bookable + CC)
-        // Ensure no duplicate user IDs are sent. Prioritize bookable if a user is in both.
-        const uniqueUserIds = new Set<string>();
+        // Update users: one bookable staff + any CC users
         const combinedUsers: any[] = [];
-        
-        selectedUserIds.forEach(user_id => {
-          uniqueUserIds.add(user_id);
-          combinedUsers.push({ user_id, is_default: false, priority: 0, is_cc: false });
-        });
-        
-        ccUserIds.forEach(user_id => {
-          if (!uniqueUserIds.has(user_id)) {
-            uniqueUserIds.add(user_id);
+        if (selectedUserId) {
+          combinedUsers.push({ user_id: selectedUserId, is_default: true, priority: 0, is_cc: false });
+        }
+        ccUserIds
+          .filter(user_id => user_id !== selectedUserId)
+          .forEach(user_id => {
             combinedUsers.push({ user_id, is_default: false, priority: 0, is_cc: true });
-          }
-        });
+          });
 
         await api.put(`/booking-pages/${pageId}/users`, {
           users: combinedUsers
@@ -248,7 +243,8 @@ export default function BookingPagesPage() {
     });
     
 
-    setSelectedUserIds((page.users || []).filter(u => !u.is_cc).map(u => u.user_id));
+    const bookableUser = (page.users || []).find(u => !u.is_cc);
+    setSelectedUserId(bookableUser?.user_id ?? null);
     setCcUserIds((page.users || []).filter(u => u.is_cc).map(u => u.user_id));
     setSelectedStoreIds((page.stores || []).map(st => st.store_id));
     
@@ -301,7 +297,7 @@ export default function BookingPagesPage() {
       widget_enabled: false,
       allowed_domains: "",
     });
-    setSelectedUserIds([]);
+    setSelectedUserId(null);
     setCcUserIds([]);
     setSelectedStoreIds([]);
     setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none" });
@@ -619,12 +615,20 @@ export default function BookingPagesPage() {
                       <Users className="h-4 w-4" /> Bookable Staff
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      {allUsers.map(user => (
-                        <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
-                          <Checkbox checked={selectedUserIds.includes(user.id)} onCheckedChange={() => toggleArrayItem(user.id, setSelectedUserIds)} />
-                          <span className="text-sm">{user.name}</span>
-                        </label>
-                      ))}
+                      <RadioGroup
+                        value={selectedUserId ?? ""}
+                        onValueChange={(val) => {
+                          setSelectedUserId(val || null);
+                          setCcUserIds(prev => prev.filter(id => id !== val));
+                        }}
+                      >
+                        {allUsers.map(user => (
+                          <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
+                            <RadioGroupItem value={user.id} id={`staff-${user.id}`} />
+                            <span className="text-sm">{user.name}</span>
+                          </label>
+                        ))}
+                      </RadioGroup>
                     </div>
                   </div>
                   <div className="space-y-4">
@@ -632,26 +636,18 @@ export default function BookingPagesPage() {
                       <Mail className="h-4 w-4" /> Notification CC
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      {allUsers.map(user => {
-                        const isBookable = selectedUserIds.includes(user.id);
-                        return (
-                          <div key={user.id} className="flex items-center justify-between hover:bg-muted p-1 rounded transition-colors">
-                            <label className={`flex items-center gap-2 ${isBookable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                              <Checkbox 
-                                checked={isBookable || ccUserIds.includes(user.id)} 
-                                disabled={isBookable}
-                                onCheckedChange={() => {
-                                  if (!isBookable) toggleArrayItem(user.id, setCcUserIds);
-                                }} 
-                              />
-                              <span className="text-sm">{user.name}</span>
-                            </label>
-                            {isBookable && (
-                              <span className="text-[10px] text-muted-foreground italic">Bookable staff are auto-notified</span>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {allUsers.filter(user => user.id !== selectedUserId).map(user => (
+                        <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
+                          <Checkbox
+                            checked={ccUserIds.includes(user.id)}
+                            onCheckedChange={() => toggleArrayItem(user.id, setCcUserIds)}
+                          />
+                          <span className="text-sm">{user.name}</span>
+                        </label>
+                      ))}
+                      {allUsers.filter(user => user.id !== selectedUserId).length === 0 && (
+                        <p className="text-xs text-muted-foreground italic py-2">No other users available for CC.</p>
+                      )}
                     </div>
 
                     <div className="pt-2 space-y-2">

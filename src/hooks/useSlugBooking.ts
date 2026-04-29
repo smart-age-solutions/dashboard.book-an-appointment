@@ -46,12 +46,10 @@ export function useSlugBooking(slug: string) {
     if (!pageQuery.data || step !== "location") return;
 
     const stores = pageQuery.data.stores ?? [];
-    const users = pageQuery.data.users ?? [];
+    const defaultUserId = pageQuery.data.booking_page?.default_user_id;
 
-    // Auto-pick first/default user — never show staff selector to customer
-    const defaultUser =
-      users.find((u) => u.is_default) ?? users[0] ?? null;
-    setAutoUser(defaultUser);
+    // Auto-pick the default user — never show staff selector to customer
+    setAutoUser(defaultUserId ? { id: defaultUserId } : null);
 
     // Skip location step if 0 or 1 stores
     if (stores.length <= 1) {

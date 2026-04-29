@@ -10,7 +10,7 @@ export interface ServiceOption {
 
 export interface UserOption {
   id: string;
-  name: string;
+  name?: string;
   is_default?: boolean;
   priority?: number;
 }
@@ -26,14 +26,13 @@ export interface BookingPageData {
   brand_color: string;
   logo_url?: string | null;
   extra_cc_emails?: string;
+  default_user_id?: string | null;
 }
 
 export interface BookingPageResponse {
   status: string;
   booking_page: BookingPageData;
-  users: UserOption[];
   services: ServiceOption[];
-  requires_user_selection: boolean;
   slots?: Record<string, string[]>; // date -> available times
   stores?: Array<{ id: string; name: string; address?: string }>;
   start_date?: string;
