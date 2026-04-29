@@ -714,9 +714,9 @@ export default function SettingsPage() {
           <TabsList className="flex-wrap">
             <TabsTrigger value="stores">Stores</TabsTrigger>
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
             {isBackofficeUser && (
               <>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
                 <TabsTrigger value="email">Email Service</TabsTrigger>
                 <TabsTrigger value="sms">SMS Service</TabsTrigger>
               </>
@@ -1042,8 +1042,7 @@ export default function SettingsPage() {
           </TabsContent>
 
           {/* Notifications */}
-          {isBackofficeUser && (
-            <TabsContent value="notifications" className="space-y-6">
+          <TabsContent value="notifications" className="space-y-6">
               <div className="rounded-xl bg-card p-6 card-shadow">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-accent">
@@ -1120,7 +1119,6 @@ export default function SettingsPage() {
                 </div>
               </div>
             </TabsContent>
-          )}
 
           {/* Email Service Configuration */}
           {isBackofficeUser && (
