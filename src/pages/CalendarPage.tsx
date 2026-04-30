@@ -25,6 +25,7 @@ import {
   Eye,
   Clock,
   User,
+  UserCheck,
   Ban,
   X,
 } from "lucide-react";
@@ -73,6 +74,7 @@ interface Appointment {
   duration: string;
   customData?: Record<string, any>;
   storeId?: string;
+  staffName?: string;
 }
 
 interface BlockedDay {
@@ -81,6 +83,27 @@ interface BlockedDay {
 }
 
 import { parseLocalDate } from "@/lib/date";
+
+function generateCalendarTimeSlots(startTime: string, endTime: string, durationMins: number): string[] {
+  const slots: string[] = [];
+  const [startH, startM] = startTime.split(":").map(Number);
+  const [endH, endM] = endTime.split(":").map(Number);
+  let current = startH * 60 + startM;
+  const end = endH * 60 + endM;
+  while (current + durationMins <= end) {
+    const h = Math.floor(current / 60);
+    const m = current % 60;
+    slots.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+    current += durationMins;
+  }
+  return slots;
+}
+
+function formatCalTime(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date(2000, 0, 1, h, m);
+  return format(d, "h:mm aa");
+}
 
 const statusStyles: Record<string, string> = {
   confirmed: "bg-success/10 text-success border-success/20",
@@ -165,9 +188,10 @@ export default function CalendarPage() {
         time: apt.time,
         service: apt.purpose || "General",
         status: apt.status || "confirmed",
-        duration: "60", // Backend doesn't store duration yet
+        duration: "60",
         customData: apt.custom_data || {},
-        storeId: apt.store_id
+        storeId: apt.store_id,
+        staffName: apt.user_name || "",
       }));
 
       // In real backend, block-day marks all slots as blocked. 
@@ -547,7 +571,7 @@ export default function CalendarPage() {
                                     apt.status === "cancelled" && "opacity-60 line-through"
                                   )}
                                 >
-                                  {apt.time} {apt.client}
+                                  {apt.time} {apt.client}{apt.staffName ? ` · ${apt.staffName}` : ""}
                                 </div>
                               ))}
                               {dayAppointments.length > 2 && (
@@ -644,6 +668,11 @@ export default function CalendarPage() {
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {apt.time}
                           </p>
+                          {apt.staffName && (
+                            <p className="text-sm text-muted-foreground flex items-center gap-1">
+                              <UserCheck className="h-3 w-3" /> {apt.staffName}
+                            </p>
+                          )}
                           <div className="pt-1">
                             <Badge variant="outline" className={cn("text-[10px] h-4 px-1 capitalize", statusStyles[apt.status])}>
                               {apt.status}
@@ -744,6 +773,18 @@ export default function CalendarPage() {
                         viewingAppointment.service}
                     </p>
                   </div>
+
+                  {viewingAppointment.staffName && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Staff Member</p>
+                        <p className="text-sm font-medium text-card-foreground">
+                          {viewingAppointment.staffName}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {viewingAppointment.email && (
                     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
@@ -870,31 +911,63 @@ export default function CalendarPage() {
                   <Input
                     type="date"
                     value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-                    onChange={(e) => setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null)}
+                    onChange={(e) => {
+                      setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null);
+                      setFormData(prev => ({ ...prev, time: "09:00" }));
+                    }}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Time</Label>
-                  <Select
-                    value={formData.time}
-                    onValueChange={(v) => setFormData({ ...formData, time: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => i + 8).map(
-                        (hour) => (
-                          <SelectItem
-                            key={hour}
-                            value={`${hour.toString().padStart(2, "0")}:00`}
-                          >
-                            {hour}:00
-                          </SelectItem>
-                        )
-                      )}
-                    </SelectContent>
-                  </Select>
+                  {(() => {
+                    const page = selectedBookingPageId && selectedBookingPageId !== "all"
+                      ? bookingPages.find(p => p.id === selectedBookingPageId)
+                      : null;
+                    if (page && selectedDate) {
+                      const jsDay = selectedDate.getDay();
+                      const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
+                      const dayHour = (page as any).hours?.find((h: any) => h.day_of_week === dayOfWeek && h.is_active);
+                      if (dayHour) {
+                        const slots = generateCalendarTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60);
+                        return (
+                          <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto">
+                            {slots.map(slot => (
+                              <button
+                                key={slot}
+                                type="button"
+                                onClick={() => setFormData({ ...formData, time: slot })}
+                                className={cn(
+                                  "py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
+                                  formData.time === slot
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background border-border text-foreground hover:border-primary/50"
+                                )}
+                              >
+                                {formatCalTime(slot)}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      }
+                    }
+                    return (
+                      <Select
+                        value={formData.time}
+                        onValueChange={(v) => setFormData({ ...formData, time: v })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
+                            <SelectItem key={hour} value={`${hour.toString().padStart(2, "0")}:00`}>
+                              {format(new Date(2000, 0, 1, hour, 0), "h:mm aa")}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()}
                 </div>
               </div>
 

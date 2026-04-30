@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,43 @@ interface Appointment {
   notes: string;
   customData?: Record<string, any>;
   storeId: string;
+  staffName?: string;
+}
+
+interface BookingPageHour {
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  is_active: boolean;
+}
+
+interface BookingPageOption {
+  id: string;
+  name: string;
+  slug: string;
+  slot_duration_minutes: number;
+  hours: BookingPageHour[];
+}
+
+function generateTimeSlots(startTime: string, endTime: string, durationMins: number): string[] {
+  const slots: string[] = [];
+  const [startH, startM] = startTime.split(":").map(Number);
+  const [endH, endM] = endTime.split(":").map(Number);
+  let current = startH * 60 + startM;
+  const end = endH * 60 + endM;
+  while (current + durationMins <= end) {
+    const h = Math.floor(current / 60);
+    const m = current % 60;
+    slots.push(`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}`);
+    current += durationMins;
+  }
+  return slots;
+}
+
+function formatTimeSlot(hhmm: string): string {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date(2000, 0, 1, h, m);
+  return format(d, "h:mm aa");
 }
 
 const statusStyles: Record<string, string> = {
@@ -67,6 +104,10 @@ export default function AppointmentsPage() {
   const [totalItems, setTotalItems] = useState(0);
   const perPage = 50;
 
+  const [bookingPages, setBookingPages] = useState<BookingPageOption[]>([]);
+  const [newApptBookingPageId, setNewApptBookingPageId] = useState("");
+  const [newApptTimeSlots, setNewApptTimeSlots] = useState<string[]>([]);
+
   const [newAppointment, setNewAppointment] = useState({
     first_name: "",
     last_name: "",
@@ -83,11 +124,15 @@ export default function AppointmentsPage() {
     custom_data: "",
   });
 
-  const resetNewAppointment = () => setNewAppointment({
-    first_name: "", last_name: "", email: "", phone: "",
-    phone_area_code: "", title: "", date: "", time: "",
-    purpose: "", notes: "", country_of_residence: "", store_id: "", custom_data: "",
-  });
+  const resetNewAppointment = () => {
+    setNewAppointment({
+      first_name: "", last_name: "", email: "", phone: "",
+      phone_area_code: "", title: "", date: "", time: "",
+      purpose: "", notes: "", country_of_residence: "", store_id: "", custom_data: "",
+    });
+    setNewApptBookingPageId("");
+    setNewApptTimeSlots([]);
+  };
 
   const handleCreateAppointment = async () => {
     if (!newAppointment.first_name || !newAppointment.email || !newAppointment.date || !newAppointment.time) {
@@ -160,12 +205,13 @@ export default function AppointmentsPage() {
         consent_communication: apt.consent_communication || false,
         service: apt.purpose || "General",
         date: parseLocalDate(apt.date),
-        time: apt.time, // HH:MM format from backend
+        time: apt.time,
         status: apt.status,
         duration: apt.duration_minutes != null ? String(apt.duration_minutes) : "60",
         notes: apt.notes || "",
         customData: apt.custom_data || {},
         storeId: apt.store_id || "",
+        staffName: apt.user_name || "",
       }));
       
       setAppointments(transformed);
@@ -181,6 +227,9 @@ export default function AppointmentsPage() {
 
   useEffect(() => {
     fetchAppointments(1);
+    api.get("/booking-pages").then((res: any) => {
+      setBookingPages(res.booking_pages || []);
+    }).catch(() => {});
   }, [statusFilter]);
 
   const filteredAppointments = appointments.filter((apt) => {
@@ -284,6 +333,17 @@ export default function AppointmentsPage() {
     }
   };
 
+  const computeSlotsForNewAppt = (pageId: string, dateStr: string) => {
+    if (!pageId || !dateStr) { setNewApptTimeSlots([]); return; }
+    const page = bookingPages.find(p => p.id === pageId);
+    if (!page) { setNewApptTimeSlots([]); return; }
+    const jsDay = new Date(dateStr + "T00:00:00").getDay(); // 0=Sun
+    const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1; // convert to Mon=0 ... Sun=6
+    const dayHour = page.hours?.find(h => h.day_of_week === dayOfWeek && h.is_active);
+    if (!dayHour) { setNewApptTimeSlots([]); return; }
+    setNewApptTimeSlots(generateTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60));
+  };
+
   const getStoreName = (storeId: string) => {
     const store = stores.find(s => s.id === storeId);
     return store?.name || "Unknown Store";
@@ -339,6 +399,7 @@ export default function AppointmentsPage() {
               <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead>Client</TableHead>
                 <TableHead>Service</TableHead>
+                <TableHead>Staff</TableHead>
                 <TableHead>Date & Time</TableHead>
                 <TableHead>Duration</TableHead>
                 <TableHead>Status</TableHead>
@@ -348,7 +409,7 @@ export default function AppointmentsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="h-24">
+                  <TableCell colSpan={7} className="h-24">
                     <div className="flex items-center justify-center">
                       <LoadingSpinner />
                     </div>
@@ -356,7 +417,7 @@ export default function AppointmentsPage() {
                 </TableRow>
               ) : filteredAppointments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No appointments found
                   </TableCell>
                 </TableRow>
@@ -370,6 +431,14 @@ export default function AppointmentsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-card-foreground">{apt.service}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {apt.staffName ? (
+                        <span className="inline-flex items-center gap-1">
+                          <UserCheck className="h-3 w-3" />
+                          {apt.staffName}
+                        </span>
+                      ) : "—"}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-card-foreground">{format(apt.date, "MMM d, yyyy")}</p>
@@ -994,22 +1063,73 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
 
+                {bookingPages.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Booking Page (for time slots)</Label>
+                    <Select
+                      value={newApptBookingPageId}
+                      onValueChange={(v) => {
+                        setNewApptBookingPageId(v);
+                        computeSlotsForNewAppt(v, newAppointment.date);
+                        setNewAppointment(prev => ({ ...prev, time: "" }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select booking page (optional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (manual time)</SelectItem>
+                        {bookingPages.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Date *</Label>
                     <Input
                       type="date"
                       value={newAppointment.date}
-                      onChange={(e) => setNewAppointment({ ...newAppointment, date: e.target.value })}
+                      onChange={(e) => {
+                        setNewAppointment({ ...newAppointment, date: e.target.value, time: "" });
+                        computeSlotsForNewAppt(newApptBookingPageId, e.target.value);
+                      }}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Time *</Label>
-                    <Input
-                      type="time"
-                      value={newAppointment.time}
-                      onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
-                    />
+                    {newApptBookingPageId && newApptBookingPageId !== "none" && newAppointment.date ? (
+                      newApptTimeSlots.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-1.5 max-h-32 overflow-y-auto">
+                          {newApptTimeSlots.map(slot => (
+                            <button
+                              key={slot}
+                              type="button"
+                              onClick={() => setNewAppointment({ ...newAppointment, time: slot })}
+                              className={cn(
+                                "py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
+                                newAppointment.time === slot
+                                  ? "bg-primary text-primary-foreground border-primary"
+                                  : "bg-background border-border text-foreground hover:border-primary/50"
+                              )}
+                            >
+                              {formatTimeSlot(slot)}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground pt-2">No slots available for this day</p>
+                      )
+                    ) : (
+                      <Input
+                        type="time"
+                        value={newAppointment.time}
+                        onChange={(e) => setNewAppointment({ ...newAppointment, time: e.target.value })}
+                      />
+                    )}
                   </div>
                 </div>
 

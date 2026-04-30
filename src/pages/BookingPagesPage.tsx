@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, MoreHorizontal, Edit2, Trash2, LayoutTemplate, Link as LinkIcon, Users, Settings, MapPin, Mail, Clock, Calendar, Globe, Eye, Copy } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Search, Plus, MoreHorizontal, Edit2, Trash2, LayoutTemplate, Link as LinkIcon, Users, Settings, MapPin, Mail, Clock, Calendar, Globe, Eye, Copy, Upload, Image } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,6 @@ interface BookingPageData {
   booking_window_days: number;
   hours?: BookingPageDayHours[];
   users?: any[];
-
   stores?: any[];
   email_templates?: any[];
   show_map_in_email?: boolean;
@@ -68,6 +67,7 @@ interface BookingPageData {
   widget_enabled?: boolean;
   allowed_domains?: string;
   extra_cc_emails?: string;
+  service_name?: string;
 }
 
 export default function BookingPagesPage() {
@@ -106,7 +106,11 @@ export default function BookingPagesPage() {
     widget_enabled: false,
     allowed_domains: "",
     extra_cc_emails: "",
+    service_name: "",
   });
+
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -240,6 +244,7 @@ export default function BookingPagesPage() {
       widget_enabled: page.widget_enabled || false,
       allowed_domains: page.allowed_domains || "",
       extra_cc_emails: page.extra_cc_emails || "",
+      service_name: page.service_name || "",
     });
     
 
@@ -296,12 +301,33 @@ export default function BookingPagesPage() {
       })),
       widget_enabled: false,
       allowed_domains: "",
+      extra_cc_emails: "",
+      service_name: "",
     });
     setSelectedUserId(null);
     setCcUserIds([]);
     setSelectedStoreIds([]);
     setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none" });
     setIsDialogOpen(true);
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!editingPage) {
+      toast({ title: "Save First", description: "Save the booking page before uploading an image.", variant: "destructive" });
+      return;
+    }
+    setIsUploadingImage(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", file);
+      const res = await api.postFormData(`/auth/booking-pages/${editingPage.id}/upload-image`, formDataUpload);
+      setFormData(prev => ({ ...prev, map_image_url: res.image_url }));
+      toast({ title: "Image Uploaded", description: "Image uploaded successfully." });
+    } catch (error: any) {
+      toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const toggleArrayItem = (id: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -435,21 +461,60 @@ export default function BookingPagesPage() {
                       <Input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="e.g. VIP Consultation" />
                     </div>
                     <div className="space-y-2">
+                      <Label>Service</Label>
+                      <Input value={formData.service_name} onChange={e => setFormData({...formData, service_name: e.target.value})} placeholder="e.g. Consultation, Hair Cut, Repair..." />
+                      <p className="text-[10px] text-muted-foreground italic">Default service label for appointments booked through this page</p>
+                    </div>
+                    <div className="space-y-2">
                       <Label>URL Slug</Label>
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground text-sm">/book/</span>
                         <Input value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} placeholder="vip-consult" />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Buffer Time (minutes)</Label>
-                      <Input type="number" value={formData.buffer_time_minutes} onChange={e => setFormData({...formData, buffer_time_minutes: parseInt(e.target.value) || 0})} />
-                    </div>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label>Description</Label>
-                      <Textarea value={formData.description} className="h-[120px]" onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Publicly visible instructions" />
+                      <Textarea value={formData.description} className="h-[100px]" onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Publicly visible instructions" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Page Image</Label>
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file);
+                          e.target.value = "";
+                        }}
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => imageInputRef.current?.click()}
+                          disabled={isUploadingImage}
+                        >
+                          {isUploadingImage ? (
+                            <Upload className="h-4 w-4 mr-2 animate-pulse" />
+                          ) : (
+                            <Image className="h-4 w-4 mr-2" />
+                          )}
+                          {isUploadingImage ? "Uploading..." : "Upload Image"}
+                        </Button>
+                        {formData.map_image_url && (
+                          <a href={formData.map_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline truncate max-w-[160px]">
+                            View image
+                          </a>
+                        )}
+                      </div>
+                      {formData.map_image_url && (
+                        <img src={formData.map_image_url} alt="Page" className="mt-2 h-20 w-auto rounded-lg border object-cover" />
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Checkbox id="active" checked={formData.is_active} onCheckedChange={v => setFormData({...formData, is_active: !!v})} />
