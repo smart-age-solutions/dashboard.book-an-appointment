@@ -19,6 +19,11 @@ export interface Store {
   state: string;
   zip: string;
   isActive: boolean;
+  mapUrl?: string;
+  mapImageUrl?: string;
+  lat?: string;
+  lng?: string;
+  showMapInEmail?: boolean;
 }
 
 interface StoreContextType {
@@ -53,10 +58,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     email: s.email || "",
     phone: s.phone || "",
     address: s.address || "",
-    city: "", 
+    city: "",
     state: "",
     zip: "",
     isActive: s.is_active,
+    mapUrl: s.map_url || "",
+    mapImageUrl: s.map_image_url || "",
+    lat: s.lat || "",
+    lng: s.lng || "",
+    showMapInEmail: s.show_map_in_email !== false,
   });
 
   const { isAuthenticated } = useAuth();
@@ -83,11 +93,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const addStore = async (store: Omit<Store, "id">) => {
     try {
-      const payload = {
+      const payload: any = {
         name: store.name,
         email: store.email,
         phone: store.phone,
         address: store.address,
+        map_url: store.mapUrl,
+        map_image_url: store.mapImageUrl,
+        lat: store.lat,
+        lng: store.lng,
+        show_map_in_email: store.showMapInEmail,
       };
       await api.post("/auth/stores", payload);
       fetchStores();
@@ -100,10 +115,15 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     try {
       const payload: any = {};
       if (updates.name) payload.name = updates.name;
-      if (updates.email) payload.email = updates.email;
-      if (updates.phone) payload.phone = updates.phone;
-      if (updates.address) payload.address = updates.address;
+      if (updates.email !== undefined) payload.email = updates.email;
+      if (updates.phone !== undefined) payload.phone = updates.phone;
+      if (updates.address !== undefined) payload.address = updates.address;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
+      if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
+      if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;
+      if (updates.lat !== undefined) payload.lat = updates.lat;
+      if (updates.lng !== undefined) payload.lng = updates.lng;
+      if (updates.showMapInEmail !== undefined) payload.show_map_in_email = updates.showMapInEmail;
 
       await api.put(`/auth/stores/${id}`, payload);
       fetchStores();

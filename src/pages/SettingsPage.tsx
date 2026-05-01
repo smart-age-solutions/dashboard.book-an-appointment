@@ -105,6 +105,11 @@ export default function SettingsPage() {
     state: "",
     zip: "",
     isActive: true,
+    mapUrl: "",
+    mapImageUrl: "",
+    lat: "",
+    lng: "",
+    showMapInEmail: true,
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -294,6 +299,11 @@ export default function SettingsPage() {
       state: "",
       zip: "",
       isActive: true,
+      mapUrl: "",
+      mapImageUrl: "",
+      lat: "",
+      lng: "",
+      showMapInEmail: true,
     });
     setIsStoreDialogOpen(true);
   };
@@ -309,6 +319,11 @@ export default function SettingsPage() {
       state: store.state,
       zip: store.zip,
       isActive: store.isActive,
+      mapUrl: store.mapUrl || "",
+      mapImageUrl: store.mapImageUrl || "",
+      lat: store.lat || "",
+      lng: store.lng || "",
+      showMapInEmail: store.showMapInEmail !== false,
     });
     setIsStoreDialogOpen(true);
   };
@@ -1448,6 +1463,52 @@ export default function SettingsPage() {
                   checked={storeFormData.isActive}
                   onCheckedChange={(v) => setStoreFormData({ ...storeFormData, isActive: v })}
                 />
+              </div>
+
+              {/* Map & Email Settings */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-card-foreground">Map & Email</h3>
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                  <div>
+                    <p className="font-medium text-card-foreground">Show Map in Emails</p>
+                    <p className="text-sm text-muted-foreground">Include a map image in confirmation emails</p>
+                  </div>
+                  <Switch
+                    checked={storeFormData.showMapInEmail}
+                    onCheckedChange={(v) => setStoreFormData({ ...storeFormData, showMapInEmail: v })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Map Image URL</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={storeFormData.mapImageUrl}
+                      onChange={(e) => setStoreFormData({ ...storeFormData, mapImageUrl: e.target.value })}
+                      placeholder="https://maps.googleapis.com/maps/api/staticmap?..."
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Static map image shown in booking confirmation emails</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Latitude</Label>
+                    <Input
+                      value={storeFormData.lat}
+                      onChange={(e) => setStoreFormData({ ...storeFormData, lat: e.target.value })}
+                      placeholder="40.7128"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Longitude</Label>
+                    <Input
+                      value={storeFormData.lng}
+                      onChange={(e) => setStoreFormData({ ...storeFormData, lng: e.target.value })}
+                      placeholder="-74.0060"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="flex gap-2 pt-4">

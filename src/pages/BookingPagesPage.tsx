@@ -646,18 +646,10 @@ export default function BookingPagesPage() {
                   <div className="space-y-6">
                     <div className="flex items-center gap-2 border-b pb-2">
                       <Globe className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="font-semibold">Location & Redirects</h3>
+                      <h3 className="font-semibold">Action URLs</h3>
                     </div>
-                    
+
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <Checkbox id="show-map" checked={formData.show_map_in_email} onCheckedChange={v => setFormData({...formData, show_map_in_email: !!v})} />
-                        <Label htmlFor="show-map" className="cursor-pointer">Show Map in Emails</Label>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs">Map Image URL</Label>
-                        <Input value={formData.map_image_url} onChange={e => setFormData({...formData, map_image_url: e.target.value})} placeholder="https://maps.googleapis.com/..." />
-                      </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label className="text-xs">External Edit Action URL</Label>
