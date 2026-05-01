@@ -314,6 +314,7 @@ export default function CalendarPage() {
 
       if (formData.storeId) payload.store_id = formData.storeId;
       payload.user_id = formData.userId || null;
+      if (formData.duration) payload.duration_minutes = parseInt(formData.duration);
 
       if (customDataText.trim()) {
         try {

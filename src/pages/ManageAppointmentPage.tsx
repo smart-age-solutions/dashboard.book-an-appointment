@@ -98,6 +98,8 @@ export default function ManageAppointmentPage() {
         const data = await res.json();
         if (res.ok) setAvailableSlots(data.slots || {});
       }
+    } catch (err: any) {
+      setActionError(err.message || "Failed to load available slots");
     } finally {
       setSlotsLoading(false);
     }

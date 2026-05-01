@@ -293,7 +293,7 @@ export default function UsersPage() {
         )}
 
         {/* Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) { setEditingUser(null); setFormData({ name: "", email: "", role: "staff", status: "active" }); } setIsDialogOpen(open); }}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{editingUser ? "Edit User" : "New User"}</DialogTitle>

@@ -260,9 +260,10 @@ export default function SettingsPage() {
           phone: globalSettings.phone,
           email: globalSettings.email,
           timezone: globalSettings.timezone,
+          booking_window_days: parseInt(globalSettings.bookingWindowDays),
         }),
         api.put("/auth/settings/business-hours", {
-          // Default Slot Duration removed from here
+          slot_duration: parseInt(globalSettings.slotDuration),
         })
       ]);
       toast({ title: "Saved", description: "Global settings updated successfully" });

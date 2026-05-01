@@ -526,7 +526,7 @@ export default function BackofficeUsersPage() {
         {/* ─── MODALS ─── */}
         
         {/* Create Tenant User Dialog */}
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        <Dialog open={isCreateOpen} onOpenChange={(open) => { if (!open) setNewUser({ clientId: "", name: "", email: "", password: "", role: "member" }); setIsCreateOpen(open); }}>
           <DialogContent className="max-w-md bg-card">
             <DialogHeader>
               <DialogTitle>Create Tenant User</DialogTitle>
@@ -578,7 +578,7 @@ export default function BackofficeUsersPage() {
         </Dialog>
 
         {/* Create Backoffice Staff Dialog */}
-        <Dialog open={isCreateStaffOpen} onOpenChange={setIsCreateStaffOpen}>
+        <Dialog open={isCreateStaffOpen} onOpenChange={(open) => { if (!open) setNewStaff({ name: "", email: "", password: "" }); setIsCreateStaffOpen(open); }}>
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">

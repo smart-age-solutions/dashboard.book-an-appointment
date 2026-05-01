@@ -125,6 +125,8 @@ export default function AppointmentsPage() {
     country_of_residence: "",
     store_id: "",
     custom_data: "",
+    duration: "60",
+    user_id: "",
   });
 
   const resetNewAppointment = () => {
@@ -132,6 +134,7 @@ export default function AppointmentsPage() {
       first_name: "", last_name: "", email: "", phone: "",
       phone_area_code: "", title: "", date: "", time: "",
       purpose: "", notes: "", country_of_residence: "", store_id: "", custom_data: "",
+      duration: "60", user_id: "",
     });
     setNewApptBookingPageId("");
     setNewApptTimeSlots([]);
@@ -158,7 +161,9 @@ export default function AppointmentsPage() {
         country_of_residence: newAppointment.country_of_residence || undefined,
       };
       if (newAppointment.store_id) payload.store_id = newAppointment.store_id;
-      
+      if (newAppointment.user_id) payload.user_id = newAppointment.user_id;
+      if (newAppointment.duration) payload.duration_minutes = parseInt(newAppointment.duration);
+
       if (newAppointment.custom_data.trim()) {
         try {
           payload.custom_data = JSON.parse(newAppointment.custom_data);
@@ -301,6 +306,7 @@ export default function AppointmentsPage() {
       payload.consent_communication = editFormData.consent_communication;
       if (editFormData.date) payload.date = format(editFormData.date, "yyyy-MM-dd");
       if (editFormData.time) payload.time = editFormData.time;
+      if (editFormData.duration) payload.duration_minutes = parseInt(editFormData.duration);
 
       if (customDataText.trim()) {
         try {
@@ -1174,25 +1180,64 @@ export default function AppointmentsPage() {
                       onChange={(e) => setNewAppointment({ ...newAppointment, purpose: e.target.value })}
                     />
                   </div>
-                  {stores.length > 0 && (
-                    <div className="space-y-2">
-                      <Label>Store</Label>
-                      <Select
-                        value={newAppointment.store_id}
-                        onValueChange={(v) => setNewAppointment({ ...newAppointment, store_id: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select store" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {stores.map(store => (
-                            <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <Label>Duration</Label>
+                    <Select
+                      value={newAppointment.duration}
+                      onValueChange={(v) => setNewAppointment({ ...newAppointment, duration: v })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 min</SelectItem>
+                        <SelectItem value="30">30 min</SelectItem>
+                        <SelectItem value="45">45 min</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="90">1.5 hours</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
+
+                {allUsers.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      Assigned Staff
+                    </Label>
+                    <Select
+                      value={newAppointment.user_id || "unassigned"}
+                      onValueChange={(v) => setNewAppointment({ ...newAppointment, user_id: v === "unassigned" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select staff member" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                        {allUsers.map(user => (
+                          <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {stores.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Store</Label>
+                    <Select
+                      value={newAppointment.store_id}
+                      onValueChange={(v) => setNewAppointment({ ...newAppointment, store_id: v })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select store" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stores.map(store => (
+                          <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>Notes</Label>
