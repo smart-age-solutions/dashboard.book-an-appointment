@@ -75,6 +75,7 @@ interface Appointment {
   customData?: Record<string, any>;
   storeId?: string;
   staffName?: string;
+  userId?: string;
 }
 
 interface BlockedDay {
@@ -130,10 +131,11 @@ export default function CalendarPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customDataText, setCustomDataText] = useState("");
   
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string }[]>([]);
   const [bookingPages, setBookingPages] = useState<any[]>([]);
   const [selectedBookingPageId, setSelectedBookingPageId] = useState<string>("all");
   const [formData, setFormData] = useState({
-    title: "", // Personal title
+    title: "",
     first_name: "",
     last_name: "",
     email: "",
@@ -145,10 +147,11 @@ export default function CalendarPage() {
     consent_communication: false,
     notes: "",
     time: "09:00",
-    service: "", // Purpose/Service title
+    service: "",
     status: "confirmed" as Appointment["status"],
     duration: "60",
     storeId: "",
+    userId: "",
   });
 
   const fetchData = useCallback(async () => {
@@ -162,13 +165,15 @@ export default function CalendarPage() {
         params.booking_page_id = selectedBookingPageId;
       }
       
-      const [aptData, overrideData, pagesRes] = await Promise.all([
+      const [aptData, overrideData, pagesRes, usersRes] = await Promise.all([
         api.get("/appointments", params),
         api.get("/slots/overrides", { start_date: start, end_date: end, per_page: 100 }),
-        api.get("/booking-pages")
+        api.get("/booking-pages"),
+        api.get("/teams/all-members"),
       ]);
 
       setBookingPages(pagesRes.booking_pages || []);
+      setAllUsers(usersRes.users || []);
 
       const transformedApts: Appointment[] = aptData.appointments.filter((apt: any) => apt.date).map((apt: any) => ({
         id: apt.id,
@@ -192,6 +197,7 @@ export default function CalendarPage() {
         customData: apt.custom_data || {},
         storeId: apt.store_id,
         staffName: apt.user_name || "",
+        userId: apt.user_id || "",
       }));
 
       // In real backend, block-day marks all slots as blocked. 
@@ -307,6 +313,7 @@ export default function CalendarPage() {
       };
 
       if (formData.storeId) payload.store_id = formData.storeId;
+      payload.user_id = formData.userId || null;
 
       if (customDataText.trim()) {
         try {
@@ -356,6 +363,7 @@ export default function CalendarPage() {
       status: apt.status,
       duration: apt.duration,
       storeId: apt.storeId || "",
+      userId: apt.userId || "",
     });
     setCustomDataText(apt.customData ? JSON.stringify(apt.customData, null, 2) : "");
     setSelectedDate(apt.date);
@@ -404,6 +412,7 @@ export default function CalendarPage() {
       status: "confirmed" as Appointment["status"],
       duration: "60",
       storeId: "",
+      userId: "",
     });
     setIsDialogOpen(true);
   };
@@ -898,328 +907,313 @@ export default function CalendarPage() {
 
         {/* Add/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? "Edit Appointment" : "New Appointment"}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 py-4 max-h-[640px] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Date *</Label>
-                  <Input
-                    type="date"
-                    value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-                    onChange={(e) => {
-                      setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null);
-                      setFormData(prev => ({ ...prev, time: "09:00" }));
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Time</Label>
-                  {(() => {
-                    const page = selectedBookingPageId && selectedBookingPageId !== "all"
-                      ? bookingPages.find(p => p.id === selectedBookingPageId)
-                      : null;
-                    if (page && selectedDate) {
-                      const jsDay = selectedDate.getDay();
-                      const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
-                      const dayHour = (page as any).hours?.find((h: any) => h.day_of_week === dayOfWeek && h.is_active);
-                      if (dayHour) {
-                        const slots = generateCalendarTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60);
-                        return (
-                          <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto">
-                            {slots.map(slot => (
-                              <button
-                                key={slot}
-                                type="button"
-                                onClick={() => setFormData({ ...formData, time: slot })}
-                                className={cn(
-                                  "py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
-                                  formData.time === slot
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-background border-border text-foreground hover:border-primary/50"
-                                )}
-                              >
-                                {formatCalTime(slot)}
-                              </button>
-                            ))}
-                          </div>
-                        );
-                      }
-                    }
-                    return (
-                      <Select
-                        value={formData.time}
-                        onValueChange={(v) => setFormData({ ...formData, time: v })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 24 }, (_, i) => i).map((hour) => (
-                            <SelectItem key={hour} value={`${hour.toString().padStart(2, "0")}:00`}>
-                              {format(new Date(2000, 0, 1, hour, 0), "h:mm aa")}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Service *</Label>
-                  <Input
-                    value={formData.service}
-                    onChange={(e) =>
-                      setFormData({ ...formData, service: e.target.value })
-                    }
-                    placeholder="e.g., Ring Consultation"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(v) =>
-                      setFormData({ ...formData, status: v as Appointment["status"] })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-1 space-y-2">
-                  <Label>Title</Label>
-                  <Select
-                    value={formData.title}
-                    onValueChange={(v) => setFormData({ ...formData, title: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Title" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Mr">Mr.</SelectItem>
-                      <SelectItem value="Mrs">Mrs.</SelectItem>
-                      <SelectItem value="Ms">Ms.</SelectItem>
-                      <SelectItem value="Dr">Dr.</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-3 grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>First Name *</Label>
-                    <Input
-                      value={formData.first_name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, first_name: e.target.value })
-                      }
-                      placeholder="e.g., John"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Last Name</Label>
-                    <Input
-                      value={formData.last_name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, last_name: e.target.value })
-                      }
-                      placeholder="e.g., Doe"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder="client@email.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                   <Label>Duration</Label>
-                   <Select
-                     value={formData.duration || "60"}
-                     onValueChange={(v) => setFormData({ ...formData, duration: v })}
-                   >
-                     <SelectTrigger>
-                       <SelectValue placeholder="Duration" />
-                     </SelectTrigger>
-                     <SelectContent>
-                       <SelectItem value="15">15 min</SelectItem>
-                       <SelectItem value="30">30 min</SelectItem>
-                       <SelectItem value="45">45 min</SelectItem>
-                       <SelectItem value="60">1 hour</SelectItem>
-                       <SelectItem value="90">1.5 hours</SelectItem>
-                       <SelectItem value="120">2 hours</SelectItem>
-                     </SelectContent>
-                   </Select>
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label>Phone Country Code</Label>
-                  <Input
-                    value={formData.phone_area_code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone_area_code: e.target.value })
-                    }
-                    placeholder="+1"
-                  />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label>Phone</Label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                    placeholder="(555) 123-4567"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Country of Residence</Label>
-                  <Input
-                    value={formData.country_of_residence}
-                    onChange={(e) =>
-                      setFormData({ ...formData, country_of_residence: e.target.value })
-                    }
-                    placeholder="USA"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Preferred Communication</Label>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
-                    {([
-                      { value: "email", label: "Email" },
-                      { value: "phone", label: "Phone" },
-                      { value: "text", label: "Text message" },
-                      { value: "whatsapp", label: "WhatsApp" },
-                    ] as const).map(({ value, label }) => {
-                      const parts = (formData.preferred_communication || "").split(", ").filter(Boolean);
-                      return (
-                        <div key={value} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`cal-comm-${value}`}
-                            checked={parts.includes(value)}
-                            onChange={() => {
-                              const next = [...parts];
-                              const idx = next.indexOf(value);
-                              if (idx >= 0) next.splice(idx, 1); else next.push(value);
-                              setFormData({ ...formData, preferred_communication: next.join(", ") });
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <Label htmlFor={`cal-comm-${value}`} className="text-sm font-normal">{label}</Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {stores.length > 1 && (
-                  <div className="space-y-2">
-                    <Label>Store</Label>
+            <div className="max-h-[600px] overflow-y-auto pr-2">
+              <div className="space-y-4 py-4">
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-1 space-y-2">
+                    <Label>Title</Label>
                     <Select
-                      value={formData.storeId}
-                      onValueChange={(v) => setFormData({ ...formData, storeId: v })}
+                      value={formData.title}
+                      onValueChange={(v) => setFormData({ ...formData, title: v })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select Store" />
+                        <SelectValue placeholder="Title" />
                       </SelectTrigger>
                       <SelectContent>
-                        {stores.map(store => (
-                          <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                        <SelectItem value="Mr">Mr.</SelectItem>
+                        <SelectItem value="Mrs">Mrs.</SelectItem>
+                        <SelectItem value="Ms">Ms.</SelectItem>
+                        <SelectItem value="Dr">Dr.</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-3 grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>First Name *</Label>
+                      <Input
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        placeholder="John"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Last Name</Label>
+                      <Input
+                        value={formData.last_name}
+                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        placeholder="Doe"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Service</Label>
+                    <Input
+                      value={formData.service}
+                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
+                      placeholder="e.g., Ring Consultation"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(v) => setFormData({ ...formData, status: v as Appointment["status"] })}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {allUsers.length > 0 && (
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                      Assigned Staff
+                    </Label>
+                    <Select
+                      value={formData.userId || "unassigned"}
+                      onValueChange={(v) => setFormData({ ...formData, userId: v === "unassigned" ? "" : v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Select staff member" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                        {allUsers.map(user => (
+                          <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                 )}
-              </div>
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={formData.accepted_terms}
-                  onChange={(e) => setFormData({ ...formData, accepted_terms: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="terms" className="text-sm font-normal">Accepted Terms</Label>
-              </div>
 
-              <div className="flex items-center space-x-2 pb-2">
-                 <input
-                  type="checkbox"
-                  id="consent"
-                  checked={formData.consent_communication}
-                  onChange={(e) => setFormData({ ...formData, consent_communication: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="consent" className="text-sm font-normal">Consent to Communication</Label>
-              </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="client@email.com"
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label>Notes</Label>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                  placeholder="Additional notes about the appointment..."
-                  rows={3}
-                />
-              </div>
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <Label>Phone Country Code</Label>
+                    <Input
+                      value={formData.phone_area_code}
+                      onChange={(e) => setFormData({ ...formData, phone_area_code: e.target.value })}
+                      placeholder="+1"
+                    />
+                  </div>
+                  <div className="col-span-2 space-y-2">
+                    <Label>Phone</Label>
+                    <Input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Custom Data (JSON)</Label>
-                <Textarea
-                  placeholder='{"key": "value"}'
-                  value={customDataText}
-                  onChange={(e) => setCustomDataText(e.target.value)}
-                  rows={4}
-                  className="font-mono text-xs"
-                />
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button className="flex-1" onClick={handleAddAppointment} isLoading={isSubmitting}>
-                  {editingAppointment ? "Update" : "Create"}
-                </Button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Country of Residence</Label>
+                    <Input
+                      value={formData.country_of_residence}
+                      onChange={(e) => setFormData({ ...formData, country_of_residence: e.target.value })}
+                      placeholder="USA"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Preferred Communication</Label>
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
+                      {([
+                        { value: "email", label: "Email" },
+                        { value: "phone", label: "Phone" },
+                        { value: "text", label: "Text message" },
+                        { value: "whatsapp", label: "WhatsApp" },
+                      ] as const).map(({ value, label }) => {
+                        const parts = (formData.preferred_communication || "").split(", ").filter(Boolean);
+                        return (
+                          <div key={value} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`cal-comm-${value}`}
+                              checked={parts.includes(value)}
+                              onChange={() => {
+                                const next = [...parts];
+                                const idx = next.indexOf(value);
+                                if (idx >= 0) next.splice(idx, 1); else next.push(value);
+                                setFormData({ ...formData, preferred_communication: next.join(", ") });
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <Label htmlFor={`cal-comm-${value}`} className="text-sm font-normal">{label}</Label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Date *</Label>
+                    <Input
+                      type="date"
+                      value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null);
+                        setFormData(prev => ({ ...prev, time: "09:00" }));
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Time</Label>
+                    {(() => {
+                      const page = selectedBookingPageId && selectedBookingPageId !== "all"
+                        ? bookingPages.find(p => p.id === selectedBookingPageId)
+                        : null;
+                      if (page && selectedDate) {
+                        const jsDay = selectedDate.getDay();
+                        const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
+                        const dayHour = (page as any).hours?.find((h: any) => h.day_of_week === dayOfWeek && h.is_active);
+                        if (dayHour) {
+                          const slots = generateCalendarTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60);
+                          return (
+                            <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto">
+                              {slots.map(slot => (
+                                <button
+                                  key={slot}
+                                  type="button"
+                                  onClick={() => setFormData({ ...formData, time: slot })}
+                                  className={cn(
+                                    "py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
+                                    formData.time === slot
+                                      ? "bg-primary text-primary-foreground border-primary"
+                                      : "bg-background border-border text-foreground hover:border-primary/50"
+                                  )}
+                                >
+                                  {formatCalTime(slot)}
+                                </button>
+                              ))}
+                            </div>
+                          );
+                        }
+                      }
+                      return (
+                        <Input
+                          value={formData.time}
+                          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                          placeholder="09:00"
+                        />
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Duration</Label>
+                    <Select
+                      value={formData.duration || "60"}
+                      onValueChange={(v) => setFormData({ ...formData, duration: v })}
+                    >
+                      <SelectTrigger><SelectValue placeholder="Duration" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="15">15 min</SelectItem>
+                        <SelectItem value="30">30 min</SelectItem>
+                        <SelectItem value="45">45 min</SelectItem>
+                        <SelectItem value="60">1 hour</SelectItem>
+                        <SelectItem value="90">1.5 hours</SelectItem>
+                        <SelectItem value="120">2 hours</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {stores.length > 1 && (
+                    <div className="space-y-2">
+                      <Label>Store</Label>
+                      <Select
+                        value={formData.storeId}
+                        onValueChange={(v) => setFormData({ ...formData, storeId: v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="Select Store" /></SelectTrigger>
+                        <SelectContent>
+                          {stores.map(store => (
+                            <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2">
+                  <input
+                    type="checkbox"
+                    id="cal-terms"
+                    checked={formData.accepted_terms}
+                    onChange={(e) => setFormData({ ...formData, accepted_terms: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="cal-terms" className="text-sm font-normal">Accepted Terms</Label>
+                </div>
+
+                <div className="flex items-center space-x-2 pb-2">
+                  <input
+                    type="checkbox"
+                    id="cal-consent"
+                    checked={formData.consent_communication}
+                    onChange={(e) => setFormData({ ...formData, consent_communication: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="cal-consent" className="text-sm font-normal">Consent to Communication</Label>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Notes</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    placeholder="Additional notes about the appointment..."
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Custom Data (JSON)</Label>
+                  <Textarea
+                    placeholder='{"key": "value"}'
+                    value={customDataText}
+                    onChange={(e) => setCustomDataText(e.target.value)}
+                    rows={4}
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div className="flex gap-2 pt-4">
+                  <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1" onClick={handleAddAppointment} isLoading={isSubmitting}>
+                    {editingAppointment ? "Save Changes" : "Create"}
+                  </Button>
+                </div>
               </div>
             </div>
           </DialogContent>
