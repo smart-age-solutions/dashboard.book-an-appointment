@@ -607,6 +607,19 @@ export default function BookingPagesPage() {
                         </Select>
                       </div>
                       <div className="space-y-2">
+                        <Label>Break Between Appointments</Label>
+                        <Select value={formData.buffer_time_minutes.toString()} onValueChange={v => setFormData({...formData, buffer_time_minutes: parseInt(v)})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">No break</SelectItem>
+                            {[5, 10, 15, 20, 30, 45, 60].map(m => (
+                              <SelectItem key={m} value={m.toString()}>{m} minutes</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground italic">Extra time blocked before and after each booking — gives staff time to prepare or wrap up</p>
+                      </div>
+                      <div className="space-y-2">
                         <Label>Booking Window (days)</Label>
                         <Select value={formData.booking_window_days.toString()} onValueChange={v => setFormData({...formData, booking_window_days: parseInt(v)})}>
                           <SelectTrigger>
@@ -698,7 +711,7 @@ export default function BookingPagesPage() {
                   </div>
                   <div className="space-y-4">
                     <Label className="flex items-center gap-2 mb-3 font-semibold text-blue-600">
-                      <Mail className="h-4 w-4" /> Notification CC
+                      <Mail className="h-4 w-4" /> Send Copy To (BCC)
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
                       {allUsers.filter(user => user.id !== selectedUserId).map(user => (
@@ -716,7 +729,7 @@ export default function BookingPagesPage() {
                     </div>
 
                     <div className="pt-2 space-y-2">
-                      <Label className="text-xs font-medium text-muted-foreground">External Emails (CC)</Label>
+                      <Label className="text-xs font-medium text-muted-foreground">External Emails (BCC)</Label>
                       <Textarea 
                         placeholder="email1@example.com, email2@example.com"
                         className="h-20 text-sm"

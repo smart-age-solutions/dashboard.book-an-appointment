@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Edit2, Trash2, Mail, Eye, Code, Users, X } from "lucide-react";
+import { Plus, Edit2, Trash2, Mail, Eye, Code } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -32,11 +31,7 @@ interface EmailTemplate {
   subject: string;
   body_html: string;
   type: string;
-  ccRecipients: string[];
 }
-
-// Mock users for CC selection
-const initialUsers: any[] = [];
 
 const templateTypes = [
   { value: "confirmation", label: "Booking Confirmation" },
@@ -47,27 +42,21 @@ const templateTypes = [
   { value: "custom", label: "Custom" },
 ];
 
-const initialTemplates: EmailTemplate[] = [];
-
 export default function EmailTemplatesPage() {
   const { user } = useAuth();
-  const [templates, setTemplates] = useState<EmailTemplate[]>(initialTemplates);
+  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(
-    null,
-  );
-  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(
-    null,
-  );
+  const [editingTemplate, setEditingTemplate] = useState<EmailTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<EmailTemplate | null>(null);
   const [editorTab, setEditorTab] = useState<"visual" | "html">("html");
   const [formData, setFormData] = useState({
     name: "",
     subject: "",
     body_html: "",
     type: "confirmation",
-    ccRecipients: [] as string[],
   });
+  const [testEmail, setTestEmail] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -80,19 +69,10 @@ export default function EmailTemplatesPage() {
         api.get("/email-templates"),
         api.get("/teams/all-members"),
       ]);
-
-      const backendTemplates = templateData.templates;
-      setTemplates(backendTemplates.map((t: any) => ({
-        ...t,
-        ccRecipients: t.ccRecipients || []
-      })));
-      setAvailableUsers(userData.users);
+      setTemplates(templateData.templates || []);
+      setAvailableUsers(userData.users || []);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +99,6 @@ export default function EmailTemplatesPage() {
         subject: formData.subject,
         body_html: formData.body_html,
         type: formData.type,
-        ccRecipients: formData.ccRecipients,
       };
 
       if (editingTemplate) {
@@ -134,21 +113,17 @@ export default function EmailTemplatesPage() {
       setIsDialogOpen(false);
       setEditingTemplate(null);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleSendTest = async () => {
-    if (formData.ccRecipients.length === 0) {
+    if (!testEmail || !testEmail.includes("@")) {
       toast({
-        title: "No Recipients",
-        description: "Please select at least one BCC recipient to send a test email.",
+        title: "No recipient",
+        description: "Please enter a valid email address to send the test to.",
         variant: "destructive",
       });
       return;
@@ -159,12 +134,11 @@ export default function EmailTemplatesPage() {
       await api.post("/email-templates/test", {
         subject: formData.subject,
         body_html: formData.body_html,
-        ccRecipients: formData.ccRecipients,
+        to_email: testEmail,
       });
-
       toast({
         title: "Test Sent",
-        description: "A test email has been sent to the selected BCC recipients.",
+        description: `Test email sent to ${testEmail}.`,
       });
     } catch (error: any) {
       toast({
@@ -184,29 +158,13 @@ export default function EmailTemplatesPage() {
       subject: template.subject,
       body_html: template.body_html,
       type: template.type,
-      ccRecipients: template.ccRecipients,
     });
+    setTestEmail("");
     setIsDialogOpen(true);
-  };
-
-  const toggleRecipient = (userId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      ccRecipients: prev.ccRecipients.includes(userId)
-        ? prev.ccRecipients.filter((id) => id !== userId)
-        : [...prev.ccRecipients, userId],
-    }));
-  };
-
-  const getRecipientNames = (ids: string[]) => {
-    return ids
-      .map((id) => availableUsers.find((u) => u.id === id)?.name)
-      .filter(Boolean);
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("Are you sure you want to delete this template?")) return;
-    
     try {
       await api.delete(`/email-templates/${id}`);
       toast({ title: "Deleted", description: "Template deleted successfully" });
@@ -233,8 +191,8 @@ export default function EmailTemplatesPage() {
   <p>Best regards,<br><strong>{{store_name}}</strong></p>
 </div>`,
       type: "confirmation",
-      ccRecipients: [],
     });
+    setTestEmail("");
     setIsDialogOpen(true);
   };
 
@@ -276,30 +234,17 @@ export default function EmailTemplatesPage() {
     };
 
     let processed = content;
-
-    // 1. Handle {% if ... %} blocks (Simple implementation for preview)
     const ifBlockRegex = /{% *if +([^%]+) *%}([\s\S]*?){% *endif *%}/g;
     processed = processed.replace(ifBlockRegex, (_, condition, body) => {
       const trimmedCondition = condition.trim();
       const isNot = trimmedCondition.startsWith("not ");
-      const varName = isNot
-        ? trimmedCondition.substring(4).trim()
-        : trimmedCondition;
-
-      // Check if variable exists and is truthy in mock context
+      const varName = isNot ? trimmedCondition.substring(4).trim() : trimmedCondition;
       const value = mockContext[varName];
-      const isTrue = isNot ? !value : !!value;
-
-      return isTrue ? body : "";
+      return (isNot ? !value : !!value) ? body : "";
     });
-
-    // 2. Handle {{ variable }} replacements
-    return processed.replace(/{{ *([\w_.]+) *}}/g, (match, varName) => {
-      // Handle simple property access if needed, but for now just flat mapping
-      return mockContext[varName] !== undefined
-        ? String(mockContext[varName])
-        : match;
-    });
+    return processed.replace(/{{ *([\w_.]+) *}}/g, (match, varName) =>
+      mockContext[varName] !== undefined ? String(mockContext[varName]) : match
+    );
   };
 
   const stripHtml = (html: string) => {
@@ -323,9 +268,7 @@ export default function EmailTemplatesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Email Templates
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground">Email Templates</h1>
             <p className="mt-1 text-muted-foreground">
               Customize automated emails with HTML support
             </p>
@@ -344,37 +287,15 @@ export default function EmailTemplatesPage() {
             </p>
             <div className="flex flex-wrap gap-2">
               {[
-                "{{name}}",
-                "{{client_name}}",
-                "{{service}}",
-                "{{date}}",
-                "{{time}}",
-                "{{company_name}}",
-                "{{store_address}}",
-                "{{appointment_id}}",
-                "{{edit_url}}",
-                "{{cancel_url}}",
-                "{{logo_url}}",
-                "{{brand_color}}",
-                "{{first_name}}",
-                "{{last_name}}",
-                "{{title}}",
-                "{{store_url}}",
-                "{{store_phone}}",
-                "{{map_url}}",
-                "{{map_image_url}}",
-                "{{lat}}",
-                "{{lng}}",
-                "{{latitude}}",
-                "{{longitude}}",
-                "{{show_map}}",
-                "{{preferred_communication}}",
-                "{{cancellation_reason}}",
+                "{{name}}", "{{client_name}}", "{{service}}", "{{date}}", "{{time}}",
+                "{{company_name}}", "{{store_address}}", "{{appointment_id}}",
+                "{{edit_url}}", "{{cancel_url}}", "{{logo_url}}", "{{brand_color}}",
+                "{{first_name}}", "{{last_name}}", "{{title}}", "{{store_url}}",
+                "{{store_phone}}", "{{map_url}}", "{{map_image_url}}", "{{lat}}",
+                "{{lng}}", "{{latitude}}", "{{longitude}}", "{{show_map}}",
+                "{{preferred_communication}}", "{{cancellation_reason}}",
               ].map((v) => (
-                <code
-                  key={v}
-                  className="px-2 py-1 rounded bg-muted text-xs text-muted-foreground font-mono"
-                >
+                <code key={v} className="px-2 py-1 rounded bg-muted text-xs text-muted-foreground font-mono">
                   {v}
                 </code>
               ))}
@@ -385,90 +306,43 @@ export default function EmailTemplatesPage() {
         {/* Templates Grid */}
         <div className="grid gap-4 md:grid-cols-2">
           {templates.map((template) => (
-            <div
-              key={template.id}
-              className="rounded-xl bg-card p-6 card-shadow"
-            >
+            <div key={template.id} className="rounded-xl bg-card p-6 card-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-accent">
                     <Mail className="h-5 w-5 text-accent-foreground" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-card-foreground">
-                      {template.name}
-                    </h3>
+                    <h3 className="font-semibold text-card-foreground">{template.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {
-                        templateTypes.find((t) => t.value === template.type)
-                          ?.label
-                      }
+                      {templateTypes.find((t) => t.value === template.type)?.label}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-xs">
-                    <Code className="h-3 w-3 mr-1" />
-                    HTML
-                  </Badge>
-                </div>
+                <Badge variant="outline" className="text-xs">
+                  <Code className="h-3 w-3 mr-1" />
+                  HTML
+                </Badge>
               </div>
               <div className="mb-4">
-                <p className="text-sm font-medium text-card-foreground mb-1">
-                  Subject:
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {template.subject}
-                </p>
+                <p className="text-sm font-medium text-card-foreground mb-1">Subject:</p>
+                <p className="text-sm text-muted-foreground">{template.subject}</p>
               </div>
               <div className="mb-4">
-                <p className="text-sm font-medium text-card-foreground mb-1">
-                  Preview:
-                </p>
+                <p className="text-sm font-medium text-card-foreground mb-1">Preview:</p>
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {stripHtml(getPreviewContent(template.body_html)).slice(0, 120)}...
                 </p>
               </div>
-              {template.ccRecipients.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm font-medium text-card-foreground mb-2 flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    BCC Recipients:
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {getRecipientNames(template.ccRecipients).map(
-                      (name, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {name}
-                        </Badge>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => handlePreview(template)}
-                >
+                <Button variant="outline" size="sm" className="flex-1" onClick={() => handlePreview(template)}>
                   <Eye className="h-4 w-4 mr-1" />
                   Preview
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleEdit(template)}
-                >
+                <Button variant="outline" size="sm" onClick={() => handleEdit(template)}>
                   <Edit2 className="h-4 w-4" />
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-destructive"
-                  onClick={() => handleDelete(template.id)}
-                >
+                <Button variant="outline" size="sm" className="text-destructive" onClick={() => handleDelete(template.id)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -480,9 +354,7 @@ export default function EmailTemplatesPage() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingTemplate ? "Edit Template" : "New Template"}
-              </DialogTitle>
+              <DialogTitle>{editingTemplate ? "Edit Template" : "New Template"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -490,56 +362,42 @@ export default function EmailTemplatesPage() {
                   <Label>Template Name</Label>
                   <Input
                     value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Booking Confirmation"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(v) => setFormData({ ...formData, type: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {templateTypes.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
+                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+
               <div className="space-y-2">
                 <Label>Subject Line</Label>
                 <Input
                   value={formData.subject}
-                  onChange={(e) =>
-                    setFormData({ ...formData, subject: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="e.g., Your appointment has been confirmed"
                 />
               </div>
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Email Body (HTML)</Label>
-                  <Tabs
-                    value={editorTab}
-                    onValueChange={(v) => setEditorTab(v as "visual" | "html")}
-                  >
+                  <Tabs value={editorTab} onValueChange={(v) => setEditorTab(v as "visual" | "html")}>
                     <TabsList className="h-8">
                       <TabsTrigger value="html" className="text-xs px-3 h-6">
-                        <Code className="h-3 w-3 mr-1" />
-                        HTML
+                        <Code className="h-3 w-3 mr-1" />HTML
                       </TabsTrigger>
                       <TabsTrigger value="visual" className="text-xs px-3 h-6">
-                        <Eye className="h-3 w-3 mr-1" />
-                        Preview
+                        <Eye className="h-3 w-3 mr-1" />Preview
                       </TabsTrigger>
                     </TabsList>
                   </Tabs>
@@ -549,67 +407,52 @@ export default function EmailTemplatesPage() {
                     rows={15}
                     className="font-mono text-sm"
                     value={formData.body_html}
-                    onChange={(e) =>
-                      setFormData({ ...formData, body_html: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, body_html: e.target.value })}
                     placeholder="<div>Enter your HTML email content here...</div>"
                   />
                 ) : (
                   <div
                     className="border border-border rounded-lg p-4 min-h-[300px] bg-card overflow-auto"
-                    dangerouslySetInnerHTML={{
-                      __html: getPreviewContent(formData.body_html),
-                    }}
+                    dangerouslySetInnerHTML={{ __html: getPreviewContent(formData.body_html) }}
                   />
                 )}
               </div>
 
-              {/* CC Recipients Section */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <Label>Send Copy To (BCC)</Label>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Select team members who will receive a copy of this email
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  {availableUsers.map((user) => (
-                    <div
-                      key={user.id}
-                      className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                        formData.ccRecipients.includes(user.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                      onClick={() => toggleRecipient(user.id)}
-                    >
-                      <Checkbox
-                        checked={formData.ccRecipients.includes(user.id)}
-                        onCheckedChange={() => toggleRecipient(user.id)}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-card-foreground truncate">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground truncate">
-                          {user.email}
-                        </p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs shrink-0">
-                        {user.role}
-                      </Badge>
-                    </div>
-                  ))}
+              {/* Send Test section */}
+              <div className="space-y-2 pt-2 border-t border-border">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  Send Test To
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="email@example.com"
+                    value={testEmail}
+                    onChange={(e) => setTestEmail(e.target.value)}
+                    className="flex-1"
+                  />
+                  <Select
+                    onValueChange={(userId) => {
+                      const picked = availableUsers.find((u) => u.id === userId);
+                      if (picked) setTestEmail(picked.email);
+                    }}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Pick from team..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableUsers.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => setIsDialogOpen(false)}
-                >
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button
@@ -617,7 +460,7 @@ export default function EmailTemplatesPage() {
                   className="flex-1"
                   onClick={handleSendTest}
                   isLoading={isTesting}
-                  disabled={isSubmitting || isTesting}
+                  disabled={isSubmitting || isTesting || !testEmail}
                 >
                   <Mail className="h-4 w-4 mr-2" />
                   Send Test
@@ -652,9 +495,7 @@ export default function EmailTemplatesPage() {
                   </div>
                   <div
                     className="p-6 bg-card"
-                    dangerouslySetInnerHTML={{
-                      __html: getPreviewContent(previewTemplate.body_html),
-                    }}
+                    dangerouslySetInnerHTML={{ __html: getPreviewContent(previewTemplate.body_html) }}
                   />
                 </div>
               </div>

@@ -41,6 +41,7 @@ interface Appointment {
   customData?: Record<string, any>;
   storeId: string;
   staffName?: string;
+  userId?: string;
 }
 
 interface BookingPageHour {
@@ -98,11 +99,13 @@ export default function AppointmentsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [customDataText, setCustomDataText] = useState("");
-  const [editFormData, setEditFormData] = useState<Partial<Appointment & { first_name: string; last_name: string }>>({});
+  const [editFormData, setEditFormData] = useState<Partial<Appointment & { first_name: string; last_name: string; userId: string }>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const perPage = 50;
+
+  const [allUsers, setAllUsers] = useState<{ id: string; name: string }[]>([]);
 
   const [bookingPages, setBookingPages] = useState<BookingPageOption[]>([]);
   const [newApptBookingPageId, setNewApptBookingPageId] = useState("");
@@ -212,6 +215,7 @@ export default function AppointmentsPage() {
         customData: apt.custom_data || {},
         storeId: apt.store_id || "",
         staffName: apt.user_name || "",
+        userId: apt.user_id || "",
       }));
       
       setAppointments(transformed);
@@ -229,6 +233,9 @@ export default function AppointmentsPage() {
     fetchAppointments(1);
     api.get("/booking-pages").then((res: any) => {
       setBookingPages(res.booking_pages || []);
+    }).catch(() => {});
+    api.get("/teams/all-members").then((res: any) => {
+      setAllUsers(res.users || []);
     }).catch(() => {});
   }, [statusFilter]);
 
@@ -265,6 +272,7 @@ export default function AppointmentsPage() {
       status: apt.status,
       notes: apt.notes,
       storeId: apt.storeId,
+      userId: apt.userId,
     });
     setCustomDataText(apt.customData ? JSON.stringify(apt.customData, null, 2) : "");
     setIsEditDialogOpen(true);
@@ -284,6 +292,7 @@ export default function AppointmentsPage() {
       if (editFormData.status) payload.status = editFormData.status;
       if (editFormData.notes !== undefined) payload.notes = editFormData.notes;
       if (editFormData.storeId) payload.store_id = editFormData.storeId;
+      payload.user_id = editFormData.userId || null;
       if (editFormData.title) payload.title = editFormData.title;
       if (editFormData.phone_area_code) payload.phone_area_code = editFormData.phone_area_code;
       if (editFormData.country_of_residence) payload.country_of_residence = editFormData.country_of_residence;
@@ -804,6 +813,29 @@ export default function AppointmentsPage() {
                   </Select>
                 </div>
               </div>
+
+              {allUsers.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
+                    Assigned Staff
+                  </Label>
+                  <Select
+                    value={editFormData.userId || "unassigned"}
+                    onValueChange={(v) => setEditFormData({ ...editFormData, userId: v === "unassigned" ? "" : v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select staff member" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                      {allUsers.map(user => (
+                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label>Email</Label>
