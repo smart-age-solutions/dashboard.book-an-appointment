@@ -13,6 +13,8 @@ import {
   startOfDay,
 } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import {
   ChevronLeft,
   ChevronRight,
@@ -28,6 +30,7 @@ import {
   UserCheck,
   Ban,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -113,6 +116,195 @@ const statusStyles: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
+const AREA_CODES = [
+  { code: "+1",   label: "+1 (United States / Canada)" },
+  { code: "+93",  label: "+93 (Afghanistan)" },
+  { code: "+355", label: "+355 (Albania)" },
+  { code: "+213", label: "+213 (Algeria)" },
+  { code: "+376", label: "+376 (Andorra)" },
+  { code: "+244", label: "+244 (Angola)" },
+  { code: "+54",  label: "+54 (Argentina)" },
+  { code: "+374", label: "+374 (Armenia)" },
+  { code: "+297", label: "+297 (Aruba)" },
+  { code: "+61",  label: "+61 (Australia)" },
+  { code: "+43",  label: "+43 (Austria)" },
+  { code: "+994", label: "+994 (Azerbaijan)" },
+  { code: "+973", label: "+973 (Bahrain)" },
+  { code: "+880", label: "+880 (Bangladesh)" },
+  { code: "+375", label: "+375 (Belarus)" },
+  { code: "+32",  label: "+32 (Belgium)" },
+  { code: "+501", label: "+501 (Belize)" },
+  { code: "+229", label: "+229 (Benin)" },
+  { code: "+975", label: "+975 (Bhutan)" },
+  { code: "+591", label: "+591 (Bolivia)" },
+  { code: "+387", label: "+387 (Bosnia and Herzegovina)" },
+  { code: "+267", label: "+267 (Botswana)" },
+  { code: "+55",  label: "+55 (Brazil)" },
+  { code: "+673", label: "+673 (Brunei)" },
+  { code: "+359", label: "+359 (Bulgaria)" },
+  { code: "+226", label: "+226 (Burkina Faso)" },
+  { code: "+257", label: "+257 (Burundi)" },
+  { code: "+855", label: "+855 (Cambodia)" },
+  { code: "+237", label: "+237 (Cameroon)" },
+  { code: "+238", label: "+238 (Cape Verde)" },
+  { code: "+236", label: "+236 (Central African Republic)" },
+  { code: "+235", label: "+235 (Chad)" },
+  { code: "+56",  label: "+56 (Chile)" },
+  { code: "+86",  label: "+86 (China)" },
+  { code: "+57",  label: "+57 (Colombia)" },
+  { code: "+269", label: "+269 (Comoros)" },
+  { code: "+242", label: "+242 (Congo)" },
+  { code: "+682", label: "+682 (Cook Islands)" },
+  { code: "+506", label: "+506 (Costa Rica)" },
+  { code: "+385", label: "+385 (Croatia)" },
+  { code: "+53",  label: "+53 (Cuba)" },
+  { code: "+357", label: "+357 (Cyprus)" },
+  { code: "+420", label: "+420 (Czech Republic)" },
+  { code: "+45",  label: "+45 (Denmark)" },
+  { code: "+253", label: "+253 (Djibouti)" },
+  { code: "+1",   label: "+1 (Dominican Republic)" },
+  { code: "+593", label: "+593 (Ecuador)" },
+  { code: "+20",  label: "+20 (Egypt)" },
+  { code: "+503", label: "+503 (El Salvador)" },
+  { code: "+240", label: "+240 (Equatorial Guinea)" },
+  { code: "+291", label: "+291 (Eritrea)" },
+  { code: "+372", label: "+372 (Estonia)" },
+  { code: "+251", label: "+251 (Ethiopia)" },
+  { code: "+679", label: "+679 (Fiji)" },
+  { code: "+358", label: "+358 (Finland)" },
+  { code: "+33",  label: "+33 (France)" },
+  { code: "+241", label: "+241 (Gabon)" },
+  { code: "+220", label: "+220 (Gambia)" },
+  { code: "+995", label: "+995 (Georgia)" },
+  { code: "+49",  label: "+49 (Germany)" },
+  { code: "+233", label: "+233 (Ghana)" },
+  { code: "+30",  label: "+30 (Greece)" },
+  { code: "+299", label: "+299 (Greenland)" },
+  { code: "+502", label: "+502 (Guatemala)" },
+  { code: "+224", label: "+224 (Guinea)" },
+  { code: "+245", label: "+245 (Guinea-Bissau)" },
+  { code: "+592", label: "+592 (Guyana)" },
+  { code: "+509", label: "+509 (Haiti)" },
+  { code: "+504", label: "+504 (Honduras)" },
+  { code: "+852", label: "+852 (Hong Kong)" },
+  { code: "+36",  label: "+36 (Hungary)" },
+  { code: "+354", label: "+354 (Iceland)" },
+  { code: "+91",  label: "+91 (India)" },
+  { code: "+62",  label: "+62 (Indonesia)" },
+  { code: "+98",  label: "+98 (Iran)" },
+  { code: "+964", label: "+964 (Iraq)" },
+  { code: "+353", label: "+353 (Ireland)" },
+  { code: "+972", label: "+972 (Israel)" },
+  { code: "+39",  label: "+39 (Italy)" },
+  { code: "+81",  label: "+81 (Japan)" },
+  { code: "+962", label: "+962 (Jordan)" },
+  { code: "+7",   label: "+7 (Kazakhstan)" },
+  { code: "+254", label: "+254 (Kenya)" },
+  { code: "+686", label: "+686 (Kiribati)" },
+  { code: "+965", label: "+965 (Kuwait)" },
+  { code: "+996", label: "+996 (Kyrgyzstan)" },
+  { code: "+856", label: "+856 (Laos)" },
+  { code: "+371", label: "+371 (Latvia)" },
+  { code: "+961", label: "+961 (Lebanon)" },
+  { code: "+266", label: "+266 (Lesotho)" },
+  { code: "+231", label: "+231 (Liberia)" },
+  { code: "+218", label: "+218 (Libya)" },
+  { code: "+423", label: "+423 (Liechtenstein)" },
+  { code: "+370", label: "+370 (Lithuania)" },
+  { code: "+352", label: "+352 (Luxembourg)" },
+  { code: "+853", label: "+853 (Macau)" },
+  { code: "+389", label: "+389 (Macedonia)" },
+  { code: "+261", label: "+261 (Madagascar)" },
+  { code: "+265", label: "+265 (Malawi)" },
+  { code: "+60",  label: "+60 (Malaysia)" },
+  { code: "+960", label: "+960 (Maldives)" },
+  { code: "+223", label: "+223 (Mali)" },
+  { code: "+356", label: "+356 (Malta)" },
+  { code: "+692", label: "+692 (Marshall Islands)" },
+  { code: "+222", label: "+222 (Mauritania)" },
+  { code: "+230", label: "+230 (Mauritius)" },
+  { code: "+52",  label: "+52 (Mexico)" },
+  { code: "+691", label: "+691 (Micronesia)" },
+  { code: "+373", label: "+373 (Moldova)" },
+  { code: "+377", label: "+377 (Monaco)" },
+  { code: "+976", label: "+976 (Mongolia)" },
+  { code: "+382", label: "+382 (Montenegro)" },
+  { code: "+212", label: "+212 (Morocco)" },
+  { code: "+258", label: "+258 (Mozambique)" },
+  { code: "+95",  label: "+95 (Myanmar)" },
+  { code: "+264", label: "+264 (Namibia)" },
+  { code: "+674", label: "+674 (Nauru)" },
+  { code: "+977", label: "+977 (Nepal)" },
+  { code: "+31",  label: "+31 (Netherlands)" },
+  { code: "+64",  label: "+64 (New Zealand)" },
+  { code: "+505", label: "+505 (Nicaragua)" },
+  { code: "+227", label: "+227 (Niger)" },
+  { code: "+234", label: "+234 (Nigeria)" },
+  { code: "+47",  label: "+47 (Norway)" },
+  { code: "+968", label: "+968 (Oman)" },
+  { code: "+92",  label: "+92 (Pakistan)" },
+  { code: "+680", label: "+680 (Palau)" },
+  { code: "+507", label: "+507 (Panama)" },
+  { code: "+675", label: "+675 (Papua New Guinea)" },
+  { code: "+595", label: "+595 (Paraguay)" },
+  { code: "+51",  label: "+51 (Peru)" },
+  { code: "+63",  label: "+63 (Philippines)" },
+  { code: "+48",  label: "+48 (Poland)" },
+  { code: "+351", label: "+351 (Portugal)" },
+  { code: "+974", label: "+974 (Qatar)" },
+  { code: "+40",  label: "+40 (Romania)" },
+  { code: "+7",   label: "+7 (Russia)" },
+  { code: "+250", label: "+250 (Rwanda)" },
+  { code: "+685", label: "+685 (Samoa)" },
+  { code: "+378", label: "+378 (San Marino)" },
+  { code: "+239", label: "+239 (Sao Tome and Principe)" },
+  { code: "+966", label: "+966 (Saudi Arabia)" },
+  { code: "+221", label: "+221 (Senegal)" },
+  { code: "+381", label: "+381 (Serbia)" },
+  { code: "+248", label: "+248 (Seychelles)" },
+  { code: "+232", label: "+232 (Sierra Leone)" },
+  { code: "+65",  label: "+65 (Singapore)" },
+  { code: "+421", label: "+421 (Slovakia)" },
+  { code: "+386", label: "+386 (Slovenia)" },
+  { code: "+677", label: "+677 (Solomon Islands)" },
+  { code: "+252", label: "+252 (Somalia)" },
+  { code: "+27",  label: "+27 (South Africa)" },
+  { code: "+82",  label: "+82 (South Korea)" },
+  { code: "+34",  label: "+34 (Spain)" },
+  { code: "+94",  label: "+94 (Sri Lanka)" },
+  { code: "+249", label: "+249 (Sudan)" },
+  { code: "+597", label: "+597 (Suriname)" },
+  { code: "+268", label: "+268 (Swaziland)" },
+  { code: "+46",  label: "+46 (Sweden)" },
+  { code: "+41",  label: "+41 (Switzerland)" },
+  { code: "+963", label: "+963 (Syria)" },
+  { code: "+886", label: "+886 (Taiwan)" },
+  { code: "+992", label: "+992 (Tajikistan)" },
+  { code: "+255", label: "+255 (Tanzania)" },
+  { code: "+66",  label: "+66 (Thailand)" },
+  { code: "+228", label: "+228 (Togo)" },
+  { code: "+690", label: "+690 (Tokelau)" },
+  { code: "+676", label: "+676 (Tonga)" },
+  { code: "+216", label: "+216 (Tunisia)" },
+  { code: "+90",  label: "+90 (Turkey)" },
+  { code: "+993", label: "+993 (Turkmenistan)" },
+  { code: "+688", label: "+688 (Tuvalu)" },
+  { code: "+256", label: "+256 (Uganda)" },
+  { code: "+380", label: "+380 (Ukraine)" },
+  { code: "+971", label: "+971 (United Arab Emirates)" },
+  { code: "+44",  label: "+44 (United Kingdom)" },
+  { code: "+598", label: "+598 (Uruguay)" },
+  { code: "+998", label: "+998 (Uzbekistan)" },
+  { code: "+678", label: "+678 (Vanuatu)" },
+  { code: "+58",  label: "+58 (Venezuela)" },
+  { code: "+84",  label: "+84 (Vietnam)" },
+  { code: "+967", label: "+967 (Yemen)" },
+  { code: "+260", label: "+260 (Zambia)" },
+  { code: "+263", label: "+263 (Zimbabwe)" },
+];
+
+const COMM_OPTIONS = ["Email", "Phone", "WhatsApp", "SMS"];
+
 const initialAppointments: Appointment[] = [];
 
 export default function CalendarPage() {
@@ -142,7 +334,7 @@ export default function CalendarPage() {
     phone: "",
     phone_area_code: "",
     country_of_residence: "",
-    preferred_communication: "email",
+    preferred_communication: "",
     accepted_terms: false,
     consent_communication: false,
     notes: "",
@@ -185,7 +377,7 @@ export default function CalendarPage() {
         phone: apt.phone || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
-        preferred_communication: (apt.preferred_communication || "email").toLowerCase(),
+        preferred_communication: apt.preferred_communication || "",
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
         notes: apt.notes || "",
@@ -404,7 +596,7 @@ export default function CalendarPage() {
       phone: "",
       phone_area_code: "",
       country_of_residence: "",
-      preferred_communication: "email",
+      preferred_communication: "",
       accepted_terms: false,
       consent_communication: false,
       notes: "",
@@ -908,306 +1100,257 @@ export default function CalendarPage() {
 
         {/* Add/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
                 {editingAppointment ? "Edit Appointment" : "New Appointment"}
               </DialogTitle>
             </DialogHeader>
-            <div className="max-h-[600px] overflow-y-auto pr-2">
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-1 space-y-2">
-                    <Label>Title</Label>
-                    <Select
-                      value={formData.title}
-                      onValueChange={(v) => setFormData({ ...formData, title: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Title" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Mr">Mr.</SelectItem>
-                        <SelectItem value="Mrs">Mrs.</SelectItem>
-                        <SelectItem value="Ms">Ms.</SelectItem>
-                        <SelectItem value="Dr">Dr.</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-3 grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>First Name *</Label>
-                      <Input
-                        value={formData.first_name}
-                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                        placeholder="John"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Last Name</Label>
-                      <Input
-                        value={formData.last_name}
-                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                        placeholder="Doe"
-                      />
-                    </div>
-                  </div>
-                </div>
+            <div className="max-h-[75vh] overflow-y-auto pr-1 -mr-1">
+              <div className="space-y-6 py-2">
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Service</Label>
-                    <Input
-                      value={formData.service}
-                      onChange={(e) => setFormData({ ...formData, service: e.target.value })}
-                      placeholder="e.g., Ring Consultation"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(v) => setFormData({ ...formData, status: v as Appointment["status"] })}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                {allUsers.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-muted-foreground" />
-                      Assigned Staff
-                    </Label>
-                    <Select
-                      value={formData.userId || "unassigned"}
-                      onValueChange={(v) => setFormData({ ...formData, userId: v === "unassigned" ? "" : v })}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Select staff member" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">— Unassigned —</SelectItem>
-                        {allUsers.map(user => (
-                          <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Identity header (edit only) */}
+                {editingAppointment && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-card-foreground truncate">{editingAppointment.client}</p>
+                      <p className="text-xs text-muted-foreground truncate">{editingAppointment.email}</p>
+                    </div>
+                    <Badge variant="outline" className={cn("ml-auto capitalize flex-shrink-0", statusStyles[editingAppointment.status])}>
+                      {editingAppointment.status}
+                    </Badge>
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="client@email.com"
-                  />
-                </div>
+                {/* ── Customer Information ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer Information</p>
+                  <Separator />
 
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-2 space-y-2">
-                    <Label>Phone Country Code</Label>
-                    <Input
-                      value={formData.phone_area_code}
-                      onChange={(e) => setFormData({ ...formData, phone_area_code: e.target.value })}
-                      placeholder="+1"
-                    />
-                  </div>
-                  <div className="col-span-2 space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Country of Residence</Label>
-                    <Input
-                      value={formData.country_of_residence}
-                      onChange={(e) => setFormData({ ...formData, country_of_residence: e.target.value })}
-                      placeholder="USA"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Preferred Communication</Label>
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
-                      {([
-                        { value: "email", label: "Email" },
-                        { value: "phone", label: "Phone" },
-                        { value: "text", label: "Text message" },
-                        { value: "whatsapp", label: "WhatsApp" },
-                      ] as const).map(({ value, label }) => {
-                        const parts = (formData.preferred_communication || "").split(", ").filter(Boolean);
-                        return (
-                          <div key={value} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`cal-comm-${value}`}
-                              checked={parts.includes(value)}
-                              onChange={() => {
-                                const next = [...parts];
-                                const idx = next.indexOf(value);
-                                if (idx >= 0) next.splice(idx, 1); else next.push(value);
-                                setFormData({ ...formData, preferred_communication: next.join(", ") });
-                              }}
-                              className="rounded border-gray-300"
-                            />
-                            <Label htmlFor={`cal-comm-${value}`} className="text-sm font-normal">{label}</Label>
-                          </div>
-                        );
-                      })}
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-2 space-y-1.5">
+                      <Label className="text-xs">Title</Label>
+                      <Select value={formData.title} onValueChange={(v) => setFormData({ ...formData, title: v })}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="—" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          <SelectItem value="Mr.">Mr.</SelectItem>
+                          <SelectItem value="Ms.">Ms.</SelectItem>
+                          <SelectItem value="Mrs.">Mrs.</SelectItem>
+                          <SelectItem value="Dr.">Dr.</SelectItem>
+                          <SelectItem value="Prof.">Prof.</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-5 space-y-1.5">
+                      <Label className="text-xs">First Name <span className="text-destructive">*</span></Label>
+                      <Input className="h-9" placeholder="John" value={formData.first_name} onChange={(e) => setFormData({ ...formData, first_name: e.target.value })} />
+                    </div>
+                    <div className="col-span-5 space-y-1.5">
+                      <Label className="text-xs">Last Name</Label>
+                      <Input className="h-9" placeholder="Doe" value={formData.last_name} onChange={(e) => setFormData({ ...formData, last_name: e.target.value })} />
                     </div>
                   </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Date *</Label>
-                    <Input
-                      type="date"
-                      value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
-                      onChange={(e) => {
-                        setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null);
-                        setFormData(prev => ({ ...prev, time: "09:00" }));
-                      }}
-                    />
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Email</Label>
+                    <Input className="h-9" type="email" placeholder="client@email.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Time</Label>
-                    {(() => {
-                      const page = selectedBookingPageId && selectedBookingPageId !== "all"
-                        ? bookingPages.find(p => p.id === selectedBookingPageId)
-                        : null;
-                      if (page && selectedDate) {
-                        const jsDay = selectedDate.getDay();
-                        const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
-                        const dayHour = (page as any).hours?.find((h: any) => h.day_of_week === dayOfWeek && h.is_active);
-                        if (dayHour) {
-                          const slots = generateCalendarTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60);
-                          return (
-                            <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto">
-                              {slots.map(slot => (
-                                <button
-                                  key={slot}
-                                  type="button"
-                                  onClick={() => setFormData({ ...formData, time: slot })}
-                                  className={cn(
-                                    "py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
-                                    formData.time === slot
-                                      ? "bg-primary text-primary-foreground border-primary"
-                                      : "bg-background border-border text-foreground hover:border-primary/50"
-                                  )}
-                                >
-                                  {formatCalTime(slot)}
-                                </button>
-                              ))}
-                            </div>
-                          );
-                        }
-                      }
-                      return (
-                        <Input
-                          value={formData.time}
-                          onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                          placeholder="09:00"
-                        />
-                      );
-                    })()}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Duration</Label>
-                    <Select
-                      value={formData.duration || "60"}
-                      onValueChange={(v) => setFormData({ ...formData, duration: v })}
-                    >
-                      <SelectTrigger><SelectValue placeholder="Duration" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 min</SelectItem>
-                        <SelectItem value="30">30 min</SelectItem>
-                        <SelectItem value="45">45 min</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="90">1.5 hours</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {stores.length > 1 && (
-                    <div className="space-y-2">
-                      <Label>Store</Label>
-                      <Select
-                        value={formData.storeId}
-                        onValueChange={(v) => setFormData({ ...formData, storeId: v })}
-                      >
-                        <SelectTrigger><SelectValue placeholder="Select Store" /></SelectTrigger>
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-4 space-y-1.5">
+                      <Label className="text-xs">Area Code</Label>
+                      <Select value={formData.phone_area_code} onValueChange={(v) => setFormData({ ...formData, phone_area_code: v })}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="+1" /></SelectTrigger>
                         <SelectContent>
-                          {stores.map(store => (
-                            <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                          {AREA_CODES.map((a, i) => (
+                            <SelectItem key={`${a.code}-${i}`} value={a.code}>{a.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-8 space-y-1.5">
+                      <Label className="text-xs">Phone</Label>
+                      <Input className="h-9" type="tel" placeholder="555 000 0000" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Country of Residence</Label>
+                    <Input className="h-9" placeholder="United States" value={formData.country_of_residence} onChange={(e) => setFormData({ ...formData, country_of_residence: e.target.value })} />
+                  </div>
+                </div>
+
+                {/* ── Appointment Details ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appointment Details</p>
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Service / Purpose <span className="text-destructive">*</span></Label>
+                      <Input className="h-9" placeholder="e.g., Ring Consultation" value={formData.service} onChange={(e) => setFormData({ ...formData, service: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Status</Label>
+                      <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Appointment["status"] })}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {allUsers.length > 0 && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <UserCheck className="h-3 w-3" /> Assigned Staff
+                      </Label>
+                      <Select value={formData.userId || "unassigned"} onValueChange={(v) => setFormData({ ...formData, userId: v === "unassigned" ? "" : v })}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Select staff member" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                          {allUsers.map(user => (
+                            <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Date <span className="text-destructive">*</span></Label>
+                      <Input className="h-9" type="date"
+                        value={selectedDate ? format(selectedDate, "yyyy-MM-dd") : ""}
+                        onChange={(e) => { setSelectedDate(e.target.value ? parseLocalDate(e.target.value) : null); setFormData(prev => ({ ...prev, time: "09:00" })); }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Time</Label>
+                      {(() => {
+                        const page = selectedBookingPageId && selectedBookingPageId !== "all"
+                          ? bookingPages.find(p => p.id === selectedBookingPageId)
+                          : null;
+                        if (page && selectedDate) {
+                          const jsDay = selectedDate.getDay();
+                          const dayOfWeek = jsDay === 0 ? 6 : jsDay - 1;
+                          const dayHour = (page as any).hours?.find((h: any) => h.day_of_week === dayOfWeek && h.is_active);
+                          if (dayHour) {
+                            const slots = generateCalendarTimeSlots(dayHour.start_time, dayHour.end_time, page.slot_duration_minutes || 60);
+                            return (
+                              <div className="grid grid-cols-3 gap-1 max-h-28 overflow-y-auto">
+                                {slots.map(slot => (
+                                  <button key={slot} type="button" onClick={() => setFormData({ ...formData, time: slot })}
+                                    className={cn("py-1.5 px-1 rounded-lg text-xs font-medium border-2 transition-colors",
+                                      formData.time === slot ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-foreground hover:border-primary/50"
+                                    )}>
+                                    {formatCalTime(slot)}
+                                  </button>
+                                ))}
+                              </div>
+                            );
+                          }
+                        }
+                        return <Input className="h-9" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} />;
+                      })()}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Duration</Label>
+                      <Select value={formData.duration || "60"} onValueChange={(v) => setFormData({ ...formData, duration: v })}>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="Duration" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 min</SelectItem>
+                          <SelectItem value="30">30 min</SelectItem>
+                          <SelectItem value="45">45 min</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="90">1.5 hours</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {stores.length > 1 && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Store</Label>
+                        <Select value={formData.storeId} onValueChange={(v) => setFormData({ ...formData, storeId: v })}>
+                          <SelectTrigger className="h-9"><SelectValue placeholder="Select Store" /></SelectTrigger>
+                          <SelectContent>
+                            {stores.map(store => (
+                              <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="cal-terms"
-                    checked={formData.accepted_terms}
-                    onChange={(e) => setFormData({ ...formData, accepted_terms: e.target.checked })}
-                    className="rounded border-gray-300"
-                  />
-                  <Label htmlFor="cal-terms" className="text-sm font-normal">Accepted Terms</Label>
+                {/* ── Communication ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="h-3 w-3" /> Communication
+                  </p>
+                  <Separator />
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Preferred Channels</Label>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      {COMM_OPTIONS.map((value) => {
+                        const parts = (formData.preferred_communication || "").split(", ").filter(Boolean);
+                        const active = parts.includes(value);
+                        return (
+                          <button key={value} type="button"
+                            onClick={() => { const next = active ? parts.filter(v => v !== value) : [...parts, value]; setFormData({ ...formData, preferred_communication: next.join(", ") }); }}
+                            className={cn("px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-all",
+                              active ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                            )}>
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                      <Label className="text-sm font-normal cursor-pointer" htmlFor="cal-terms">Accepted Terms</Label>
+                      <Switch id="cal-terms" checked={formData.accepted_terms} onCheckedChange={(v) => setFormData({ ...formData, accepted_terms: v })} />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                      <Label className="text-sm font-normal cursor-pointer" htmlFor="cal-consent">Consent to Comms</Label>
+                      <Switch id="cal-consent" checked={formData.consent_communication} onCheckedChange={(v) => setFormData({ ...formData, consent_communication: v })} />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-2 pb-2">
-                  <input
-                    type="checkbox"
-                    id="cal-consent"
-                    checked={formData.consent_communication}
-                    onChange={(e) => setFormData({ ...formData, consent_communication: e.target.checked })}
-                    className="rounded border-gray-300"
-                  />
-                  <Label htmlFor="cal-consent" className="text-sm font-normal">Consent to Communication</Label>
+                {/* ── Notes & Data ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes & Data</p>
+                  <Separator />
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea rows={3} value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} placeholder="Additional notes about the appointment..." />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Custom Data (JSON)</Label>
+                    <Textarea rows={3} className="font-mono text-xs" placeholder='{"key": "value"}' value={customDataText} onChange={(e) => setCustomDataText(e.target.value)} />
+                  </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Notes</Label>
-                  <Textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    placeholder="Additional notes about the appointment..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Custom Data (JSON)</Label>
-                  <Textarea
-                    placeholder='{"key": "value"}'
-                    value={customDataText}
-                    onChange={(e) => setCustomDataText(e.target.value)}
-                    rows={4}
-                    className="font-mono text-xs"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-4">
+                {/* Actions */}
+                <div className="flex gap-2 pt-2 pb-1">
                   <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
                     Cancel
                   </Button>
@@ -1215,6 +1358,7 @@ export default function CalendarPage() {
                     {editingAppointment ? "Save Changes" : "Create"}
                   </Button>
                 </div>
+
               </div>
             </div>
           </DialogContent>
