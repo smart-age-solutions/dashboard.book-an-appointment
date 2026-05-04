@@ -125,24 +125,33 @@ export default function SettingsPage() {
     primaryColor: "#a6cd39",
     timezone: "America/New_York",
     bookingWindowDays: "30",
-    slotDuration: "60",
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  // Time slots configuration
-  const [timeSlots, setTimeSlots] = useState<any[]>([]);
+  // Booking page schedule
+  const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-  const toggleTimeSlotDay = (index: number) => {
-    setTimeSlots(prev => prev.map((slot, i) => 
-      i === index ? { ...slot, isOpen: !slot.isOpen } : slot
-    ));
-  };
+  type DayHours = { day_of_week: number; start_time: string; end_time: string; is_active: boolean };
 
-  const updateTimeSlot = (index: number, field: "startTime" | "endTime", value: string) => {
-    setTimeSlots(prev => prev.map((slot, i) => 
-      i === index ? { ...slot, [field]: value } : slot
-    ));
+  const defaultHoursTemplate = (): DayHours[] =>
+    Array.from({ length: 7 }, (_, i) => ({
+      day_of_week: i,
+      start_time: "09:00",
+      end_time: "18:00",
+      is_active: i < 5,
+    }));
+
+  const [schedulingPages, setSchedulingPages] = useState<any[]>([]);
+  const [selectedSchedulePageId, setSelectedSchedulePageId] = useState<string>("");
+  const [pageHours, setPageHours] = useState<DayHours[]>(defaultHoursTemplate());
+  const [pageSlotDuration, setPageSlotDuration] = useState<number>(60);
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+  const updatePageDayHours = (dayIndex: number, field: keyof DayHours, value: string | boolean) => {
+    setPageHours(prev =>
+      prev.map(h => h.day_of_week === dayIndex ? { ...h, [field]: value } : h)
+    );
   };
 
   const handleSaveNotifications = async () => {
@@ -195,15 +204,15 @@ export default function SettingsPage() {
         timezone: profileData.profile.timezone || "America/New_York",
       });
 
-      // Fetch Email & SMS configs
+      // Fetch Email, SMS configs, reminders and booking pages
       try {
-        const [emailRes, smsRes, reminderRes, businessHoursRes] = await Promise.all([
+        const [emailRes, smsRes, reminderRes, pagesRes] = await Promise.all([
           api.get("/auth/settings/email-config"),
           api.get("/auth/settings/sms-config"),
           api.get("/auth/settings/reminder-settings"),
-          api.get("/auth/settings/business-hours")
+          api.get("/booking-pages", { include_inactive: "true" }),
         ]);
-        
+
         if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
           setEmailConfig({ ...initialEmailConfig, ...emailRes.email_config });
         }
@@ -217,11 +226,16 @@ export default function SettingsPage() {
             reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
           }));
         }
-        if (businessHoursRes.business_hours) {
-          setGlobalSettings(prev => ({
-            ...prev,
-            slotDuration: String(businessHoursRes.business_hours.slot_duration || "60"),
-          }));
+
+        const pages: any[] = pagesRes.booking_pages || [];
+        setSchedulingPages(pages);
+        if (pages.length > 0) {
+          const first = pages[0];
+          setSelectedSchedulePageId(first.id);
+          setPageHours(
+            first.hours && first.hours.length > 0 ? first.hours : defaultHoursTemplate()
+          );
+          setPageSlotDuration(first.slot_duration_minutes || 60);
         }
       } catch (e) {
         console.error("Failed to fetch service configs", e);
@@ -267,13 +281,36 @@ export default function SettingsPage() {
           timezone: globalSettings.timezone,
           booking_window_days: parseInt(globalSettings.bookingWindowDays),
         }),
-        api.put("/auth/settings/business-hours", {
-          slot_duration: parseInt(globalSettings.slotDuration),
-        })
       ]);
       toast({ title: "Saved", description: "Global settings updated successfully" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleSelectSchedulePage = (pageId: string) => {
+    const page = schedulingPages.find(p => p.id === pageId);
+    if (!page) return;
+    setSelectedSchedulePageId(pageId);
+    setPageHours(
+      page.hours && page.hours.length > 0 ? page.hours : defaultHoursTemplate()
+    );
+    setPageSlotDuration(page.slot_duration_minutes || 60);
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!selectedSchedulePageId) return;
+    setIsSavingSchedule(true);
+    try {
+      await api.put(`/booking-pages/${selectedSchedulePageId}`, {
+        hours: pageHours,
+        slot_duration_minutes: pageSlotDuration,
+      });
+      toast({ title: "Saved", description: "Booking page schedule updated successfully" });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSavingSchedule(false);
     }
   };
 
@@ -993,65 +1030,112 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Weekly Time Slots - Hidden for now */}
-            {/* <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
+            {/* Booking Page Weekly Schedule */}
+            <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+              <div className="flex items-center gap-3 mb-4 md:mb-6">
                 <div className="p-2 rounded-lg bg-accent">
                   <Clock className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-card-foreground">Weekly Time Slots</h2>
-                  <p className="text-sm text-muted-foreground">Set default available hours for appointments</p>
+                  <h2 className="text-lg font-semibold text-card-foreground">Weekly Schedule</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Configure availability hours per day for each booking page
+                  </p>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                {timeSlots.map((slot, index) => (
-                  <div
-                    key={slot.day}
-                    className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                      slot.isOpen ? "bg-accent/30" : "bg-muted/30"
-                    }`}
-                  >
-                    <div className="w-24">
-                      <span className={`text-sm font-medium ${slot.isOpen ? "text-card-foreground" : "text-muted-foreground"}`}>
-                        {slot.day.slice(0, 3)}
-                      </span>
-                    </div>
-                    <Switch
-                      checked={slot.isOpen}
-                      onCheckedChange={() => toggleTimeSlotDay(index)}
-                    />
-                    {slot.isOpen ? (
-                      <div className="flex items-center gap-2 flex-1">
-                        <Input
-                          type="time"
-                          value={slot.startTime}
-                          onChange={(e) => updateTimeSlot(index, "startTime", e.target.value)}
-                          className="w-32 h-8 text-sm"
-                        />
-                        <span className="text-muted-foreground text-sm">to</span>
-                        <Input
-                          type="time"
-                          value={slot.endTime}
-                          onChange={(e) => updateTimeSlot(index, "endTime", e.target.value)}
-                          className="w-32 h-8 text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Closed</span>
-                    )}
+              {schedulingPages.length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  No booking pages found. Create a booking page first.
+                </p>
+              ) : (
+                <>
+                  {/* Booking page selector */}
+                  <div className="space-y-2 mb-6 max-w-xs">
+                    <Label>Booking Page</Label>
+                    <Select value={selectedSchedulePageId} onValueChange={handleSelectSchedulePage}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a booking page" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {schedulingPages.map(p => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                ))}
-              </div>
 
-              <div className="mt-6 flex justify-end">
-                <Button onClick={handleSaveGlobalSettings}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </Button>
-              </div>
-            </div> */}
+                  {/* Per-day hours */}
+                  <div className="space-y-2 mb-6">
+                    {DAY_LABELS.map((dayName, idx) => {
+                      const dayData = pageHours.find(h => h.day_of_week === idx) ?? {
+                        day_of_week: idx, start_time: "09:00", end_time: "18:00", is_active: false,
+                      };
+                      return (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                            dayData.is_active ? "bg-accent/30" : "bg-muted/30"
+                          }`}
+                        >
+                          <div className="w-32 flex items-center gap-2">
+                            <Switch
+                              checked={dayData.is_active}
+                              onCheckedChange={(v) => updatePageDayHours(idx, "is_active", v)}
+                            />
+                            <span className={`text-sm font-medium ${dayData.is_active ? "text-card-foreground" : "text-muted-foreground"}`}>
+                              {dayName}
+                            </span>
+                          </div>
+                          {dayData.is_active ? (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                type="time"
+                                value={dayData.start_time}
+                                onChange={(e) => updatePageDayHours(idx, "start_time", e.target.value)}
+                                className="w-32 h-8 text-sm"
+                              />
+                              <span className="text-muted-foreground text-sm">to</span>
+                              <Input
+                                type="time"
+                                value={dayData.end_time}
+                                onChange={(e) => updatePageDayHours(idx, "end_time", e.target.value)}
+                                className="w-32 h-8 text-sm"
+                              />
+                            </div>
+                          ) : (
+                            <span className="text-sm text-muted-foreground italic">Closed / Unavailable</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Slot duration */}
+                  <div className="space-y-2 max-w-xs mb-6">
+                    <Label>Slot Duration</Label>
+                    <Select
+                      value={pageSlotDuration.toString()}
+                      onValueChange={(v) => setPageSlotDuration(parseInt(v))}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[15, 30, 45, 60, 90, 120].map(m => (
+                          <SelectItem key={m} value={m.toString()}>{m} minutes</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button onClick={handleSaveSchedule} disabled={isSavingSchedule}>
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSavingSchedule ? "Saving..." : "Save Schedule"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
 
 
 

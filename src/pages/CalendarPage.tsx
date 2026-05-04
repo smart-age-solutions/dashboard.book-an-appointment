@@ -247,9 +247,9 @@ export default function CalendarPage() {
     if (!selectedDate) return;
     setIsSubmitting(true);
     try {
-      await api.post("/slots/override/block-day", {
-        date: format(selectedDate, "yyyy-MM-dd")
-      });
+      const payload: Record<string, string> = { date: format(selectedDate, "yyyy-MM-dd") };
+      if (selectedBookingPageId !== "all") payload.booking_page_id = selectedBookingPageId;
+      await api.post("/slots/override/block-day", payload);
       toast({
         title: "Blocked",
         description: `${format(selectedDate, "MMMM d")} is now blocked`,

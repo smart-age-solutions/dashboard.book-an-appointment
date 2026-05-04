@@ -118,6 +118,9 @@ export default function SlugBookingPage() {
             <div className="min-w-0">
               <h1 className="font-bold text-gray-900 truncate">{page.company_name}</h1>
               <p className="text-xs text-gray-400 truncate">{page.name}</p>
+              {page.description && (
+                <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{page.description}</p>
+              )}
             </div>
           </div>
 
