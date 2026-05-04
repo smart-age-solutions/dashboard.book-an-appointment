@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck, MessageSquare } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -79,6 +81,28 @@ function formatTimeSlot(hhmm: string): string {
   const d = new Date(2000, 0, 1, h, m);
   return format(d, "h:mm aa");
 }
+
+const AREA_CODES = [
+  { code: "+1",   label: "+1  (US/CA)" },
+  { code: "+44",  label: "+44 (UK)" },
+  { code: "+61",  label: "+61 (AU)" },
+  { code: "+33",  label: "+33 (FR)" },
+  { code: "+49",  label: "+49 (DE)" },
+  { code: "+34",  label: "+34 (ES)" },
+  { code: "+39",  label: "+39 (IT)" },
+  { code: "+55",  label: "+55 (BR)" },
+  { code: "+52",  label: "+52 (MX)" },
+  { code: "+57",  label: "+57 (CO)" },
+  { code: "+54",  label: "+54 (AR)" },
+  { code: "+56",  label: "+56 (CL)" },
+  { code: "+81",  label: "+81 (JP)" },
+  { code: "+86",  label: "+86 (CN)" },
+  { code: "+91",  label: "+91 (IN)" },
+  { code: "+971", label: "+971 (AE)" },
+  { code: "+966", label: "+966 (SA)" },
+];
+
+const COMM_OPTIONS = ["Email", "Phone", "WhatsApp", "SMS"];
 
 const statusStyles: Record<string, string> = {
   confirmed: "bg-success/10 text-success border-success/20",
@@ -208,7 +232,7 @@ export default function AppointmentsPage() {
         title: apt.title || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
-        preferred_communication: (apt.preferred_communication || "email").toLowerCase(),
+        preferred_communication: apt.preferred_communication || "",
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
         service: apt.purpose || "General",
@@ -751,278 +775,341 @@ export default function AppointmentsPage() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Edit Appointment</DialogTitle>
             </DialogHeader>
-            <div className="max-h-[600px] overflow-y-auto pr-2">
-              <div className="space-y-4 py-4">
-              <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-1 space-y-2">
-                  <Label>Title</Label>
-                  <Select
-                    value={editFormData.title || ""}
-                    onValueChange={(v) => setEditFormData({ ...editFormData, title: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Title" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Mr">Mr.</SelectItem>
-                      <SelectItem value="Mrs">Mrs.</SelectItem>
-                      <SelectItem value="Ms">Ms.</SelectItem>
-                      <SelectItem value="Dr">Dr.</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="col-span-3 grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>First Name</Label>
-                    <Input
-                      value={editFormData.first_name || ""}
-                      onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Last Name</Label>
-                    <Input
-                      value={editFormData.last_name || ""}
-                      onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Service</Label>
-                  <Input
-                    value={editFormData.service || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, service: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select
-                    value={editFormData.status}
-                    onValueChange={(v) => setEditFormData({ ...editFormData, status: v as Appointment["status"] })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="confirmed">Confirmed</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="cancelled">Cancelled</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <div className="max-h-[75vh] overflow-y-auto pr-1 -mr-1">
+              <div className="space-y-6 py-2">
 
-              {allUsers.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <UserCheck className="h-4 w-4 text-muted-foreground" />
-                    Assigned Staff
-                  </Label>
-                  <Select
-                    value={editFormData.userId || "unassigned"}
-                    onValueChange={(v) => setEditFormData({ ...editFormData, userId: v === "unassigned" ? "" : v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select staff member" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="unassigned">— Unassigned —</SelectItem>
-                      {allUsers.map(user => (
-                        <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={editFormData.email || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                  />
-                </div>
-              <div className="grid grid-cols-4 gap-4">
-                <div className="col-span-2 space-y-2">
-                  <Label>Phone Country Code</Label>
-                  <Input
-                    value={editFormData.phone_area_code || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, phone_area_code: e.target.value })}
-                    placeholder="+1"
-                  />
-                </div>
-                <div className="col-span-2 space-y-2">
-                  <Label>Phone</Label>
-                  <Input
-                    value={editFormData.phone || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Country of Residence</Label>
-                  <Input
-                    value={editFormData.country_of_residence || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, country_of_residence: e.target.value })}
-                    placeholder="USA"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Preferred Communication</Label>
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 pt-1">
-                    {([
-                      { value: "email", label: "Email" },
-                      { value: "phone", label: "Phone" },
-                      { value: "text", label: "Text message" },
-                      { value: "whatsapp", label: "WhatsApp" },
-                    ] as const).map(({ value, label }) => {
-                      const parts = (editFormData.preferred_communication || "").split(", ").filter(Boolean);
-                      return (
-                        <div key={value} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            id={`edit-comm-${value}`}
-                            checked={parts.includes(value)}
-                            onChange={() => {
-                              const next = [...parts];
-                              const idx = next.indexOf(value);
-                              if (idx >= 0) next.splice(idx, 1); else next.push(value);
-                              setEditFormData({ ...editFormData, preferred_communication: next.join(", ") });
-                            }}
-                            className="rounded border-gray-300"
-                          />
-                          <Label htmlFor={`edit-comm-${value}`} className="text-sm font-normal">{label}</Label>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Date</Label>
-                  <Input
-                    type="date"
-                    value={editFormData.date ? format(editFormData.date, "yyyy-MM-dd") : ""}
-                    onChange={(e) => {
-                      const newDate = e.target.value ? parseLocalDate(e.target.value) : undefined;
-                      setEditFormData({ ...editFormData, date: newDate });
-                    }}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Time</Label>
-                  <Input
-                    value={editFormData.time || ""}
-                    onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Duration</Label>
-                  <Select
-                    value={editFormData.duration || "60"}
-                    onValueChange={(v) => setEditFormData({ ...editFormData, duration: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Duration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="15">15 min</SelectItem>
-                      <SelectItem value="30">30 min</SelectItem>
-                      <SelectItem value="45">45 min</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="90">1.5 hours</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {stores.length > 1 && (
-                  <div className="space-y-2">
-                    <Label>Store</Label>
-                    <Select
-                      value={editFormData.storeId}
-                      onValueChange={(v) => setEditFormData({ ...editFormData, storeId: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stores.map(store => (
-                          <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Identity header */}
+                {selectedAppointment && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="h-9 w-9 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0">
+                      <User className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-card-foreground truncate">{selectedAppointment.client}</p>
+                      <p className="text-xs text-muted-foreground truncate">{selectedAppointment.email}</p>
+                    </div>
+                    <Badge variant="outline" className={cn("ml-auto capitalize flex-shrink-0", statusStyles[selectedAppointment.status])}>
+                      {selectedAppointment.status}
+                    </Badge>
                   </div>
                 )}
-              </div>
 
-              <div className="flex items-center space-x-2 pt-2">
-                <input
-                  type="checkbox"
-                  id="edit-terms"
-                  checked={editFormData.accepted_terms || false}
-                  onChange={(e) => setEditFormData({ ...editFormData, accepted_terms: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="edit-terms" className="text-sm font-normal">Accepted Terms</Label>
-              </div>
+                {/* ── Customer Information ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer Information</p>
+                  <Separator />
 
-              <div className="flex items-center space-x-2 pb-2">
-                 <input
-                  type="checkbox"
-                  id="edit-consent"
-                  checked={editFormData.consent_communication || false}
-                  onChange={(e) => setEditFormData({ ...editFormData, consent_communication: e.target.checked })}
-                  className="rounded border-gray-300"
-                />
-                <Label htmlFor="edit-consent" className="text-sm font-normal">Consent to Communication</Label>
-              </div>
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-2 space-y-1.5">
+                      <Label className="text-xs">Title</Label>
+                      <Select
+                        value={editFormData.title || ""}
+                        onValueChange={(v) => setEditFormData({ ...editFormData, title: v })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">—</SelectItem>
+                          <SelectItem value="Mr.">Mr.</SelectItem>
+                          <SelectItem value="Ms.">Ms.</SelectItem>
+                          <SelectItem value="Mrs.">Mrs.</SelectItem>
+                          <SelectItem value="Dr.">Dr.</SelectItem>
+                          <SelectItem value="Prof.">Prof.</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-5 space-y-1.5">
+                      <Label className="text-xs">First Name</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.first_name || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, first_name: e.target.value })}
+                      />
+                    </div>
+                    <div className="col-span-5 space-y-1.5">
+                      <Label className="text-xs">Last Name</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.last_name || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, last_name: e.target.value })}
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Notes</Label>
-                <Textarea
-                  rows={3}
-                  value={editFormData.notes || ""}
-                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
-                />
-              </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Email</Label>
+                    <Input
+                      className="h-9"
+                      type="email"
+                      value={editFormData.email || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                    />
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Custom Data (JSON)</Label>
-                <Textarea
-                  rows={4}
-                  className="font-mono text-xs"
-                  placeholder='{"key": "value"}'
-                  value={customDataText}
-                  onChange={(e) => setCustomDataText(e.target.value)}
-                />
-              </div>
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-4 space-y-1.5">
+                      <Label className="text-xs">Area Code</Label>
+                      <Select
+                        value={editFormData.phone_area_code || ""}
+                        onValueChange={(v) => setEditFormData({ ...editFormData, phone_area_code: v })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="+1" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AREA_CODES.map((a) => (
+                            <SelectItem key={a.code} value={a.code}>{a.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-8 space-y-1.5">
+                      <Label className="text-xs">Phone</Label>
+                      <Input
+                        className="h-9"
+                        type="tel"
+                        value={editFormData.phone || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                        placeholder="555 000 0000"
+                      />
+                    </div>
+                  </div>
 
-              <div className="flex gap-2 pt-4">
-                <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button className="flex-1" onClick={handleSaveEdit} isLoading={isSubmitting}>
-                  Save Changes
-                </Button>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Country of Residence</Label>
+                    <Input
+                      className="h-9"
+                      value={editFormData.country_of_residence || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, country_of_residence: e.target.value })}
+                      placeholder="United States"
+                    />
+                  </div>
+                </div>
+
+                {/* ── Appointment Details ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appointment Details</p>
+                  <Separator />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Service / Purpose</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.service || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, service: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Status</Label>
+                      <Select
+                        value={editFormData.status}
+                        onValueChange={(v) => setEditFormData({ ...editFormData, status: v as Appointment["status"] })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {allUsers.length > 0 && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs flex items-center gap-1.5">
+                        <UserCheck className="h-3 w-3" /> Assigned Staff
+                      </Label>
+                      <Select
+                        value={editFormData.userId || "unassigned"}
+                        onValueChange={(v) => setEditFormData({ ...editFormData, userId: v === "unassigned" ? "" : v })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select staff member" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unassigned">— Unassigned —</SelectItem>
+                          {allUsers.map(user => (
+                            <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Date</Label>
+                      <Input
+                        className="h-9"
+                        type="date"
+                        value={editFormData.date ? format(editFormData.date, "yyyy-MM-dd") : ""}
+                        onChange={(e) => {
+                          const newDate = e.target.value ? parseLocalDate(e.target.value) : undefined;
+                          setEditFormData({ ...editFormData, date: newDate });
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Time</Label>
+                      <Input
+                        className="h-9"
+                        type="time"
+                        value={editFormData.time || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, time: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Duration</Label>
+                      <Select
+                        value={editFormData.duration || "60"}
+                        onValueChange={(v) => setEditFormData({ ...editFormData, duration: v })}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="15">15 min</SelectItem>
+                          <SelectItem value="30">30 min</SelectItem>
+                          <SelectItem value="45">45 min</SelectItem>
+                          <SelectItem value="60">1 hour</SelectItem>
+                          <SelectItem value="90">1.5 hours</SelectItem>
+                          <SelectItem value="120">2 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {stores.length > 1 && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Store</Label>
+                        <Select
+                          value={editFormData.storeId}
+                          onValueChange={(v) => setEditFormData({ ...editFormData, storeId: v })}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stores.map(store => (
+                              <SelectItem key={store.id} value={store.id}>{store.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Communication ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                    <MessageSquare className="h-3 w-3" /> Communication
+                  </p>
+                  <Separator />
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Preferred Channels</Label>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      {COMM_OPTIONS.map((value) => {
+                        const parts = (editFormData.preferred_communication || "").split(", ").filter(Boolean);
+                        const active = parts.includes(value);
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => {
+                              const next = active ? parts.filter(v => v !== value) : [...parts, value];
+                              setEditFormData({ ...editFormData, preferred_communication: next.join(", ") });
+                            }}
+                            className={cn(
+                              "px-3 py-1.5 rounded-full text-xs font-medium border-2 transition-all",
+                              active
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-background border-border text-muted-foreground hover:border-primary/50"
+                            )}
+                          >
+                            {value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 pt-1">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                      <Label className="text-sm font-normal cursor-pointer" htmlFor="edit-terms">
+                        Accepted Terms
+                      </Label>
+                      <Switch
+                        id="edit-terms"
+                        checked={editFormData.accepted_terms || false}
+                        onCheckedChange={(v) => setEditFormData({ ...editFormData, accepted_terms: v })}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/40">
+                      <Label className="text-sm font-normal cursor-pointer" htmlFor="edit-consent">
+                        Consent to Comms
+                      </Label>
+                      <Switch
+                        id="edit-consent"
+                        checked={editFormData.consent_communication || false}
+                        onCheckedChange={(v) => setEditFormData({ ...editFormData, consent_communication: v })}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Notes & Data ── */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Notes & Data</p>
+                  <Separator />
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Notes</Label>
+                    <Textarea
+                      rows={3}
+                      value={editFormData.notes || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                      placeholder="Any additional notes..."
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Custom Data (JSON)</Label>
+                    <Textarea
+                      rows={3}
+                      className="font-mono text-xs"
+                      placeholder='{"source": "instagram"}'
+                      value={customDataText}
+                      onChange={(e) => setCustomDataText(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2 pb-1">
+                  <Button variant="outline" className="flex-1" onClick={() => setIsEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button className="flex-1" onClick={handleSaveEdit} isLoading={isSubmitting}>
+                    Save Changes
+                  </Button>
+                </div>
+
               </div>
             </div>
-          </div>
           </DialogContent>
         </Dialog>
 

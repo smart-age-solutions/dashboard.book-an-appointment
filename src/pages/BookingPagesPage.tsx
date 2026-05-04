@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 
@@ -71,6 +72,7 @@ interface BookingPageData {
 }
 
 export default function BookingPagesPage() {
+  const { client } = useAuth();
   const [pages, setPages] = useState<BookingPageData[]>([]);
 
   const [allUsers, setAllUsers] = useState<UserData[]>([]);
@@ -797,6 +799,29 @@ export default function BookingPagesPage() {
                           </Button>
                         </div>
                       </div>
+                      {client?.id && (
+                        <div className="space-y-2">
+                          <Label>Client Booking Pages List URL</Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              readOnly
+                              value={`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/booking-pages/client/${client.id}`}
+                              className="bg-muted/50 font-mono text-sm"
+                            />
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
+                                navigator.clipboard.writeText(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/booking-pages/client/${client.id}`);
+                                toast({ title: "Copied!", description: "Client listing URL copied to clipboard." });
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground italic">Returns all active booking pages for your account — use this to list pages in an external integration.</p>
+                        </div>
+                      )}
                       <div className="space-y-2">
                         <Label>Embed Code</Label>
                         <div className="p-4 bg-muted/30 border rounded-md relative text-sm font-mono break-all text-muted-foreground pr-12">

@@ -81,16 +81,24 @@ export function useSlugBooking(slug: string) {
         throw new Error("Please select a date and time");
       }
       const start_time = `${selectedDate}T${selectedTime}:00`;
+      const customer_name = [data.first_name, data.last_name].filter(Boolean).join(" ");
       return createBooking(slug, {
         ...(autoUser ? { user_id: autoUser.id } : {}),
         ...(selectedStoreId ? { store_id: selectedStoreId } : {}),
-        customer_name: data.customer_name,
-        customer_email: data.customer_email,
+        customer_name,
+        customer_email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        title: data.title,
+        email: data.email,
+        phone_area_code: data.phone_area_code,
         phone: data.phone,
+        country_of_residence: data.country_of_residence,
+        preferred_communication: data.preferred_communication,
         notes: data.notes,
         accepted_terms: data.accepted_terms,
+        consent_communication: data.consent_communication,
         custom_data: data.custom_data,
-        country_of_residence: data.country_of_residence,
         start_time,
       } as any);
     },

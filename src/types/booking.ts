@@ -95,13 +95,18 @@ export interface BookingResponse {
 // ─── Customer Form Data ─────────────────────────────────────────────────────
 
 export interface CustomerData {
-  customer_name: string;
-  customer_email: string;
+  first_name: string;
+  last_name?: string;
+  title?: string;
+  email: string;
+  phone_area_code?: string;
   phone?: string;
-  notes?: string;
-  accepted_terms?: boolean;
-  custom_data?: Record<string, any>;
   country_of_residence?: string;
+  preferred_communication?: string;
+  notes?: string;
+  accepted_terms: boolean;
+  consent_communication?: boolean;
+  custom_data?: Record<string, any>;
 }
 
 // ─── Step Union ─────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/lib/api";
-import { Save, Store, Mail, Phone, MapPin, Globe, Key, Server, Copy, CheckCircle2, AlertCircle, MessageSquare, Link, XCircle, Plus, Trash2, Edit2, Building2, Palette, Upload } from "lucide-react";
+import { Save, Store, Mail, Phone, MapPin, Globe, Key, Server, Copy, CheckCircle2, AlertCircle, MessageSquare, Link, XCircle, Plus, Trash2, Edit2, Building2, Palette, Upload, Code } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -966,6 +966,78 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Public API */}
+            {client?.id && (
+              <div className="rounded-xl bg-card p-4 md:p-6 card-shadow">
+                <div className="flex items-center gap-3 mb-4 md:mb-6">
+                  <div className="p-2 rounded-lg bg-accent">
+                    <Code className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold text-card-foreground">Public API</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Unauthenticated endpoints you can use to integrate booking pages into external sites
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-card-foreground">Client ID</p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono break-all">
+                        {client.id}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(client.id, "client-id")}
+                      >
+                        {copiedField === "client-id" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-card-foreground">List All Booking Pages</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Returns all active booking pages with their schedule, hours, and branding.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-lg font-mono break-all">
+                        {`GET /api/booking-pages/client/${client.id}`}
+                      </code>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => copyToClipboard(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/booking-pages/client/${client.id}`, "pages-url")}
+                      >
+                        {copiedField === "pages-url" ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-card-foreground">Get a Specific Booking Page</p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      Returns full page info, available slots, services, and staff. Use the page slug or UUID.
+                    </p>
+                    <code className="block text-xs bg-muted px-3 py-2 rounded-lg font-mono">
+                      {`GET /api/booking-pages/{slug}`}
+                    </code>
+                  </div>
+                </div>
+              </div>
+            )}
 
           </TabsContent>
 
