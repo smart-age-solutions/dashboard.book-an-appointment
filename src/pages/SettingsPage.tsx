@@ -1475,6 +1475,19 @@ export default function SettingsPage() {
                   </div>
                   <p className="text-xs text-muted-foreground">Static map image shown in booking confirmation emails</p>
                 </div>
+                <div className="space-y-2">
+                  <Label>Map Link URL</Label>
+                  <div className="relative">
+                    <Link className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      value={storeFormData.mapUrl}
+                      onChange={(e) => setStoreFormData({ ...storeFormData, mapUrl: e.target.value })}
+                      placeholder="https://maps.google.com/?q=..."
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">The map image will link to this URL when clicked in the email</p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Latitude</Label>

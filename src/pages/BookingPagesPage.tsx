@@ -673,7 +673,7 @@ export default function BookingPagesPage() {
                       <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/20">
                         <div className="space-y-0.5">
                           <Label className="text-sm font-medium cursor-pointer" htmlFor="show_map_email">Show location map in emails</Label>
-                          <p className="text-[11px] text-muted-foreground">When enabled, the map image uploaded in the General tab will appear in confirmation, update, cancellation and reminder emails.</p>
+                          <p className="text-[11px] text-muted-foreground">When enabled, the map image and link configured on the store (in Settings → Locations) will appear in confirmation, update, cancellation and reminder emails.</p>
                         </div>
                         <Checkbox
                           id="show_map_email"
@@ -681,16 +681,6 @@ export default function BookingPagesPage() {
                           onCheckedChange={v => setFormData({...formData, show_map_in_email: !!v})}
                           className="ml-4 flex-shrink-0"
                         />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs">Map Link URL</Label>
-                        <Input
-                          value={formData.map_url}
-                          onChange={e => setFormData({...formData, map_url: e.target.value})}
-                          placeholder="https://maps.google.com/?q=..."
-                        />
-                        <p className="text-[10px] text-muted-foreground italic">The map image will link to this URL when clicked in the email.</p>
                       </div>
                     </div>
                   </div>
