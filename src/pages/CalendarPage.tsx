@@ -865,14 +865,14 @@ export default function CalendarPage() {
                             {apt.service}
                           </p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
-                            <User className="h-3 w-3" /> {apt.client}
+                            <User className="h-3 w-3" /> Client: {apt.client}
                           </p>
                           <p className="text-sm text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" /> {apt.time}
                           </p>
                           {apt.staffName && (
                             <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              <UserCheck className="h-3 w-3" /> {apt.staffName}
+                              <UserCheck className="h-3 w-3" /> Staff: {apt.staffName}
                             </p>
                           )}
                           <div className="pt-1">
