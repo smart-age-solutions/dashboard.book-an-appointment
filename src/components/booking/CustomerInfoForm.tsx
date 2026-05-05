@@ -305,7 +305,7 @@ export function CustomerInfoForm({
           <span className="text-base">📋</span>
           {serviceName}
         </div>
-        <div className="flex items-center gap-2 text-gray-600">
+        <div className="flex items-center gap-2 text-gray-600 hidden">
           <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color: brandColor }} />
           With {userName}
         </div>
