@@ -131,6 +131,17 @@ export default function SlugBookingPage() {
           />
         </div>
 
+        {/* Page image */}
+        {page.page_image_url && (
+          <div className="w-full overflow-hidden max-h-40">
+            <img
+              src={page.page_image_url}
+              alt={page.name}
+              className="w-full object-cover"
+            />
+          </div>
+        )}
+
         {/* Step content */}
         <div className="p-6">
           {submitError && (

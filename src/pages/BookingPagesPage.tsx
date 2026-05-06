@@ -61,6 +61,7 @@ interface BookingPageData {
   show_map_in_email?: boolean;
   map_url?: string;
   map_image_url?: string;
+  page_image_url?: string;
   lat?: string;
   lng?: string;
   edit_appointment_url?: string;
@@ -95,6 +96,7 @@ export default function BookingPagesPage() {
     show_map_in_email: true,
     map_url: "",
     map_image_url: "",
+    page_image_url: "",
     lat: "",
     lng: "",
     edit_appointment_url: "",
@@ -233,6 +235,7 @@ export default function BookingPagesPage() {
       show_map_in_email: page.show_map_in_email !== undefined ? page.show_map_in_email : true,
       map_url: page.map_url || "",
       map_image_url: page.map_image_url || "",
+      page_image_url: page.page_image_url || "",
       lat: page.lat || "",
       lng: page.lng || "",
       edit_appointment_url: page.edit_appointment_url || "",
@@ -291,6 +294,7 @@ export default function BookingPagesPage() {
       show_map_in_email: true,
       map_url: "",
       map_image_url: "",
+      page_image_url: "",
       lat: "",
       lng: "",
       edit_appointment_url: "",
@@ -323,7 +327,7 @@ export default function BookingPagesPage() {
       const formDataUpload = new FormData();
       formDataUpload.append("file", file);
       const res = await api.postFormData(`/auth/booking-pages/${editingPage.id}/upload-image`, formDataUpload);
-      setFormData(prev => ({ ...prev, map_image_url: res.image_url }));
+      setFormData(prev => ({ ...prev, page_image_url: res.image_url }));
       toast({ title: "Image Uploaded", description: "Image uploaded successfully." });
     } catch (error: any) {
       toast({ title: "Upload Failed", description: error.message, variant: "destructive" });
@@ -508,14 +512,14 @@ export default function BookingPagesPage() {
                           )}
                           {isUploadingImage ? "Uploading..." : "Upload Image"}
                         </Button>
-                        {formData.map_image_url && (
-                          <a href={formData.map_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline truncate max-w-[160px]">
+                        {formData.page_image_url && (
+                          <a href={formData.page_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline truncate max-w-[160px]">
                             View image
                           </a>
                         )}
                       </div>
-                      {formData.map_image_url && (
-                        <img src={formData.map_image_url} alt="Page" className="mt-2 h-20 w-auto rounded-lg border object-cover" />
+                      {formData.page_image_url && (
+                        <img src={formData.page_image_url} alt="Page" className="mt-2 h-20 w-auto rounded-lg border object-cover" />
                       )}
                     </div>
                     <div className="flex items-center gap-2">

@@ -150,6 +150,22 @@ export default function SettingsPage() {
     }
   };
 
+  const handleTestEmail = async () => {
+    try {
+      const res = await api.post("/auth/settings/email-config/test", {});
+      toast({
+        title: "Test Email Sent",
+        description: res.message || `Sent via ${res.provider}`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Test Email Failed",
+        description: error.message || "Could not send test email — check server logs for details",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSaveSmsConfig = async () => {
     try {
       await api.put("/auth/settings/sms-config", smsConfig);
@@ -1156,7 +1172,11 @@ export default function SettingsPage() {
 
                 {renderProviderFields()}
 
-                <div className="mt-6 flex justify-end">
+                <div className="mt-6 flex justify-end gap-2">
+                  <Button variant="outline" onClick={handleTestEmail}>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Test Email
+                  </Button>
                   <Button onClick={handleSaveEmailConfig}>
                     <Save className="h-4 w-4 mr-2" />
                     Save Configuration
