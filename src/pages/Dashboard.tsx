@@ -22,17 +22,23 @@ const Dashboard = memo(function Dashboard() {
       const data = await api.get("/auth/stats/dashboard");
       return {
         todayAppointments: data.todayAppointments,
+        apptChange: data.apptChange,
         totalClients: data.totalClients,
+        clientsChange: data.clientsChange,
         availableSlots: data.availableSlots,
         bookingRate: data.bookingRate,
+        rateChange: data.rateChange,
       };
     },
     enabled: isClientAccess,
     initialData: {
       todayAppointments: 0,
+      apptChange: "",
       totalClients: 0,
+      clientsChange: "",
       availableSlots: 0,
       bookingRate: "0%",
+      rateChange: "",
     },
   });
 
@@ -68,15 +74,15 @@ const Dashboard = memo(function Dashboard() {
               <StatCard
                 title="Today's Appointments"
                 value={stats.todayAppointments}
-                change="+2 from yesterday"
-                changeType="positive"
+                change={stats.apptChange}
+                changeType={stats.apptChange.startsWith("+") ? "positive" : stats.apptChange.startsWith("-") ? "negative" : "neutral"}
                 icon={Calendar}
               />
               <StatCard
                 title="Total Clients"
                 value={stats.totalClients}
-                change="+18 this month"
-                changeType="positive"
+                change={stats.clientsChange}
+                changeType={stats.clientsChange.startsWith("+") ? "positive" : "neutral"}
                 icon={Users}
               />
               <StatCard
@@ -89,8 +95,8 @@ const Dashboard = memo(function Dashboard() {
               <StatCard
                 title="Booking Rate"
                 value={stats.bookingRate}
-                change="+5% from last week"
-                changeType="positive"
+                change={stats.rateChange}
+                changeType={stats.rateChange.startsWith("+") ? "positive" : stats.rateChange.startsWith("-") ? "negative" : "neutral"}
                 icon={TrendingUp}
               />
             </div>

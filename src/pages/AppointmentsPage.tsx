@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { format } from "date-fns";
-import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck, MessageSquare } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck, MessageSquare, Download } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -298,6 +298,13 @@ export default function AppointmentsPage() {
 
   const [allUsers, setAllUsers] = useState<{ id: string; name: string }[]>([]);
 
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"csv" | "xlsx">("csv");
+  const [exportPeriod, setExportPeriod] = useState<"all" | "7d" | "30d" | "custom">("all");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+
   const [bookingPages, setBookingPages] = useState<BookingPageOption[]>([]);
   const [newApptBookingPageId, setNewApptBookingPageId] = useState("");
   const [newApptTimeSlots, setNewApptTimeSlots] = useState<string[]>([]);
@@ -564,6 +571,46 @@ export default function AppointmentsPage() {
     return store?.name || "Unknown Store";
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const token = localStorage.getItem("access_token");
+      const impersonated = localStorage.getItem("impersonate_client");
+
+      const params = new URLSearchParams({ format: exportFormat });
+      if (exportPeriod === "7d") {
+        params.set("start_date", format(subDays(new Date(), 7), "yyyy-MM-dd"));
+      } else if (exportPeriod === "30d") {
+        params.set("start_date", format(subDays(new Date(), 30), "yyyy-MM-dd"));
+      } else if (exportPeriod === "custom") {
+        if (exportStartDate) params.set("start_date", exportStartDate);
+        if (exportEndDate) params.set("end_date", exportEndDate);
+      }
+      if (statusFilter !== "all") params.set("status", statusFilter);
+
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      if (impersonated) headers["X-Impersonate-Client-ID"] = JSON.parse(impersonated).id;
+
+      const res = await fetch(`${API_URL}/appointments/export?${params.toString()}`, { headers });
+      if (!res.ok) throw new Error("Export failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `appointments.${exportFormat}`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setIsExportDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: "Export failed", description: err.message, variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6 max-w-6xl mx-auto">
@@ -575,10 +622,16 @@ export default function AppointmentsPage() {
               View and manage all your appointments
             </p>
           </div>
-          <Button onClick={() => { resetNewAppointment(); setIsCreateDialogOpen(true); }}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Appointment
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={() => { resetNewAppointment(); setIsCreateDialogOpen(true); }}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Appointment
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -1284,6 +1337,96 @@ export default function AppointmentsPage() {
                   </Button>
                 </div>
 
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Export Dialog */}
+        <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Export Appointments</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5 py-2">
+
+              {/* Format */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Format</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["csv", "xlsx"] as const).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setExportFormat(f)}
+                      className={cn(
+                        "flex items-center justify-center gap-2 rounded-lg border-2 py-2.5 text-sm font-medium transition-all",
+                        exportFormat === f
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/40"
+                      )}
+                    >
+                      <FileText className="h-4 w-4" />
+                      {f.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Period */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Period</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: "all",    label: "All time"    },
+                    { value: "7d",     label: "Last 7 days" },
+                    { value: "30d",    label: "Last 30 days"},
+                    { value: "custom", label: "Custom range"},
+                  ] as const).map(({ value, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setExportPeriod(value)}
+                      className={cn(
+                        "rounded-lg border-2 py-2 text-sm font-medium transition-all",
+                        exportPeriod === value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/40"
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {exportPeriod === "custom" && (
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <div className="space-y-1">
+                      <Label className="text-xs">From</Label>
+                      <Input type="date" className="h-8 text-xs" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">To</Label>
+                      <Input type="date" className="h-8 text-xs" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {statusFilter !== "all" && (
+                <p className="text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+                  Filter applied: <span className="font-medium capitalize">{statusFilter}</span> appointments only
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setIsExportDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button className="flex-1" onClick={handleExport} isLoading={isExporting}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
               </div>
             </div>
           </DialogContent>
