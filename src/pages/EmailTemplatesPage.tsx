@@ -222,6 +222,7 @@ export default function EmailTemplatesPage() {
       staff: "Jane Smith",
       // Booking page
       booking_page_name: "Main Booking Page",
+      page_image_url: "https://placehold.co/600x300?text=Page+Banner+Image",
       // Branding
       company_name: "Smart Age Solutions",
       brand_color: "#a6cd39",
@@ -313,7 +314,11 @@ export default function EmailTemplatesPage() {
               },
               {
                 label: "Service & Staff",
-                vars: ["{{service_name}}", "{{service}}", "{{user_name}}", "{{staff_name}}", "{{booking_page_name}}"],
+                vars: ["{{service_name}}", "{{service}}", "{{user_name}}", "{{staff_name}}"],
+              },
+              {
+                label: "Booking Page",
+                vars: ["{{booking_page_name}}", "{{page_image_url}}"],
               },
               {
                 label: "Company & Store",
@@ -328,7 +333,7 @@ export default function EmailTemplatesPage() {
                 vars: ["{{edit_url}}", "{{cancel_url}}"],
               },
               {
-                label: "Map",
+                label: "Location / Map",
                 vars: ["{{map_url}}", "{{map_image_url}}", "{{show_map}}", "{{lat}}", "{{lng}}"],
               },
             ].map(({ label, vars }) => (
