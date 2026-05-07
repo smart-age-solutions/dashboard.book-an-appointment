@@ -21,25 +21,17 @@ const Dashboard = memo(function Dashboard() {
     queryFn: async () => {
       const data = await api.get("/auth/stats/dashboard");
       return {
-        todayAppointments: data.todayAppointments,
-        apptChange: data.apptChange,
-        totalClients: data.totalClients,
-        clientsChange: data.clientsChange,
-        availableSlots: data.availableSlots,
-        bookingRate: data.bookingRate,
-        rateChange: data.rateChange,
+        todayAppointments: data.todayAppointments ?? 0,
+        apptChange: data.apptChange ?? "",
+        totalClients: data.totalClients ?? 0,
+        clientsChange: data.clientsChange ?? "",
+        availableSlots: data.availableSlots ?? 0,
+        bookingRate: data.bookingRate ?? "0%",
+        rateChange: data.rateChange ?? "",
       };
     },
     enabled: isClientAccess,
-    initialData: {
-      todayAppointments: 0,
-      apptChange: "",
-      totalClients: 0,
-      clientsChange: "",
-      availableSlots: 0,
-      bookingRate: "0%",
-      rateChange: "",
-    },
+    staleTime: 0,
   });
 
   if (isLoading && isClientAccess) {
@@ -73,30 +65,30 @@ const Dashboard = memo(function Dashboard() {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               <StatCard
                 title="Today's Appointments"
-                value={stats.todayAppointments}
-                change={stats.apptChange}
-                changeType={stats.apptChange.startsWith("+") ? "positive" : stats.apptChange.startsWith("-") ? "negative" : "neutral"}
+                value={stats?.todayAppointments ?? 0}
+                change={stats?.apptChange ?? ""}
+                changeType={(stats?.apptChange ?? "").startsWith("+") ? "positive" : (stats?.apptChange ?? "").startsWith("-") ? "negative" : "neutral"}
                 icon={Calendar}
               />
               <StatCard
                 title="Total Clients"
-                value={stats.totalClients}
-                change={stats.clientsChange}
-                changeType={stats.clientsChange.startsWith("+") ? "positive" : "neutral"}
+                value={stats?.totalClients ?? 0}
+                change={stats?.clientsChange ?? ""}
+                changeType={(stats?.clientsChange ?? "").startsWith("+") ? "positive" : "neutral"}
                 icon={Users}
               />
               <StatCard
                 title="Available Slots"
-                value={stats.availableSlots}
+                value={stats?.availableSlots ?? 0}
                 change="Today"
                 changeType="neutral"
                 icon={Clock}
               />
               <StatCard
                 title="Booking Rate"
-                value={stats.bookingRate}
-                change={stats.rateChange}
-                changeType={stats.rateChange.startsWith("+") ? "positive" : stats.rateChange.startsWith("-") ? "negative" : "neutral"}
+                value={stats?.bookingRate ?? "0%"}
+                change={stats?.rateChange ?? ""}
+                changeType={(stats?.rateChange ?? "").startsWith("+") ? "positive" : (stats?.rateChange ?? "").startsWith("-") ? "negative" : "neutral"}
                 icon={TrendingUp}
               />
             </div>

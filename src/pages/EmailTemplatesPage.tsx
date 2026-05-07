@@ -198,36 +198,54 @@ export default function EmailTemplatesPage() {
 
   const getPreviewContent = (content: string) => {
     const mockContext: any = {
+      // Customer
+      customer_name: "Mr. John Doe",
       name: "John Doe",
       client_name: "John Doe",
-      service: "Hair Styling",
-      date: "January 15, 2026",
-      time: "10:00 AM",
-      company_name: "Smart Age Solutions",
-      store_address: "123 Main Street, City",
-      appointment_id: "apt_123456",
-      edit_url: "#",
-      cancel_url: "#",
-      logo_url: "https://placehold.co/200x50",
-      brand_color: "#a6cd39",
       first_name: "John",
       last_name: "Doe",
       title: "Mr.",
-      store_url: "#",
+      preferred_communication: "Email",
+      cancellation_reason: "Schedule conflict",
+      // Appointment
+      appointment_date: "01/15/2026",
+      appointment_time: "10:00 AM",
+      date: "01/15/2026",
+      time: "10:00 AM",
+      appointment_id: "apt_123456",
+      notes: "Please be on time.",
+      // Service / Staff
+      service_name: "Consultation",
+      service: "Consultation",
+      user_name: "Jane Smith",
+      staff_name: "Jane Smith",
+      staff: "Jane Smith",
+      // Booking page
+      booking_page_name: "Main Booking Page",
+      // Branding
+      company_name: "Smart Age Solutions",
+      brand_color: "#a6cd39",
+      logo_url: "https://placehold.co/200x50",
+      // Links
+      edit_url: "#",
+      cancel_url: "#",
+      store_url: "https://example.com",
+      // Store
+      store_name: "Main Store",
+      store_address: "123 Main Street, City",
       store_phone: "555-0123",
       map_url: "https://maps.google.com/q=123+Main+St",
       map_image_url: "https://placehold.co/600x400?text=Map+Preview",
+      show_map: true,
       lat: "40.7128",
       lng: "-74.0060",
       latitude: "40.7128",
       longitude: "-74.0060",
-      show_map: true,
-      preferred_communication: "Email",
-      cancellation_reason: "Schedule conflict",
-      notes: "Please be on time.",
+      // Update-only
       show_previous_details: true,
-      old_date: "January 14, 2026",
+      old_date: "01/14/2026",
       old_time: "09:00 AM",
+      // System
       inviter_name: "Jane Smith",
       invite_url: "#",
       reset_url: "#",
@@ -281,25 +299,50 @@ export default function EmailTemplatesPage() {
 
         {/* Variables Help */}
         {(["admin", "owner"].includes(user?.role || "") || user?.email?.endsWith("@smartagesolutions.com") || user?.email?.endsWith("@smartasolutions.com")) && (
-          <div className="rounded-lg bg-accent/50 border border-primary/20 p-4">
-            <p className="text-sm font-medium text-card-foreground mb-2">
-              Available Variables (use in HTML):
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {[
-                "{{name}}", "{{client_name}}", "{{service}}", "{{date}}", "{{time}}",
-                "{{company_name}}", "{{store_address}}", "{{appointment_id}}",
-                "{{edit_url}}", "{{cancel_url}}", "{{logo_url}}", "{{brand_color}}",
-                "{{first_name}}", "{{last_name}}", "{{title}}", "{{store_url}}",
-                "{{store_phone}}", "{{map_url}}", "{{map_image_url}}", "{{lat}}",
-                "{{lng}}", "{{latitude}}", "{{longitude}}", "{{show_map}}",
-                "{{preferred_communication}}", "{{cancellation_reason}}",
-              ].map((v) => (
-                <code key={v} className="px-2 py-1 rounded bg-muted text-xs text-muted-foreground font-mono">
-                  {v}
-                </code>
-              ))}
-            </div>
+          <div className="rounded-lg bg-accent/50 border border-primary/20 p-4 space-y-3">
+            <p className="text-sm font-medium text-card-foreground">Available Variables (use in HTML):</p>
+
+            {[
+              {
+                label: "Customer",
+                vars: ["{{customer_name}}", "{{name}}", "{{first_name}}", "{{last_name}}", "{{title}}", "{{preferred_communication}}"],
+              },
+              {
+                label: "Appointment",
+                vars: ["{{appointment_date}}", "{{appointment_time}}", "{{date}}", "{{time}}", "{{appointment_id}}", "{{notes}}", "{{cancellation_reason}}"],
+              },
+              {
+                label: "Service & Staff",
+                vars: ["{{service_name}}", "{{service}}", "{{user_name}}", "{{staff_name}}", "{{booking_page_name}}"],
+              },
+              {
+                label: "Company & Store",
+                vars: ["{{company_name}}", "{{store_name}}", "{{store_address}}", "{{store_phone}}", "{{store_url}}"],
+              },
+              {
+                label: "Branding",
+                vars: ["{{logo_url}}", "{{brand_color}}"],
+              },
+              {
+                label: "Links",
+                vars: ["{{edit_url}}", "{{cancel_url}}"],
+              },
+              {
+                label: "Map",
+                vars: ["{{map_url}}", "{{map_image_url}}", "{{show_map}}", "{{lat}}", "{{lng}}"],
+              },
+            ].map(({ label, vars }) => (
+              <div key={label}>
+                <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wide mb-1">{label}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {vars.map((v) => (
+                    <code key={v} className="px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground font-mono">
+                      {v}
+                    </code>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
