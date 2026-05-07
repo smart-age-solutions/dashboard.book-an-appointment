@@ -48,8 +48,8 @@ export function Sidebar() {
   const { user, isBackofficeUser, logout } = useAuth();
   const { isImpersonating } = useImpersonation();
   const navigate = useNavigate();
-  // Cast to any because AuthContext union type doesn't surface .role directly on BackofficeUser
-  const userRole: string = (user as any)?.role ?? "staff";
+  // Backoffice users have no role field; grant owner-level menu access when impersonating
+  const userRole: string = isImpersonating ? "owner" : ((user as any)?.role ?? "staff");
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
