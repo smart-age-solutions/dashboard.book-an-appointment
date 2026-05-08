@@ -92,8 +92,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           client: data.client,
           accessToken: localStorage.getItem("access_token"),
         });
-      } else {
+      } else if (data.email && !data.company_name) {
         // Backoffice context response: { id, name, email, ... }
+        // May include impersonated_client when impersonating — ignored here,
+        // ImpersonationContext (localStorage) owns that state.
         setAuthState({
           isAuthenticated: true,
           identityType: "backoffice",
@@ -101,6 +103,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           client: null,
           accessToken: localStorage.getItem("access_token"),
         });
+      } else {
+        // Unexpected response shape — treat as unauthenticated
+        logout();
+        return;
       }
     } catch (error) {
       console.error("Failed to fetch profile", error);

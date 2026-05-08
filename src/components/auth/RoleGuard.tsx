@@ -1,4 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 import { Navigate } from "react-router-dom";
 
 interface RoleGuardProps {
@@ -20,8 +21,10 @@ interface RoleGuardProps {
  */
 export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
   const { user } = useAuth();
+  const { isImpersonating } = useImpersonation();
 
-  const role = (user as any)?.role ?? "staff";
+  // Backoffice users have no role field; grant full access when impersonating
+  const role = isImpersonating ? "owner" : ((user as any)?.role ?? "staff");
 
   // Owner always has full access — highest privilege role in a client workspace.
   const hasAccess = role === "owner" || allowedRoles.includes(role);
