@@ -724,7 +724,7 @@ export default function SettingsPage() {
             {isBackofficeUser && (
               <>
                 <TabsTrigger value="email">Email Service</TabsTrigger>
-                <TabsTrigger value="sms">SMS Service</TabsTrigger>
+                {/* SMS Service tab hidden until SMS integration is ready */}
               </>
             )}
           </TabsList>
@@ -1115,16 +1115,7 @@ export default function SettingsPage() {
                     />
                   </div>
 
-                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
-                    <div>
-                      <p className="font-medium text-card-foreground">SMS Reminders</p>
-                      <p className="text-sm text-muted-foreground">Send text message reminders (requires SMS integration)</p>
-                    </div>
-                    <Switch
-                      checked={notifications.smsReminder}
-                      onCheckedChange={(v) => setNotifications({ ...notifications, smsReminder: v })}
-                    />
-                  </div>
+                  {/* SMS Reminders toggle hidden until SMS integration is ready */}
                 </div>
 
                 <div className="mt-6 flex justify-end">
