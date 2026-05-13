@@ -124,7 +124,8 @@ export default function BookingPagesPage() {
     confirmation: "none",
     update: "none",
     cancellation: "none",
-    reminder: "none"
+    reminder: "none",
+    completed: "none",
   });
 
   const fetchData = useCallback(async () => {
@@ -259,7 +260,7 @@ export default function BookingPagesPage() {
     setSelectedStoreIds((page.stores || []).map(st => st.store_id));
     
     // Load email templates
-    const currentTriggers = { confirmation: "none", update: "none", cancellation: "none", reminder: "none" };
+    const currentTriggers = { confirmation: "none", update: "none", cancellation: "none", reminder: "none", completed: "none" };
     (page.email_templates || []).forEach(et => {
       if (et.trigger_type in currentTriggers) {
         (currentTriggers as any)[et.trigger_type] = et.template_id;
@@ -313,7 +314,7 @@ export default function BookingPagesPage() {
     setSelectedUserId(null);
     setCcUserIds([]);
     setSelectedStoreIds([]);
-    setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none" });
+    setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none", completed: "none" });
     setIsDialogOpen(true);
   };
 
@@ -766,7 +767,8 @@ export default function BookingPagesPage() {
                     { id: "confirmation", label: "Booking Confirmation" },
                     { id: "update", label: "Appointment Update" },
                     { id: "cancellation", label: "Cancellation Notice" },
-                    { id: "reminder", label: "Booking Reminder" }
+                    { id: "reminder", label: "Booking Reminder" },
+                    { id: "completed", label: "Thank You (Completed)" },
                   ].map(trigger => (
                     <div key={trigger.id} className="space-y-1">
                       <Label className="text-sm">{trigger.label}</Label>
@@ -774,7 +776,7 @@ export default function BookingPagesPage() {
                         <SelectTrigger><SelectValue placeholder="Select Template" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None (Disabled)</SelectItem>
-                          {allTemplates.filter(t => t.type === trigger.id).map(t => (
+                          {allTemplates.filter(t => t.type === (trigger.id === "completed" ? "thank_you" : trigger.id)).map(t => (
                             <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                           ))}
                         </SelectContent>

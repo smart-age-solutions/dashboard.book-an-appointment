@@ -87,6 +87,8 @@ export default function SettingsPage() {
     smsReminder: false,
     reminder1h: false,
     reminder24h: false,
+    emailUpdate: true,
+    emailThankYou: true,
   });
 
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(initialEmailConfig);
@@ -134,6 +136,8 @@ export default function SettingsPage() {
       await api.put("/auth/settings/reminder-settings", {
         reminder_1h_enabled: notifications.reminder1h,
         reminder_24h_enabled: notifications.reminder24h,
+        send_update_email_enabled: notifications.emailUpdate,
+        send_thank_you_email_enabled: notifications.emailThankYou,
       });
       toast({ title: "Saved", description: "Notification settings updated successfully" });
     } catch (error: any) {
@@ -214,6 +218,8 @@ export default function SettingsPage() {
             ...prev,
             reminder1h: reminderRes.reminder_settings.reminder_1h_enabled || false,
             reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
+            emailUpdate: reminderRes.reminder_settings.send_update_email_enabled !== false,
+            emailThankYou: reminderRes.reminder_settings.send_thank_you_email_enabled !== false,
           }));
         }
       } catch (e) {
@@ -1112,6 +1118,28 @@ export default function SettingsPage() {
                     <Switch
                       checked={notifications.emailCancellation}
                       onCheckedChange={(v) => setNotifications({ ...notifications, emailCancellation: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Appointment Update</p>
+                      <p className="text-sm text-muted-foreground">Send email when an appointment is rescheduled or its details change</p>
+                    </div>
+                    <Switch
+                      checked={notifications.emailUpdate}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, emailUpdate: v })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+                    <div>
+                      <p className="font-medium text-card-foreground">Thank You (Completed)</p>
+                      <p className="text-sm text-muted-foreground">Send a thank-you email when an appointment is marked as completed</p>
+                    </div>
+                    <Switch
+                      checked={notifications.emailThankYou}
+                      onCheckedChange={(v) => setNotifications({ ...notifications, emailThankYou: v })}
                     />
                   </div>
 
