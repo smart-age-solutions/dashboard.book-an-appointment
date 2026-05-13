@@ -965,9 +965,15 @@ export default function AppointmentsPage() {
                       <FileText className="h-3 w-3 text-muted-foreground" />
                       <p className="text-xs text-muted-foreground">Custom Data</p>
                     </div>
-                    <pre className="text-xs text-card-foreground bg-background/50 p-2 rounded overflow-auto max-h-32">
-                      {JSON.stringify(selectedAppointment.customData, null, 2)}
-                    </pre>
+                    <div className="space-y-1">
+                      {Object.entries(selectedAppointment.customData).map(([key, value]) => (
+                        <p key={key} className="text-sm text-card-foreground">
+                          <span className="font-medium capitalize">{key.replace(/_/g, " ")}</span>
+                          {": "}
+                          {String(value)}
+                        </p>
+                      ))}
+                    </div>
                   </div>
                 )}
 
