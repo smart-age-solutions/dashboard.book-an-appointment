@@ -102,14 +102,21 @@ export default function EmailTemplatesPage() {
       };
 
       if (editingTemplate) {
-        await api.put(`/email-templates/${editingTemplate.id}`, payload);
+        const res = await api.put(`/email-templates/${editingTemplate.id}`, payload);
+        const updated = res.template ?? { ...editingTemplate, ...payload };
+        setTemplates(prev => prev.map(t => t.id === editingTemplate.id ? updated : t));
         toast({ title: "Success", description: "Template updated successfully" });
       } else {
-        await api.post("/email-templates", payload);
+        const res = await api.post("/email-templates", payload);
+        const created = res.template;
+        if (created) {
+          setTemplates(prev => [...prev, created]);
+        } else {
+          fetchTemplates();
+        }
         toast({ title: "Success", description: "Template created successfully" });
       }
 
-      fetchTemplates();
       setIsDialogOpen(false);
       setEditingTemplate(null);
     } catch (error: any) {

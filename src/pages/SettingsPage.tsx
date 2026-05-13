@@ -181,9 +181,12 @@ export default function SettingsPage() {
 
   const fetchGlobalSettings = async () => {
     try {
-      const [brandingData, profileData] = await Promise.all([
+      const [brandingData, profileData, emailRes, smsRes, reminderRes] = await Promise.all([
         api.get("/auth/settings/branding"),
-        api.get("/auth/settings/profile")
+        api.get("/auth/settings/profile"),
+        api.get("/auth/settings/email-config").catch(() => ({})),
+        api.get("/auth/settings/sms-config").catch(() => ({})),
+        api.get("/auth/settings/reminder-settings").catch(() => ({})),
       ]);
 
       setGlobalSettings({
@@ -199,31 +202,20 @@ export default function SettingsPage() {
         timezone: profileData.profile.timezone || "America/New_York",
       });
 
-      // Fetch Email, SMS configs and reminders
-      try {
-        const [emailRes, smsRes, reminderRes] = await Promise.all([
-          api.get("/auth/settings/email-config"),
-          api.get("/auth/settings/sms-config"),
-          api.get("/auth/settings/reminder-settings"),
-        ]);
-
-        if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
-          setEmailConfig({ ...initialEmailConfig, ...emailRes.email_config });
-        }
-        if (smsRes.sms_config && Object.keys(smsRes.sms_config).length > 0) {
-          setSmsConfig({ ...initialSmsConfig, ...smsRes.sms_config });
-        }
-        if (reminderRes.reminder_settings) {
-          setNotifications(prev => ({
-            ...prev,
-            reminder1h: reminderRes.reminder_settings.reminder_1h_enabled || false,
-            reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
-            emailUpdate: reminderRes.reminder_settings.send_update_email_enabled !== false,
-            emailThankYou: reminderRes.reminder_settings.send_thank_you_email_enabled !== false,
-          }));
-        }
-      } catch (e) {
-        console.error("Failed to fetch service configs", e);
+      if (emailRes.email_config && Object.keys(emailRes.email_config).length > 0) {
+        setEmailConfig({ ...initialEmailConfig, ...emailRes.email_config });
+      }
+      if (smsRes.sms_config && Object.keys(smsRes.sms_config).length > 0) {
+        setSmsConfig({ ...initialSmsConfig, ...smsRes.sms_config });
+      }
+      if (reminderRes.reminder_settings) {
+        setNotifications(prev => ({
+          ...prev,
+          reminder1h: reminderRes.reminder_settings.reminder_1h_enabled || false,
+          reminder24h: reminderRes.reminder_settings.reminder_24h_enabled || false,
+          emailUpdate: reminderRes.reminder_settings.send_update_email_enabled !== false,
+          emailThankYou: reminderRes.reminder_settings.send_thank_you_email_enabled !== false,
+        }));
       }
     } catch (error: any) {
       toast({ title: "Error", description: "Failed to load settings", variant: "destructive" });

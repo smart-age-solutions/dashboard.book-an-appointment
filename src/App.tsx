@@ -35,6 +35,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
 import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
 import { RoleGuard } from "@/components/auth/RoleGuard";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -57,6 +58,7 @@ const App = () => (
             <Sonner />
             <ImpersonationBanner />
             <BrowserRouter>
+              <ErrorBoundary>
               <Suspense fallback={
                 <div className="flex h-screen items-center justify-center bg-background">
                   <LoadingSpinner size={48} />
@@ -93,6 +95,7 @@ const App = () => (
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
+              </ErrorBoundary>
             </BrowserRouter>
           </StoreProvider>
         </ImpersonationProvider>

@@ -138,12 +138,7 @@ export default function BookingPagesPage() {
         api.get("/email-templates")
       ]);
 
-      // Pages come with limited data in list, we usually need details for some parts but list is fine for overview
-      const fullPages: any[] = await Promise.all(pagesRes.booking_pages.map((p: any) => 
-        api.get(`/booking-pages/${p.id}`)
-      ));
-      
-      setPages(fullPages.map(r => r.booking_page));
+      setPages(pagesRes.booking_pages);
       setAllStores(storesRes.stores || []);
 
       setAllUsers(usersRes.users || []);
@@ -214,7 +209,13 @@ export default function BookingPagesPage() {
         await api.put(`/booking-pages/${pageId}/email-templates`, { triggers });
       }
 
-      fetchData();
+      // Optimistic update: merge saved data into state instead of full refetch
+      if (editingPage) {
+        setPages(prev => prev.map(p => p.id === editingPage.id ? { ...p, ...formData } : p));
+      } else {
+        // For new pages, refetch to get server-assigned id and data
+        fetchData();
+      }
       setIsDialogOpen(false);
       setEditingPage(null);
     } catch (error: any) {
@@ -222,7 +223,14 @@ export default function BookingPagesPage() {
     }
   };
 
-  const handleEdit = (page: BookingPageData) => {
+  const handleEdit = async (page: BookingPageData) => {
+    // Fetch full detail to get email_templates (not included in list response)
+    try {
+      const detail = await api.get(`/booking-pages/${page.id}`);
+      page = detail.booking_page;
+    } catch {
+      // Fall through with list data if fetch fails
+    }
     setEditingPage(page);
     setFormData({
       name: page.name,
