@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { StoreSelector } from "@/components/booking/StoreSelector";
 import { CalendarPicker } from "@/components/booking/CalendarPicker";
@@ -26,6 +26,7 @@ type Step = "store" | "datetime" | "form" | "success";
 
 export default function BookingPage() {
   const { clientId } = useParams<{ clientId: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<Step>("store");
@@ -48,7 +49,13 @@ export default function BookingPage() {
     if (!clientId) return;
     const fetchStores = async () => {
       try {
-        const res = await fetch(`${API_URL}/public/stores/${clientId}`);
+        const bookingPageId = searchParams.get("booking_page_id");
+        const bookingPageSlug = searchParams.get("slug") || searchParams.get("booking_page_slug");
+        const storeParams = new URLSearchParams();
+        if (bookingPageId) storeParams.set("booking_page_id", bookingPageId);
+        else if (bookingPageSlug) storeParams.set("booking_page_slug", bookingPageSlug);
+        const storeQuery = storeParams.toString() ? `?${storeParams}` : "";
+        const res = await fetch(`${API_URL}/public/stores/${clientId}${storeQuery}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load");
 
