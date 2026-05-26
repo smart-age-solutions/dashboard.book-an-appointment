@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   Calendar, Clock, X, Check, Mail, Settings, UserPlus, UserMinus,
-  MapPin, Activity, Search, Filter, Palette, ChevronLeft, ChevronRight,
+  MapPin, Activity, Search, Filter, Palette, ChevronLeft, ChevronRight, User,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
@@ -16,23 +16,39 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 // ── Config maps ───────────────────────────────────────────────────────────────
 
 const ACTION_CONFIG: Record<string, { icon: typeof Activity; bg: string; text: string; label: string }> = {
-  create_appointment:    { icon: Calendar,  bg: "bg-green-500/10",    text: "text-green-600",      label: "Booked"          },
-  appointment_created:   { icon: Calendar,  bg: "bg-green-500/10",    text: "text-green-600",      label: "Booked"          },
-  update_appointment:    { icon: Clock,     bg: "bg-blue-500/10",     text: "text-blue-600",       label: "Updated"         },
-  appointment_updated:   { icon: Clock,     bg: "bg-blue-500/10",     text: "text-blue-600",       label: "Updated"         },
-  cancel_appointment:    { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",    label: "Cancelled"       },
-  appointment_cancelled: { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",    label: "Cancelled"       },
-  login:                 { icon: Check,     bg: "bg-muted",           text: "text-muted-foreground", label: "Signed in"     },
-  login_success:         { icon: Check,     bg: "bg-muted",           text: "text-muted-foreground", label: "Signed in"     },
-  login_failed:          { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",    label: "Login failed"    },
-  invite_user:           { icon: UserPlus,  bg: "bg-purple-500/10",   text: "text-purple-600",     label: "User invited"    },
-  remove_user:           { icon: UserMinus, bg: "bg-orange-500/10",   text: "text-orange-600",     label: "User removed"    },
-  update_settings:       { icon: Settings,  bg: "bg-yellow-500/10",   text: "text-yellow-600",     label: "Settings"        },
-  update_branding:       { icon: Palette,   bg: "bg-pink-500/10",     text: "text-pink-600",       label: "Branding"        },
-  create_store:          { icon: MapPin,    bg: "bg-teal-500/10",     text: "text-teal-600",       label: "Location added"  },
-  update_store:          { icon: MapPin,    bg: "bg-teal-500/10",     text: "text-teal-600",       label: "Location updated"},
-  delete_store:          { icon: MapPin,    bg: "bg-destructive/10",  text: "text-destructive",    label: "Location deleted"},
-  send_email:            { icon: Mail,      bg: "bg-indigo-500/10",   text: "text-indigo-600",     label: "Email sent"      },
+  // Appointments
+  create_appointment:    { icon: Calendar,  bg: "bg-green-500/10",    text: "text-green-600",        label: "Booked"           },
+  appointment_created:   { icon: Calendar,  bg: "bg-green-500/10",    text: "text-green-600",        label: "Booked"           },
+  update_appointment:    { icon: Clock,     bg: "bg-blue-500/10",     text: "text-blue-600",         label: "Updated"          },
+  appointment_updated:   { icon: Clock,     bg: "bg-blue-500/10",     text: "text-blue-600",         label: "Updated"          },
+  cancel_appointment:    { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",      label: "Cancelled"        },
+  appointment_cancelled: { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",      label: "Cancelled"        },
+  // Auth
+  login:                 { icon: Check,     bg: "bg-muted",           text: "text-muted-foreground", label: "Signed in"        },
+  login_success:         { icon: Check,     bg: "bg-muted",           text: "text-muted-foreground", label: "Signed in"        },
+  login_failed:          { icon: X,         bg: "bg-destructive/10",  text: "text-destructive",      label: "Login failed"     },
+  user_registered:       { icon: UserPlus,  bg: "bg-green-500/10",    text: "text-green-600",        label: "Registered"       },
+  invitation_accepted:   { icon: Check,     bg: "bg-green-500/10",    text: "text-green-600",        label: "Invite accepted"  },
+  password_reset:        { icon: Settings,  bg: "bg-muted",           text: "text-muted-foreground", label: "Password reset"   },
+  password_changed:      { icon: Settings,  bg: "bg-muted",           text: "text-muted-foreground", label: "Password changed" },
+  // Team / Users
+  invite_user:           { icon: UserPlus,  bg: "bg-purple-500/10",   text: "text-purple-600",       label: "User invited"     },
+  team_member_invited:   { icon: UserPlus,  bg: "bg-purple-500/10",   text: "text-purple-600",       label: "User invited"     },
+  remove_user:           { icon: UserMinus, bg: "bg-orange-500/10",   text: "text-orange-600",       label: "User removed"     },
+  team_member_removed:   { icon: UserMinus, bg: "bg-orange-500/10",   text: "text-orange-600",       label: "User removed"     },
+  team_member_updated:   { icon: User,      bg: "bg-blue-500/10",     text: "text-blue-600",         label: "User updated"     },
+  // Settings (keys kept for prefix fallback in getConfig)
+  update_settings:       { icon: Settings,  bg: "bg-yellow-500/10",   text: "text-yellow-600",       label: "Settings"         },
+  update_branding:       { icon: Palette,   bg: "bg-pink-500/10",     text: "text-pink-600",         label: "Branding"         },
+  // Stores
+  create_store:          { icon: MapPin,    bg: "bg-teal-500/10",     text: "text-teal-600",         label: "Location added"   },
+  update_store:          { icon: MapPin,    bg: "bg-teal-500/10",     text: "text-teal-600",         label: "Location updated" },
+  delete_store:          { icon: MapPin,    bg: "bg-destructive/10",  text: "text-destructive",      label: "Location deleted" },
+  // Slots
+  slot_override_created: { icon: Clock,     bg: "bg-yellow-500/10",   text: "text-yellow-600",       label: "Slot blocked"     },
+  slot_override_deleted: { icon: Clock,     bg: "bg-green-500/10",    text: "text-green-600",        label: "Slot unblocked"   },
+  // Email
+  send_email:            { icon: Mail,      bg: "bg-indigo-500/10",   text: "text-indigo-600",       label: "Email sent"       },
 };
 
 const ENTITY_BADGE: Record<string, { label: string; cls: string }> = {
@@ -46,9 +62,13 @@ const ENTITY_BADGE: Record<string, { label: string; cls: string }> = {
 };
 
 function getConfig(action: string) {
-  return ACTION_CONFIG[action] ?? {
-    icon: Activity, bg: "bg-muted", text: "text-muted-foreground", label: action.replace(/_/g, " "),
-  };
+  if (ACTION_CONFIG[action]) return ACTION_CONFIG[action];
+  if (action.startsWith("settings_updated_")) {
+    return action === "settings_updated_branding"
+      ? ACTION_CONFIG.update_branding
+      : ACTION_CONFIG.update_settings;
+  }
+  return { icon: Activity, bg: "bg-muted", text: "text-muted-foreground", label: action.replace(/_/g, " ") };
 }
 
 function getMessage(log: any): string {
@@ -80,20 +100,37 @@ function getMessage(log: any): string {
       return `Failed sign-in attempt${d.email ? ` for ${d.email}` : ""}`;
 
     case "invite_user":
-      return `${actor} invited ${d.email || "a new user"}${d.role ? ` as ${d.role}` : ""}`;
+    case "team_member_invited":
+      return `${actor} invited ${d.invited_email || d.email || "a new user"}${d.role ? ` as ${d.role}` : ""}`;
 
     case "remove_user":
-      return `${actor} removed ${d.user_name || d.email || "a user"}`;
+    case "team_member_removed":
+      return `${actor} removed ${d.user_name || d.email || "a team member"}`;
 
-    case "update_settings": {
-      const fields: string[] = d.updated_fields || [];
-      return fields.length
-        ? `${actor} updated settings: ${fields.join(", ")}`
-        : `${actor} updated settings`;
-    }
+    case "team_member_updated":
+      return `${actor} updated a team member`;
 
+    case "user_registered":
+      return `${actor} registered${d.company_name ? ` (${d.company_name})` : ""}`;
+
+    case "invitation_accepted":
+      return `${d.email || actor} accepted their invitation`;
+
+    case "password_reset":
+      return `${actor} reset their password`;
+
+    case "password_changed":
+      return `${actor} changed their password`;
+
+    case "slot_override_created":
+      return `${actor} blocked a time slot`;
+
+    case "slot_override_deleted":
+      return `${actor} unblocked a time slot`;
+
+    case "update_settings":
     case "update_branding":
-      return `${actor} updated company branding`;
+      return `${actor} updated settings`;
 
     case "create_store":
       return `${actor} added location "${d.store_name || d.name || ""}"`;
@@ -108,6 +145,10 @@ function getMessage(log: any): string {
       return `Email sent to ${d.to || d.recipient || "recipient"}${d.subject ? ` — "${d.subject}"` : ""}`;
 
     default:
+      if (log.action.startsWith("settings_updated_")) {
+        const type = log.action.replace("settings_updated_", "").replace(/_/g, " ");
+        return `${actor} updated ${type} settings`;
+      }
       return `${actor} · ${log.action.replace(/_/g, " ")}`;
   }
 }
@@ -120,9 +161,16 @@ function getSubDetails(log: any): string[] {
     if (d.date) lines.push(`Date: ${format(new Date(d.date), "MMM d, yyyy")}`);
     if (d.slot_time || d.start_time) lines.push(`Time: ${d.slot_time || d.start_time}`);
     if (d.staff_name || d.user_name) lines.push(`Staff: ${d.staff_name || d.user_name}`);
-    if (d.phone) lines.push(`Phone: ${d.phone}`);
     if (d.email) lines.push(`Email: ${d.email}`);
+    if (d.phone) lines.push(`Phone: ${d.phone}`);
     if (d.status) lines.push(`Status: ${d.status}`);
+    // appointment_updated stores changes in d.changes
+    const changes = d.changes || {};
+    if (changes.new_date) lines.push(`New date: ${format(new Date(changes.new_date), "MMM d, yyyy")}`);
+    if (changes.old_date) lines.push(`Old date: ${format(new Date(changes.old_date), "MMM d, yyyy")}`);
+    if (changes.new_time) lines.push(`New time: ${changes.new_time}`);
+    if (changes.old_time) lines.push(`Old time: ${changes.old_time}`);
+    if (changes.status) lines.push(`New status: ${changes.status}`);
   }
 
   if (log.entity_type === "user") {
@@ -225,18 +273,20 @@ export default function ActivityPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Actions</SelectItem>
-                <SelectItem value="create_appointment">Appointment Booked</SelectItem>
-                <SelectItem value="update_appointment">Appointment Updated</SelectItem>
-                <SelectItem value="cancel_appointment">Appointment Cancelled</SelectItem>
-                <SelectItem value="invite_user">User Invited</SelectItem>
-                <SelectItem value="remove_user">User Removed</SelectItem>
-                <SelectItem value="update_settings">Settings Updated</SelectItem>
-                <SelectItem value="update_branding">Branding Updated</SelectItem>
+                <SelectItem value="appointment_created">Appointment Booked</SelectItem>
+                <SelectItem value="appointment_updated">Appointment Updated</SelectItem>
+                <SelectItem value="appointment_cancelled">Appointment Cancelled</SelectItem>
+                <SelectItem value="team_member_invited">User Invited</SelectItem>
+                <SelectItem value="team_member_removed">User Removed</SelectItem>
+                <SelectItem value="settings_updated">Settings Updated</SelectItem>
+                <SelectItem value="settings_updated_branding">Branding Updated</SelectItem>
+                <SelectItem value="slot_override_created">Slot Blocked</SelectItem>
+                <SelectItem value="slot_override_deleted">Slot Unblocked</SelectItem>
                 <SelectItem value="login_success">Sign-in</SelectItem>
                 <SelectItem value="login_failed">Failed Sign-in</SelectItem>
                 <SelectItem value="create_store">Location Added</SelectItem>
                 <SelectItem value="update_store">Location Updated</SelectItem>
-                <SelectItem value="send_email">Email Sent</SelectItem>
+                <SelectItem value="delete_store">Location Deleted</SelectItem>
               </SelectContent>
             </Select>
 
