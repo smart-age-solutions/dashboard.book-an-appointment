@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Download, Mail, Users, CheckCircle, XCircle, Filter } from "lucide-react";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { api, apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,6 +116,7 @@ export default function CustomersPage() {
   );
 
   return (
+    <DashboardLayout>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-1">
@@ -321,5 +323,6 @@ export default function CustomersPage() {
         )}
       </div>
     </div>
+    </DashboardLayout>
   );
 }
