@@ -4,6 +4,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { UpcomingAppointments } from "@/components/dashboard/UpcomingAppointments";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
@@ -31,7 +32,7 @@ const Dashboard = memo(function Dashboard() {
       };
     },
     enabled: isClientAccess,
-    staleTime: 0,
+    staleTime: 1000 * 60 * 2,
   });
 
   if (isLoading && isClientAccess) {
@@ -92,6 +93,9 @@ const Dashboard = memo(function Dashboard() {
                 icon={TrendingUp}
               />
             </div>
+
+            {/* Quick Actions */}
+            <QuickActions />
 
             {/* Content Grid */}
             <div className="grid gap-6 lg:grid-cols-2">

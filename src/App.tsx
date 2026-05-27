@@ -29,6 +29,7 @@ const BookingPage = lazy(() => import("./pages/BookingPage"));
 const SlugBookingPage = lazy(() => import("./pages/SlugBookingPage"));
 const ManageAppointmentPage = lazy(() => import("./pages/ManageAppointmentPage"));
 const BookingPagesPage = lazy(() => import("./pages/BookingPagesPage"));
+const CustomersPage = lazy(() => import("./pages/CustomersPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -80,6 +81,7 @@ const App = () => (
                   <Route path="/" element={<ClientPageGuard><Dashboard /></ClientPageGuard>} />
                   <Route path="/calendar" element={<ClientPageGuard><CalendarPage /></ClientPageGuard>} />
                   <Route path="/appointments" element={<ClientPageGuard><AppointmentsPage /></ClientPageGuard>} />
+                  <Route path="/customers" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin", "manager"]}><CustomersPage /></RoleGuard></ClientPageGuard>} />
                   <Route path="/booking-pages" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin", "manager"]}><BookingPagesPage /></RoleGuard></ClientPageGuard>} />
                   <Route path="/email-templates" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin", "manager"]}><EmailTemplatesPage /></RoleGuard></ClientPageGuard>} />
                   <Route path="/users" element={<ClientPageGuard><RoleGuard allowedRoles={["owner", "admin"]}><UsersPage /></RoleGuard></ClientPageGuard>} />
