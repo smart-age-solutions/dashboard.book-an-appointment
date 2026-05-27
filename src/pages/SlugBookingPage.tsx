@@ -7,6 +7,7 @@ import { SlugTimeSlotPicker } from "@/components/booking/SlugTimeSlotPicker";
 import { CustomerInfoForm } from "@/components/booking/CustomerInfoForm";
 import { BookingConfirmation } from "@/components/booking/BookingConfirmation";
 import { StoreSelector } from "@/components/booking/StoreSelector";
+import { StaffSelector } from "@/components/booking/StaffSelector";
 
 /**
  * SlugBookingPage — /book/:slug
@@ -28,12 +29,15 @@ export default function SlugBookingPage() {
     currentStepIndex,
     stores,
     selectedStoreId,
+    availableUsers,
+    selectedUser,
     selectedDate,
     selectedTime,
     availableDates,
     appointmentResult,
     submitError,
     selectStore,
+    selectUser,
     selectDate,
     selectTime,
     goToForm,
@@ -154,7 +158,6 @@ export default function SlugBookingPage() {
           {/* ── Step 1: Location ── */}
           {step === "location" && (
             <div className="space-y-5">
-              {/* <h2 className="text-xl font-bold text-gray-900">Select a Location</h2> */}
               <StoreSelector
                 stores={stores}
                 selectedStoreId={selectedStoreId}
@@ -164,7 +167,19 @@ export default function SlugBookingPage() {
             </div>
           )}
 
-          {/* ── Step 2: Date & Time ── */}
+          {/* ── Step 2: Staff ── */}
+          {step === "staff" && (
+            <div className="space-y-5">
+              <StaffSelector
+                users={availableUsers}
+                selectedUser={selectedUser}
+                onSelect={selectUser}
+                brandColor={brandColor}
+              />
+            </div>
+          )}
+
+          {/* ── Step 3: Date & Time ── */}
           {step === "datetime" && (
             <div className="space-y-5">
               {selectedStoreName && (
@@ -194,7 +209,7 @@ export default function SlugBookingPage() {
               )}
 
               <div className="flex gap-3 pt-2">
-                {stores.length > 1 && (
+                {(stores.length > 1 || availableUsers.length > 1) && (
                   <BackButton onClick={goBack} label="Back" />
                 )}
                 <button
@@ -217,7 +232,7 @@ export default function SlugBookingPage() {
                 isLoading={isSubmitting}
                 brandColor={brandColor}
                 serviceName={page.name}
-                userName=""
+                userName={selectedUser?.name ?? ""}
                 date={selectedDate}
                 time={selectedTime}
                 timezone={page.timezone}

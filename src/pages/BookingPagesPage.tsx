@@ -522,9 +522,16 @@ export default function BookingPagesPage() {
                           {isUploadingImage ? "Uploading..." : "Upload Image"}
                         </Button>
                         {formData.page_image_url && (
-                          <a href={formData.page_image_url} target="_blank" rel="noreferrer" className="text-xs text-primary underline truncate max-w-[160px]">
-                            View image
-                          </a>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setFormData(prev => ({ ...prev, page_image_url: "" }))}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Remove
+                          </Button>
                         )}
                       </div>
                       {formData.page_image_url && (

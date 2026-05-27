@@ -37,14 +37,16 @@ async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
 export const getBookingPage = (slug: string) =>
   publicFetch<BookingPageResponse>(`/api/booking-pages/${slug}`);
 
-/** Fetch available time slots for a user + date (service optional). */
+/** Fetch available time slots for a user + date (service optional).
+ *  Pass an empty/falsy userId to get the union of all staff availability. */
 export const getAvailability = (
   slug: string,
   serviceId: string | null | undefined,
-  userId: string,
+  userId: string | null | undefined,
   date: string // YYYY-MM-DD
 ) => {
-  const params = new URLSearchParams({ user_id: userId, date });
+  const params = new URLSearchParams({ date });
+  if (userId) params.set("user_id", userId);
   if (serviceId) params.set("service_id", serviceId);
   return publicFetch<AvailabilityResponse>(
     `/api/booking-pages/${slug}/availability?${params}`

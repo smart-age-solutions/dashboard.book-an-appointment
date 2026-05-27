@@ -15,10 +15,12 @@ import type {
 /**
  * useSlugBooking
  * ─────────────
- * Simplified booking flow: Location → Date & Time → Details → Success
+ * Booking flow: Location → Staff (optional) → Date & Time → Details → Success
  *
  * - Location step skipped if 0 or 1 stores
- * - Staff is auto-selected (first/default user), never shown to customer
+ * - Staff step shown only when booking page has multiple staff members
+ * - Customer can select a specific staff member or choose "No preference"
+ * - If no preference: availability shows union of all staff; backend auto-assigns
  * - Services are entirely optional; booking works without them
  */
 export function useSlugBooking(slug: string) {
@@ -27,7 +29,8 @@ export function useSlugBooking(slug: string) {
 
   // ── Selections ───────────────────────────────────────────────────────────
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
-  const [autoUser, setAutoUser] = useState<UserOption | null>(null);
+  const [availableUsers, setAvailableUsers] = useState<UserOption[]>([]);
+  const [selectedUser, setSelectedUser] = useState<UserOption | null>(null);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [appointmentResult, setAppointmentResult] = useState<BookingResult | null>(null);
@@ -41,35 +44,37 @@ export function useSlugBooking(slug: string) {
     staleTime: 1000 * 60 * 5,
   });
 
-  // Auto-resolve initial step and auto-select staff when data loads
+  // Auto-resolve initial step, populate staff list, skip steps as needed
   useEffect(() => {
     if (!pageQuery.data || step !== "location") return;
 
     const stores = pageQuery.data.stores ?? [];
-    const defaultUserId = pageQuery.data.booking_page?.default_user_id;
+    const users = pageQuery.data.users ?? [];
 
-    // Auto-pick the default user — never show staff selector to customer
-    setAutoUser(defaultUserId ? { id: defaultUserId } : null);
+    setAvailableUsers(users);
 
-    // Skip location step if 0 or 1 stores
-    if (stores.length <= 1) {
+    const hasMultipleStores = stores.length > 1;
+    const hasMultipleStaff = users.length > 1;
+
+    if (!hasMultipleStores) {
       if (stores.length === 1) setSelectedStoreId(stores[0].id);
-      setStep("datetime");
+      setStep(hasMultipleStaff ? "staff" : "datetime");
     }
-    // else stay on "location" so the user can pick a store
+    // else stay on "location"
   }, [pageQuery.data, step]);
 
   // ── Fetch availability (per date) ─────────────────────────────────────────
+  // When selectedUser is null (no preference), omit user_id — backend returns union.
   const availabilityQuery = useQuery({
-    queryKey: ["availability", slug, autoUser?.id, selectedDate],
+    queryKey: ["availability", slug, selectedUser?.id ?? "any", selectedDate],
     queryFn: () =>
       getAvailability(
         slug,
-        "",        // no service_id needed
-        autoUser!.id,
+        "",
+        selectedUser?.id ?? null,  // null → backend returns union of all staff
         selectedDate!
       ),
-    enabled: !!(autoUser && selectedDate && step === "datetime"),
+    enabled: !!(selectedDate && step === "datetime"),
     retry: 1,
     staleTime: 10_000,
   });
@@ -83,7 +88,8 @@ export function useSlugBooking(slug: string) {
       const start_time = `${selectedDate}T${selectedTime}:00`;
       const customer_name = [data.first_name, data.last_name].filter(Boolean).join(" ");
       return createBooking(slug, {
-        ...(autoUser ? { user_id: autoUser.id } : {}),
+        // Only include user_id if a specific staff member was selected
+        ...(selectedUser ? { user_id: selectedUser.id } : {}),
         ...(selectedStoreId ? { store_id: selectedStoreId } : {}),
         customer_name,
         customer_email: data.email,
@@ -125,13 +131,19 @@ export function useSlugBooking(slug: string) {
     setSelectedStoreId(storeId);
     setSelectedDate(null);
     setSelectedTime(null);
+    setStep(availableUsers.length > 1 ? "staff" : "datetime");
+  }, [availableUsers.length]);
+
+  const selectUser = useCallback((user: UserOption | null) => {
+    setSelectedUser(user);
+    setSelectedDate(null);
+    setSelectedTime(null);
     setStep("datetime");
   }, []);
 
   const selectDate = useCallback((date: string) => {
     setSelectedDate(date);
     setSelectedTime(null);
-    // stay on datetime step — time slots will load below the calendar
   }, []);
 
   const selectTime = useCallback((time: string) => {
@@ -145,9 +157,17 @@ export function useSlugBooking(slug: string) {
   const goBack = useCallback(() => {
     setSubmitError(null);
     switch (step) {
-      case "datetime":
-        // Only go back to location if there are multiple stores
+      case "staff":
         if ((pageQuery.data?.stores?.length ?? 0) > 1) {
+          setStep("location");
+        }
+        break;
+      case "datetime":
+        if (availableUsers.length > 1) {
+          setStep("staff");
+          setSelectedDate(null);
+          setSelectedTime(null);
+        } else if ((pageQuery.data?.stores?.length ?? 0) > 1) {
           setStep("location");
           setSelectedDate(null);
           setSelectedTime(null);
@@ -159,10 +179,11 @@ export function useSlugBooking(slug: string) {
       default:
         break;
     }
-  }, [step, pageQuery.data]);
+  }, [step, pageQuery.data, availableUsers.length]);
 
   const resetBooking = useCallback(() => {
     setStep("location");
+    setSelectedUser(null);
     setSelectedDate(null);
     setSelectedTime(null);
     setAppointmentResult(null);
@@ -173,16 +194,17 @@ export function useSlugBooking(slug: string) {
   // ── Derived helpers ───────────────────────────────────────────────────────
   const stores = pageQuery.data?.stores ?? [];
   const hasMultipleStores = stores.length > 1;
+  const hasMultipleStaff = availableUsers.length > 1;
 
   const stepLabels: { key: BookingStep; label: string }[] = [
     ...(hasMultipleStores ? [{ key: "location" as BookingStep, label: "Location" }] : []),
+    ...(hasMultipleStaff ? [{ key: "staff" as BookingStep, label: "Staff" }] : []),
     { key: "datetime", label: "Date & Time" },
     { key: "form", label: "Details" },
   ];
 
   const currentStepIndex = stepLabels.findIndex((s) => s.key === step);
 
-  // Build available dates set from page-level slots
   const availableDates = pageQuery.data?.slots
     ? new Set(Object.keys(pageQuery.data.slots))
     : undefined;
@@ -195,12 +217,15 @@ export function useSlugBooking(slug: string) {
     currentStepIndex,
     stores,
     selectedStoreId,
+    availableUsers,
+    selectedUser,
     selectedDate,
     selectedTime,
     availableDates,
     appointmentResult,
     submitError,
     selectStore,
+    selectUser,
     selectDate,
     selectTime,
     goToForm,

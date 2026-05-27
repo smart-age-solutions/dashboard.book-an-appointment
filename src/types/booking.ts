@@ -33,6 +33,7 @@ export interface BookingPageResponse {
   status: string;
   booking_page: BookingPageData;
   services: ServiceOption[];
+  users?: UserOption[];
   slots?: Record<string, string[]>; // date -> available times
   stores?: Array<{ id: string; name: string; address?: string }>;
   start_date?: string;
@@ -113,6 +114,7 @@ export interface CustomerData {
 
 export type BookingStep =
   | "location"
+  | "staff"
   | "datetime"
   | "form"
   | "success";

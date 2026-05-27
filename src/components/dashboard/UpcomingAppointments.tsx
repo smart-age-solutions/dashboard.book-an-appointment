@@ -7,6 +7,7 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { parseLocalDate } from "@/lib/date";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { useImpersonation } from "@/contexts/ImpersonationContext";
 
 const statusStyles: Record<string, string> = {
   confirmed: "bg-success/10 text-success border-success/20",
@@ -17,13 +18,20 @@ const statusStyles: Record<string, string> = {
 
 export const UpcomingAppointments = memo(function UpcomingAppointments() {
   const [selected, setSelected] = useState<any | null>(null);
+  const { isImpersonating } = useImpersonation();
 
   const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ["upcoming-appointments"],
+    queryKey: ["upcoming-appointments", isImpersonating],
     queryFn: async () => {
       const today = format(new Date(), "yyyy-MM-dd");
-      const data = await api.get("/appointments", { start_date: today, per_page: 10 });
-      return data.appointments;
+      const data = await api.get("/appointments", {
+        start_date: today,
+        per_page: 10,
+        sort: "date_asc",
+      });
+      return (data.appointments as any[]).filter(
+        (a) => a.status !== "cancelled" && a.status !== "completed"
+      );
     },
     staleTime: 1000 * 60 * 2,
   });

@@ -326,6 +326,7 @@ export default function CalendarPage() {
   const [allUsers, setAllUsers] = useState<{ id: string; name: string }[]>([]);
   const [bookingPages, setBookingPages] = useState<any[]>([]);
   const [selectedBookingPageId, setSelectedBookingPageId] = useState<string>("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>("all");
   const [formData, setFormData] = useState({
     title: "",
     first_name: "",
@@ -355,6 +356,9 @@ export default function CalendarPage() {
       const params: any = { start_date: start, end_date: end, per_page: 100 };
       if (selectedBookingPageId && selectedBookingPageId !== "all") {
         params.booking_page_id = selectedBookingPageId;
+      }
+      if (selectedUserId && selectedUserId !== "all") {
+        params.user_id = selectedUserId;
       }
       
       const [aptData, overrideData, pagesRes, usersRes] = await Promise.all([
@@ -409,11 +413,11 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentMonth, selectedBookingPageId]);
+  }, [currentMonth, selectedBookingPageId, selectedUserId]);
 
   useEffect(() => {
     fetchData();
-  }, [fetchData, selectedBookingPageId]);
+  }, [fetchData, selectedBookingPageId, selectedUserId]);
 
   const days = eachDayOfInterval({
     start: startOfMonth(currentMonth),
@@ -676,6 +680,24 @@ export default function CalendarPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                {allUsers.length > 0 && (
+                  <div className="flex-1">
+                    <Label className="text-xs text-muted-foreground mb-1 block">Filter by Staff Member</Label>
+                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                      <SelectTrigger className="w-full bg-muted/50">
+                        <SelectValue placeholder="All Staff" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Staff</SelectItem>
+                        {allUsers.map(user => (
+                          <SelectItem key={user.id} value={user.id}>
+                            {user.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 {stores.length > 0 && (
                   <div className="w-full sm:w-48">
                     <Label className="text-xs text-muted-foreground mb-1 block">Store Location</Label>
