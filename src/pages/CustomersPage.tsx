@@ -24,6 +24,7 @@ interface Customer {
   consent_communication: boolean;
   custom_data: Record<string, unknown>;
   last_appointment_date: string | null;
+  appointment_count: number;
 }
 
 export default function CustomersPage() {
@@ -194,19 +195,20 @@ export default function CustomersPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Pref. Channel</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Terms</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Consent</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Appts</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Last Appt</th>
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-16 text-center text-muted-foreground">
                     Loading customers…
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-4 py-16 text-center text-muted-foreground">
                     No customers found.
                   </td>
                 </tr>
@@ -239,6 +241,11 @@ export default function CustomersPage() {
                         <td className="px-4 py-3">
                           <BoolBadge value={c.consent_communication} trueLabel="Yes" falseLabel="No" />
                         </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="inline-flex items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-semibold w-7 h-7">
+                            {c.appointment_count}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                           {c.last_appointment_date ?? "—"}
                         </td>
@@ -247,7 +254,7 @@ export default function CustomersPage() {
                       {/* Expanded detail row */}
                       {isExpanded && (
                         <tr key={`${c.email}-expanded`} className="bg-muted/10 border-b">
-                          <td colSpan={8} className="px-6 py-4">
+                          <td colSpan={9} className="px-6 py-4">
                             <div className="flex flex-wrap gap-8 text-sm">
                               {c.first_name && (
                                 <div>
