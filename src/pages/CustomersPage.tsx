@@ -228,7 +228,11 @@ export default function CustomersPage() {
                           {c.title && <div className="text-xs text-muted-foreground">{c.title}</div>}
                         </td>
                         <td className="px-4 py-3 text-foreground">{c.email}</td>
-                        <td className="px-4 py-3 text-foreground">{c.phone || <span className="text-muted-foreground">—</span>}</td>
+                        <td className="px-4 py-3 text-foreground">
+                          {c.phone_area_code || c.phone_number
+                            ? <span>+{c.phone_area_code} {c.phone_number}</span>
+                            : <span className="text-muted-foreground">—</span>}
+                        </td>
                         <td className="px-4 py-3 text-foreground">{c.country_of_residence || <span className="text-muted-foreground">—</span>}</td>
                         <td className="px-4 py-3">
                           {c.preferred_communication
@@ -274,10 +278,10 @@ export default function CustomersPage() {
                                   <p className="font-medium">{c.title}</p>
                                 </div>
                               )}
-                              {c.phone_area_code && (
+                              {(c.phone_area_code || c.phone_number) && (
                                 <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">Area Code</p>
-                                  <p className="font-medium">+{c.phone_area_code}</p>
+                                  <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
+                                  <p className="font-medium">+{c.phone_area_code} {c.phone_number}</p>
                                 </div>
                               )}
                               {c.preferred_communication && (

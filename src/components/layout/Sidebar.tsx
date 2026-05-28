@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut, PlusCircle, UserCog, Activity, Contact } from "lucide-react";
+import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut, PlusCircle, UserCog, Activity, Contact, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useImpersonation } from "@/contexts/ImpersonationContext";
@@ -35,6 +35,7 @@ export const clientNavigation = [
   { name: "Activity",        href: "/activity",        icon: Activity,        minRole: "manager" },
   { name: "Users",           href: "/users",           icon: Users,           minRole: "admin"   },
   { name: "Settings",        href: "/settings",        icon: Settings,        minRole: "admin"   },
+  { name: "Help",            href: "/help",            icon: BookOpen,        minRole: "staff"   },
 ];
 
 export const backofficeNavigation = [
