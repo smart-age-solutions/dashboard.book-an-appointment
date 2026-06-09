@@ -342,14 +342,8 @@ const sections = [
         heading: "Tab: General",
         body: `Configure your business identity:\n\n• **Company name** — Appears in emails and on booking pages.\n• **Company email** — Contact email shown to customers.\n• **Phone** — Business phone number.\n• **Website URL** — Your main website.\n• **Logo** — Upload your logo (drag-and-drop or click to browse). Shown on booking pages and emails.\n• **Brand color** — Primary color used on booking pages and buttons.\n• **Primary timezone** — Default timezone for all appointments and notifications.\n\nClick **Save** after making changes. A success confirmation will appear.`,
       },
-      {
-        heading: "Tab: Email Configuration",
-        body: `Connect your email provider to enable automated appointment emails. Supported providers:\n\n• **AWS SES (API)** — Requires Access Key, Secret Key, and Region.\n• **AWS SES (SMTP)** — Requires SMTP Host, Port, Username, and Password.\n• **Gmail SMTP** — Requires your Gmail credentials and app password.\n• **Mailgun (API)** — Requires API Key and sending Domain.\n• **Mailgun (SMTP)** — Requires SMTP credentials.\n\nAfter entering credentials, set the **From address** and **From name** (e.g. "bookings@yourcompany.com" / "Your Company"). Click **Send Test Email** to verify the connection before activating.\n\nIf using a custom domain, the **Domain Verification** section provides DKIM tokens to add to your DNS records to improve email deliverability.`,
-      },
-      {
-        heading: "Tab: SMS Configuration",
-        body: `Optional: connect an SMS provider to send appointment reminders by text message.\n\n• **AWS SNS** — Requires Access Key, Secret Key, and Region.\n• **Twilio** — Requires Account SID, Auth Token, and your Twilio phone number.\n\nEnter the credentials and click **Send Test SMS** to verify. Once configured, enable SMS reminders under the Notifications tab.`,
-      },
+
+
       {
         heading: "Tab: Notifications & Reminders",
         body: `Control which automated messages are sent and when:\n\n• **Booking confirmation** — Toggle on/off. Sent immediately on booking.\n• **Appointment reminder** — Toggle on/off. Set timing: 1 hour before, 24 hours before, or a custom number of hours.\n• **Appointment update** — Toggle on/off. Sent when any field on an appointment is changed.\n• **Cancellation notice** — Toggle on/off. Sent when an appointment is cancelled.\n• **Thank you email** — Toggle on/off. Sent when status changes to Completed.\n• **SMS reminders** — Toggle on/off (only available if SMS is configured).\n• **CC recipients** — Additional email addresses that receive a copy of every notification (comma-separated).\n• **BCC address** — A hidden copy recipient on every outgoing email.`,
