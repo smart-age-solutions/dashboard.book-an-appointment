@@ -36,10 +36,10 @@ export function useSlugBooking(slug: string) {
   const [appointmentResult, setAppointmentResult] = useState<BookingResult | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // ── Fetch booking page (once) ─────────────────────────────────────────────
+  // ── Fetch booking page (re-fetches when store changes for store-hours filtering) ──
   const pageQuery = useQuery({
-    queryKey: ["booking-page", slug],
-    queryFn: () => getBookingPage(slug),
+    queryKey: ["booking-page", slug, selectedStoreId ?? ""],
+    queryFn: () => getBookingPage(slug, selectedStoreId),
     retry: 1,
     staleTime: 1000 * 60 * 5,
   });
@@ -65,14 +65,16 @@ export function useSlugBooking(slug: string) {
 
   // ── Fetch availability (per date) ─────────────────────────────────────────
   // When selectedUser is null (no preference), omit user_id — backend returns union.
+  // Pass selectedStoreId so backend respects use_store_hours when applicable.
   const availabilityQuery = useQuery({
-    queryKey: ["availability", slug, selectedUser?.id ?? "any", selectedDate],
+    queryKey: ["availability", slug, selectedUser?.id ?? "any", selectedDate, selectedStoreId ?? ""],
     queryFn: () =>
       getAvailability(
         slug,
         "",
         selectedUser?.id ?? null,  // null → backend returns union of all staff
-        selectedDate!
+        selectedDate!,
+        selectedStoreId
       ),
     enabled: !!(selectedDate && step === "datetime"),
     retry: 1,
@@ -167,6 +169,7 @@ export function useSlugBooking(slug: string) {
           setStep("staff");
           setSelectedDate(null);
           setSelectedTime(null);
+          setSelectedUser(null);
         } else if ((pageQuery.data?.stores?.length ?? 0) > 1) {
           setStep("location");
           setSelectedDate(null);

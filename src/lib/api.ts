@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number>;
@@ -38,16 +38,19 @@ export const apiFetch = async (endpoint: string, options: RequestOptions = {}) =
     headers,
   });
 
+  // Parse body first so we can surface the real server message on any error status
+  const data = await response.json().catch(() => ({}));
+
   if (response.status === 401) {
-    // Unauthorized - clear token and redirect to login if necessary
+    // Always clear stale session token
     localStorage.removeItem("access_token");
-    if (!window.location.pathname.includes("/login")) {
+    // Redirect to login only when this wasn't the login call itself (avoids redirect loop)
+    if (!endpoint.includes("/auth/login") && !window.location.pathname.includes("/login")) {
       window.location.href = "/login";
     }
-    throw new Error("Unauthorized");
+    // Throw the actual server error message so the UI shows something useful
+    throw new Error(data.error || data.message || "Invalid credentials");
   }
-
-  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.error || data.message || "An error occurred");

@@ -44,6 +44,11 @@ interface BookingPageDayHours {
   is_active: boolean;
 }
 
+interface StoreAssignment {
+  store_id: string;
+  use_store_hours: boolean;
+}
+
 interface BookingPageData {
   id: string;
   name: string;
@@ -119,7 +124,7 @@ export default function BookingPagesPage() {
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [ccUserIds, setCcUserIds] = useState<string[]>([]);
-  const [selectedStoreIds, setSelectedStoreIds] = useState<string[]>([]);
+  const [storeAssignments, setStoreAssignments] = useState<StoreAssignment[]>([]);
   const [emailTriggers, setEmailTriggers] = useState({
     confirmation: "none",
     update: "none",
@@ -196,7 +201,7 @@ export default function BookingPagesPage() {
         
         // Update stores
         await api.put(`/booking-pages/${pageId}/stores`, {
-          store_ids: selectedStoreIds
+          stores: storeAssignments
         });
         
         // Update email templates
@@ -265,7 +270,7 @@ export default function BookingPagesPage() {
     const bookableUser = (page.users || []).find(u => !u.is_cc);
     setSelectedUserId(bookableUser?.user_id ?? null);
     setCcUserIds((page.users || []).filter(u => u.is_cc).map(u => u.user_id));
-    setSelectedStoreIds((page.stores || []).map(st => st.store_id));
+    setStoreAssignments((page.stores || []).map(st => ({ store_id: st.store_id, use_store_hours: st.use_store_hours ?? false })));
     
     // Load email templates
     const currentTriggers = { confirmation: "none", update: "none", cancellation: "none", reminder: "none", completed: "none" };
@@ -321,7 +326,7 @@ export default function BookingPagesPage() {
     });
     setSelectedUserId(null);
     setCcUserIds([]);
-    setSelectedStoreIds([]);
+    setStoreAssignments([]);
     setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none", completed: "none" });
     setIsDialogOpen(true);
   };
@@ -714,12 +719,40 @@ export default function BookingPagesPage() {
                       <MapPin className="h-4 w-4" /> Locations
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      {allStores.map(store => (
-                        <label key={store.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
-                          <Checkbox checked={selectedStoreIds.includes(store.id)} onCheckedChange={() => toggleArrayItem(store.id, setSelectedStoreIds)} />
-                          <span className="text-sm">{store.name}</span>
-                        </label>
-                      ))}
+                      {allStores.map(store => {
+                        const assignment = storeAssignments.find(a => a.store_id === store.id);
+                        const isSelected = !!assignment;
+                        return (
+                          <div key={store.id} className="space-y-1">
+                            <label className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setStoreAssignments(prev => [...prev, { store_id: store.id, use_store_hours: false }]);
+                                  } else {
+                                    setStoreAssignments(prev => prev.filter(a => a.store_id !== store.id));
+                                  }
+                                }}
+                              />
+                              <span className="text-sm">{store.name}</span>
+                            </label>
+                            {isSelected && (
+                              <label className="flex items-center gap-2 cursor-pointer hover:bg-muted pl-6 pr-1 py-1 rounded transition-colors text-xs text-muted-foreground">
+                                <Checkbox
+                                  checked={assignment?.use_store_hours ?? false}
+                                  onCheckedChange={(checked) => {
+                                    setStoreAssignments(prev => prev.map(a =>
+                                      a.store_id === store.id ? { ...a, use_store_hours: !!checked } : a
+                                    ));
+                                  }}
+                                />
+                                Use this location's hours for slot limits
+                              </label>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                   <div className="space-y-2">

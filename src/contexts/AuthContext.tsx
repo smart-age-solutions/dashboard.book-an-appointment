@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { api } from "@/lib/api";
+import { logger } from "@/lib/logger";
 
 export type IdentityType = "client" | "backoffice";
 
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
     } catch (error) {
-      console.error("Failed to fetch profile", error);
+      logger.error("Failed to fetch profile; logging out", {}, error);
       logout();
     } finally {
       setIsLoading(false);

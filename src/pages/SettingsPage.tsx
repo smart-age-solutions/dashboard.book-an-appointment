@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/lib/api";
-import { Save, Store, Mail, Phone, MapPin, Globe, Key, Server, Copy, CheckCircle2, AlertCircle, MessageSquare, Link, XCircle, Plus, Trash2, Edit2, Building2, Palette, Upload, Code } from "lucide-react";
+import { Save, Store, Mail, Phone, MapPin, Globe, Key, Server, Copy, CheckCircle2, AlertCircle, MessageSquare, Link, XCircle, Plus, Trash2, Edit2, Building2, Palette, Upload, Code, Clock } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
-import { useStores, Store as StoreType, StoreHours, defaultHours } from "@/contexts/StoreContext";
+import { useStores, Store as StoreType, StoreHours, defaultStoreHours } from "@/contexts/StoreContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -78,7 +79,7 @@ const initialSmsConfig: SmsConfig = {
 };
 
 export default function SettingsPage() {
-  const { stores, addStore, updateStore, deleteStore } = useStores();
+  const { stores, addStore, updateStore, deleteStore, fetchStoreHours, saveStoreHours } = useStores();
   const { isBackofficeUser, client } = useAuth();
 
   const [notifications, setNotifications] = useState({
@@ -113,6 +114,7 @@ export default function SettingsPage() {
     lng: "",
     showMapInEmail: true,
   });
+  const [storeHours, setStoreHours] = useState<StoreHours[]>(defaultStoreHours);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -293,10 +295,11 @@ export default function SettingsPage() {
       lng: "",
       showMapInEmail: true,
     });
+    setStoreHours(defaultStoreHours);
     setIsStoreDialogOpen(true);
   };
 
-  const openEditStore = (store: StoreType) => {
+  const openEditStore = async (store: StoreType) => {
     setEditingStore(store);
     setStoreFormData({
       name: store.name,
@@ -313,23 +316,33 @@ export default function SettingsPage() {
       lng: store.lng || "",
       showMapInEmail: store.showMapInEmail !== false,
     });
+    const hours = await fetchStoreHours(store.id);
+    setStoreHours(hours.length > 0 ? hours : defaultStoreHours);
     setIsStoreDialogOpen(true);
   };
 
-  const handleSaveStore = () => {
+  const handleSaveStore = async () => {
     if (!storeFormData.name) {
       toast({ title: "Error", description: "Store name is required", variant: "destructive" });
       return;
     }
 
-    if (editingStore) {
-      updateStore(editingStore.id, storeFormData);
-      toast({ title: "Updated", description: "Store updated successfully" });
-    } else {
-      addStore(storeFormData);
-      toast({ title: "Created", description: "New store added successfully" });
+    try {
+      if (editingStore) {
+        await updateStore(editingStore.id, storeFormData);
+        await saveStoreHours(editingStore.id, storeHours);
+        toast({ title: "Updated", description: "Store updated successfully" });
+      } else {
+        const newStore = await addStore(storeFormData);
+        if (newStore) {
+          await saveStoreHours(newStore.id, storeHours);
+        }
+        toast({ title: "Created", description: "New store added successfully" });
+      }
+      setIsStoreDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message || "Failed to save store", variant: "destructive" });
     }
-    setIsStoreDialogOpen(false);
   };
 
   const handleDeleteStore = (storeId: string) => {
@@ -1478,6 +1491,73 @@ export default function SettingsPage() {
                   checked={storeFormData.isActive}
                   onCheckedChange={(v) => setStoreFormData({ ...storeFormData, isActive: v })}
                 />
+              </div>
+
+              {/* Weekly Schedule */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b pb-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <h3 className="font-medium text-card-foreground">Weekly Schedule</h3>
+                </div>
+                <div className="space-y-3">
+                  {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map((dayName, idx) => {
+                    const dayData = storeHours.find(h => h.day_of_week === idx) || {
+                      day_of_week: idx,
+                      start_time: "09:00",
+                      end_time: "18:00",
+                      is_active: false,
+                    };
+                    return (
+                      <div key={idx} className="flex items-center gap-4 p-2 rounded-lg border bg-muted/20">
+                        <div className="flex items-center gap-2 w-32">
+                          <Checkbox
+                            checked={dayData.is_active}
+                            onCheckedChange={(checked) => {
+                              const newHours = [...storeHours];
+                              const existingIdx = newHours.findIndex(h => h.day_of_week === idx);
+                              if (existingIdx >= 0) {
+                                newHours[existingIdx] = { ...newHours[existingIdx], is_active: !!checked };
+                              } else {
+                                newHours.push({ day_of_week: idx, start_time: "09:00", end_time: "18:00", is_active: !!checked });
+                              }
+                              setStoreHours(newHours);
+                            }}
+                          />
+                          <Label className="text-sm font-medium">{dayName}</Label>
+                        </div>
+                        {dayData.is_active ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              type="time"
+                              className="h-8 w-32"
+                              value={dayData.start_time}
+                              onChange={(e) => {
+                                const newHours = [...storeHours];
+                                const existingIdx = newHours.findIndex(h => h.day_of_week === idx);
+                                if (existingIdx >= 0) newHours[existingIdx] = { ...newHours[existingIdx], start_time: e.target.value };
+                                setStoreHours(newHours);
+                              }}
+                            />
+                            <span className="text-muted-foreground text-sm">to</span>
+                            <Input
+                              type="time"
+                              className="h-8 w-32"
+                              value={dayData.end_time}
+                              onChange={(e) => {
+                                const newHours = [...storeHours];
+                                const existingIdx = newHours.findIndex(h => h.day_of_week === idx);
+                                if (existingIdx >= 0) newHours[existingIdx] = { ...newHours[existingIdx], end_time: e.target.value };
+                                setStoreHours(newHours);
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground italic">Closed</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Map & Email Settings */}

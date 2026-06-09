@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "./AuthContext";
+import { logger } from "@/lib/logger";
 
 export interface StoreHours {
-  day: string;
-  isOpen: boolean;
-  openTime: string;
-  closeTime: string;
+  id?: string;
+  day_of_week: number;  // 0=Monday … 6=Sunday
+  start_time: string;   // "HH:MM"
+  end_time: string;
+  is_active: boolean;
 }
 
 export interface Store {
@@ -24,25 +26,30 @@ export interface Store {
   lat?: string;
   lng?: string;
   showMapInEmail?: boolean;
+  hours?: StoreHours[];
 }
 
 interface StoreContextType {
   stores: Store[];
-  addStore: (store: Omit<Store, "id">) => void;
+  addStore: (store: Omit<Store, "id">) => Promise<Store | null>;
   updateStore: (id: string, store: Partial<Store>) => void;
   deleteStore: (id: string) => void;
   getStore: (id: string) => Store | undefined;
+  fetchStoreHours: (storeId: string) => Promise<StoreHours[]>;
+  saveStoreHours: (storeId: string, hours: StoreHours[]) => Promise<void>;
 }
 
-const defaultHours: StoreHours[] = [
-  { day: "Monday", isOpen: true, openTime: "09:00", closeTime: "18:00" },
-  { day: "Tuesday", isOpen: true, openTime: "09:00", closeTime: "18:00" },
-  { day: "Wednesday", isOpen: true, openTime: "09:00", closeTime: "18:00" },
-  { day: "Thursday", isOpen: true, openTime: "09:00", closeTime: "18:00" },
-  { day: "Friday", isOpen: true, openTime: "09:00", closeTime: "18:00" },
-  { day: "Saturday", isOpen: true, openTime: "10:00", closeTime: "16:00" },
-  { day: "Sunday", isOpen: false, openTime: "10:00", closeTime: "14:00" },
+export const defaultStoreHours: StoreHours[] = [
+  { day_of_week: 0, start_time: "09:00", end_time: "18:00", is_active: true },
+  { day_of_week: 1, start_time: "09:00", end_time: "18:00", is_active: true },
+  { day_of_week: 2, start_time: "09:00", end_time: "18:00", is_active: true },
+  { day_of_week: 3, start_time: "09:00", end_time: "18:00", is_active: true },
+  { day_of_week: 4, start_time: "09:00", end_time: "18:00", is_active: true },
+  { day_of_week: 5, start_time: "10:00", end_time: "16:00", is_active: true },
+  { day_of_week: 6, start_time: "10:00", end_time: "14:00", is_active: false },
 ];
+
+const defaultHours = defaultStoreHours;
 
 const initialStores: Store[] = [];
 
@@ -67,6 +74,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     lat: s.lat || "",
     lng: s.lng || "",
     showMapInEmail: s.show_map_in_email !== false,
+    hours: s.hours || [],
   });
 
   const { isAuthenticated } = useAuth();
@@ -81,7 +89,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       const data = await api.get("/auth/stores");
       setStores(data.stores.map(transformStore));
     } catch (error) {
-      console.error("Failed to fetch stores", error);
+      logger.error("Failed to fetch stores", { action: "fetchStores" }, error);
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +99,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     fetchStores();
   }, [fetchStores]);
 
-  const addStore = async (store: Omit<Store, "id">) => {
+  const addStore = async (store: Omit<Store, "id">): Promise<Store | null> => {
     try {
       const payload: any = {
         name: store.name,
@@ -104,10 +112,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         lng: store.lng,
         show_map_in_email: store.showMapInEmail,
       };
-      await api.post("/auth/stores", payload);
+      const res = await api.post("/auth/stores", payload);
       fetchStores();
+      return transformStore(res.store);
     } catch (error) {
-      console.error("Failed to add store", error);
+      logger.error("Failed to add store", { action: "addStore" }, error);
+      return null;
     }
   };
 
@@ -128,7 +138,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await api.put(`/auth/stores/${id}`, payload);
       fetchStores();
     } catch (error) {
-      console.error("Failed to update store", error);
+      logger.error("Failed to update store", { action: "updateStore", storeId: id }, error);
     }
   };
 
@@ -137,7 +147,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       await api.delete(`/auth/stores/${id}`);
       fetchStores();
     } catch (error) {
-      console.error("Failed to delete store", error);
+      logger.error("Failed to delete store", { action: "deleteStore", storeId: id }, error);
     }
   };
 
@@ -145,8 +155,21 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return stores.find(store => store.id === id);
   };
 
+  const fetchStoreHours = async (storeId: string): Promise<StoreHours[]> => {
+    try {
+      const res = await api.get(`/auth/stores/${storeId}/hours`);
+      return res.hours || [];
+    } catch {
+      return [];
+    }
+  };
+
+  const saveStoreHours = async (storeId: string, hours: StoreHours[]): Promise<void> => {
+    await api.put(`/auth/stores/${storeId}/hours`, { hours });
+  };
+
   return (
-    <StoreContext.Provider value={{ stores, addStore, updateStore, deleteStore, getStore }}>
+    <StoreContext.Provider value={{ stores, addStore, updateStore, deleteStore, getStore, fetchStoreHours, saveStoreHours }}>
       {!isLoading && children}
     </StoreContext.Provider>
   );

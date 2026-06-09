@@ -24,7 +24,7 @@ const sections = [
       },
       {
         heading: "User Roles & Permissions",
-        body: `Every team member has a role that controls which sections they can access:\n\n• **Staff / Member** — View Dashboard, Calendar, and Appointments. Ideal for front-line staff who only need to see and manage bookings.\n• **Manager** — Everything above, plus Booking Pages, Customers, Email Templates, and Activity. Ideal for team leads.\n• **Admin** — Everything above, plus Users and Settings. Can manage the whole account except ownership transfer.\n• **Owner** — Full access to every feature, including billing and ownership settings.`,
+        body: `Every team member has a role that controls which sections they can access:\n\n• **Staff** — Dashboard, Calendar, and Appointments. Ideal for front-line team members who only manage bookings.\n• **Manager** — Everything above, plus Booking Pages, Customers, Email Templates, and Activity Log. Ideal for team leads.\n• **Admin** — Everything above, plus the Users page and all Settings (email config, SMS, stores, branding). Can manage the whole account except ownership transfer.\n• **Owner** — Full access to every feature. Only Owners can transfer company ownership.`,
       },
       {
         heading: "Logging In",
@@ -155,8 +155,8 @@ const sections = [
         body: `Set the days and times when appointments are available:\n\n• Toggle each weekday on or off.\n• Set the start time and end time for each active day.\n• The system automatically splits the active window into slots based on your slot duration.\n• Use **Copy to all days** to apply one day's schedule across the whole week quickly.`,
       },
       {
-        heading: "Tab: Services & Staff",
-        body: `• **Services** — Select which services or appointment types are offered through this page. Each service has a name, duration, and optional description.\n• **Primary staff** — The default team member assigned to new bookings from this page.\n• **Additional CC staff** — Team members who receive copies of booking notifications.\n• **Store / Location** — Assign this page to a specific physical location.`,
+        heading: "Tab: Assignments",
+        body: `Configure which locations and staff are linked to this booking page:\n\n• **Locations** — Check each store / location where this booking page is available. When a store is checked, an indented sub-option appears: **Use this location's hours for slot limits**. When enabled, the slot engine uses the store's own weekly schedule (set in Settings → Stores) to determine available time slots, instead of this booking page's schedule. Useful when a store has opening hours that are more restrictive than the booking page's default schedule.\n• **Bookable Staff** — Select the team member (or members) who can be booked through this page. The selected person is marked as the default and is preselected in the booking widget. If only one staff member is assigned, the staff-selection step is hidden entirely and bookings are assigned automatically. If multiple staff members are assigned, customers see a "Choose your specialist" step and can pick who to book with — the system always assigns bookings to the first free staff member (by priority) when no preference is given.\n• **Send copy to (BCC)** — Additional team members who receive a silent copy of all booking notifications from this page but are never shown as bookable options.\n• **External BCC emails** — Extra email addresses outside your team that receive notification copies (comma-separated).`,
       },
       {
         heading: "Tab: Notifications",
@@ -187,7 +187,7 @@ const sections = [
     content: [
       {
         heading: "How Customers Book",
-        body: `When a customer visits your booking page URL (e.g. /book/your-slug), they go through a guided multi-step flow:\n\n1. **Location** (if you have multiple stores) — They select the location they want to visit.\n2. **Date & Time** — They see a calendar with available dates highlighted. After selecting a date, available time slots appear.\n3. **Service** (if you offer multiple) — They choose the type of appointment.\n4. **Your Information** — They fill in their contact details (name, email, phone, etc.) and any custom fields you configured.\n5. **Confirmation** — They review their booking and submit. A confirmation email is sent immediately.`,
+        body: `When a customer visits your booking page URL (e.g. /book/your-slug), they go through a guided multi-step flow:\n\n1. **Location** (if you have multiple stores) — They select the location they want to visit.\n2. **Staff member** (only shown if the page has more than one bookable staff member) — They choose who they'd like to book with. If there is only one staff member, this step is skipped and the system assigns them automatically.\n3. **Date & Time** — They see a calendar with available dates highlighted. Available slots are the union of all free time across bookable staff — if any staff member is free, the slot appears. After selecting a date, available time slots appear.\n4. **Service** (if you offer multiple) — They choose the type of appointment.\n5. **Your Information** — They fill in their contact details (name, email, phone, etc.) and any custom fields you configured.\n6. **Confirmation** — They review their booking and submit. A confirmation email is sent immediately.`,
       },
       {
         heading: "Rescheduling & Cancellation (Customer-Facing)",
@@ -312,23 +312,23 @@ const sections = [
       },
       {
         heading: "Inviting a Team Member",
-        body: `Click **+ Invite User** and fill in:\n\n• **Name** — The person's full name.\n• **Email** — Their work email address. Must be unique in the system.\n• **Role** — Choose the appropriate access level (Staff, Manager, or Admin).\n\nClick **Send Invitation**. They receive an email with a link to set their password and activate their account. The link is valid for 7 days. If it expires, use the actions menu to **Resend Invitation**.`,
+        body: `Click **+ Invite User** and fill in:\n\n• **Name** — The person's full name.\n• **Email** — Their work email address. Must be unique per company.\n• **Role** — Choose the appropriate access level (Staff, Manager, Admin, or Owner).\n\nClick **Send Invitation**. They receive an email with a secure link to set their password and activate their account. The link expires after 7 days. If it expires, the user's status shows **Expired** — edit them and resend, or ask your administrator.`,
       },
       {
         heading: "Role Definitions",
-        body: `• **Staff** — Can view the Dashboard, Calendar, and Appointments. Cannot change settings, manage customers, or invite others.\n• **Manager** — Everything Staff can do, plus: manage Booking Pages, view and export Customers, manage Email Templates, and view the Activity log.\n• **Admin** — Everything Manager can do, plus: manage team members (Users page) and all Settings including email configuration, stores, and branding.\n• **Owner** — Full access. Only Owners can transfer ownership or manage billing.`,
+        body: `There are four roles, each building on the one below it:\n\n• **Staff** — Dashboard, Calendar, and Appointments (view and manage their own). Ideal for front-line team members.\n• **Manager** — Everything Staff can do, plus: Booking Pages, Customers (view and export), Email Templates, and Activity Log. Ideal for team leads.\n• **Admin** — Everything Manager can do, plus: Users page (invite and manage team members) and all Settings (email, SMS, stores, branding). Cannot transfer ownership.\n• **Owner** — Full access to every feature. Only owners can transfer company ownership.`,
       },
       {
         heading: "Editing a User",
-        body: `Click the actions menu (⋯) on any user and select **Edit** to change their name or role. The change takes effect immediately — no need to re-invite them.`,
+        body: `Click the actions menu (⋯) on any user and select **Edit**. You can change:\n\n• **Name** — Display name in the dashboard and emails.\n• **Role** — Immediately adjusts the user's permissions without requiring re-login.\n• **Status** — Set to Active, Inactive, or other statuses to control access. Setting a user to Inactive blocks dashboard login but keeps all their historical data.`,
       },
       {
         heading: "Removing a User",
-        body: `Select **Remove** from the actions menu. The user immediately loses access to the dashboard. Their past appointments, activity log entries, and any work they did remain intact in the system. You can reactivate them later by editing their status back to Active.`,
+        body: `Select **Remove** from the actions menu. The user immediately loses access to the dashboard. Their past appointments remain intact and are kept in the system with the user name shown as-is. Appointments assigned to the removed user are retained but the staff assignment is cleared.`,
       },
       {
-        heading: "Resetting a Password",
-        body: `If a team member is locked out, click the actions menu and select **Reset Password**. They will receive an email with a secure link to set a new password.`,
+        heading: "User Statuses",
+        body: `Each user has a status indicator on their row:\n\n• **Active** (green dot) — Logged in and fully operational.\n• **Invited** — Invitation email sent, waiting for them to set their password.\n• **Expired** — Invitation link expired before they accepted. Edit the user to resend.\n• **Inactive** — Account manually deactivated. They cannot log in until reactivated.`,
       },
     ],
   },
@@ -356,7 +356,7 @@ const sections = [
       },
       {
         heading: "Tab: Stores / Locations",
-        body: `Manage your physical business locations. Each booking can be tied to a specific store.\n\nTo **add a store**, click **+ Add Store** and fill in:\n• Store name, address (street, city, state/province, ZIP, country)\n• Phone number and email\n• Map coordinates (latitude and longitude) or a Google Maps link\n• Map image URL — a static map image shown in confirmation emails\n• Active / Inactive toggle\n\nTo set **opening hours** for a store, click **Edit** then open the **Hours** tab. Set start and end times for each day of the week, or mark days as closed.\n\nStores can be assigned to specific Booking Pages so customers only see slots for that location.`,
+        body: `Manage your physical business locations. Each booking can be tied to a specific store.\n\nTo **add a store**, click **+ Add Store** and fill in:\n• Store name, address, phone, and email\n• Map coordinates (latitude / longitude) or a Google Maps link\n• Map image URL — a static map image shown in confirmation emails\n• **Active / Inactive** toggle — inactive stores cannot receive new bookings\n\n**Weekly Schedule** — each store has its own day-by-day operating hours editor inside the Add / Edit dialog. Check each day to activate it and set the opening and closing times. Unchecked days are shown as "Closed". These hours are saved separately from the store's contact info when you click **Save**.\n\nStores can be assigned to specific Booking Pages (see Booking Pages → Assignments tab). When assigning a store you can enable **Use this location's hours for slot limits** — this makes the slot engine use the store's weekly schedule instead of the booking page's own schedule when generating available time slots for that page.`,
       },
       {
         heading: "Tab: Branding",

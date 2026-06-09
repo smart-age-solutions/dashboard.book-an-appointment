@@ -33,21 +33,27 @@ async function publicFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 // ─── Endpoints ───────────────────────────────────────────────────────────────
 
-/** Fetch booking page info, services, and users by slug. */
-export const getBookingPage = (slug: string) =>
-  publicFetch<BookingPageResponse>(`/api/booking-pages/${slug}`);
+/** Fetch booking page info, services, and users by slug.
+ *  Pass storeId to get calendar dates filtered to that store's hours. */
+export const getBookingPage = (slug: string, storeId?: string | null) => {
+  const params = storeId ? `?store_id=${encodeURIComponent(storeId)}` : "";
+  return publicFetch<BookingPageResponse>(`/api/booking-pages/${slug}${params}`);
+};
 
 /** Fetch available time slots for a user + date (service optional).
- *  Pass an empty/falsy userId to get the union of all staff availability. */
+ *  Pass an empty/falsy userId to get the union of all staff availability.
+ *  Pass storeId to respect store hours when use_store_hours is enabled. */
 export const getAvailability = (
   slug: string,
   serviceId: string | null | undefined,
   userId: string | null | undefined,
-  date: string // YYYY-MM-DD
+  date: string, // YYYY-MM-DD
+  storeId?: string | null
 ) => {
   const params = new URLSearchParams({ date });
   if (userId) params.set("user_id", userId);
   if (serviceId) params.set("service_id", serviceId);
+  if (storeId) params.set("store_id", storeId);
   return publicFetch<AvailabilityResponse>(
     `/api/booking-pages/${slug}/availability?${params}`
   );
