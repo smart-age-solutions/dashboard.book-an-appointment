@@ -197,7 +197,6 @@ const AREA_CODES = [
 const COMM_OPTIONS = [
   { value: "Email",    label: "Email" },
   { value: "Phone",    label: "Phone" },
-  { value: "WhatsApp", label: "WhatsApp" },
   { value: "SMS",      label: "SMS" },
 ];
 
@@ -407,20 +406,6 @@ export function CustomerInfoForm({
               />
             </div>
           </div>
-        </div>
-
-        {/* Country of residence */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Country of Residence <span className="text-gray-400 font-normal text-xs">(optional)</span>
-          </label>
-          <input
-            {...register("country_of_residence")}
-            type="text"
-            placeholder="United States"
-            autoComplete="country-name"
-            className={inputClass()}
-          />
         </div>
 
         {/* Preferred communication */}

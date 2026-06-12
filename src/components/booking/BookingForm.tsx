@@ -208,46 +208,32 @@ export function BookingForm({ onSubmit, isLoading, brandColor, date, time, store
         </div>
       </div>
 
-      {/* Communication & Location */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Preferred Communication</label>
-          <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
-            {([
-              { value: "email", label: "Email" },
-              { value: "phone", label: "Phone" },
-              { value: "text", label: "Text" },
-              { value: "whatsapp", label: "WhatsApp" },
-            ] as const).map(({ value, label }) => (
-              <label key={value} className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.preferred_communication.split(", ").includes(value)}
-                  onChange={() =>
-                    setForm(f => {
-                      const parts = f.preferred_communication ? f.preferred_communication.split(", ").filter(Boolean) : [];
-                      const idx = parts.indexOf(value);
-                      if (idx >= 0) parts.splice(idx, 1); else parts.push(value);
-                      return { ...f, preferred_communication: parts.join(", ") };
-                    })
-                  }
-                  className="rounded border-gray-300"
-                />
-                {label}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Country of Residence</label>
-          <input
-            type="text"
-            placeholder="e.g. USA"
-            value={form.country_of_residence}
-            onChange={set("country_of_residence")}
-            className={inputClass}
-            style={focusStyle}
-          />
+      {/* Communication */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">Preferred Communication</label>
+        <div className="flex flex-wrap gap-x-3 gap-y-2 pt-1">
+          {([
+            { value: "email", label: "Email" },
+            { value: "phone", label: "Phone" },
+            { value: "text", label: "Text" },
+          ] as const).map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.preferred_communication.split(", ").includes(value)}
+                onChange={() =>
+                  setForm(f => {
+                    const parts = f.preferred_communication ? f.preferred_communication.split(", ").filter(Boolean) : [];
+                    const idx = parts.indexOf(value);
+                    if (idx >= 0) parts.splice(idx, 1); else parts.push(value);
+                    return { ...f, preferred_communication: parts.join(", ") };
+                  })
+                }
+                className="rounded border-gray-300"
+              />
+              {label}
+            </label>
+          ))}
         </div>
       </div>
 
