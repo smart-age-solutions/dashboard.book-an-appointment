@@ -1,0 +1,118 @@
+SMARTAPPOINTMENT — PROPRIETARY SOFTWARE LICENSE
+================================================
+Copyright © 2024–2026 Smart Age Solutions. All rights reserved.
+
+IMPORTANT: READ THIS LICENSE CAREFULLY BEFORE USING, COPYING, OR
+DISTRIBUTING THIS SOFTWARE.
+
+This software, including all source code, documentation, design assets,
+and related materials (collectively, the "Software"), is the exclusive
+proprietary property of Smart Age Solutions ("the Company"). It is
+protected by copyright law, international treaty provisions, trade secret
+law, and other applicable intellectual property laws and regulations.
+
+
+1. OWNERSHIP
+------------
+The Software is owned by the Company. No title or ownership of the
+Software or any portion thereof is transferred to you by virtue of your
+access to or use of the Software. All rights not expressly granted herein
+are reserved by the Company.
+
+
+2. RESTRICTIONS
+---------------
+You may NOT, without the prior written consent of the Company:
+
+  a) Copy, reproduce, duplicate, or distribute the Software or any
+     portion thereof, in whole or in part, in any form or medium;
+
+  b) Modify, adapt, translate, reverse engineer, decompile, disassemble,
+     or create derivative works based on the Software;
+
+  c) Rent, lease, sublicense, sell, resell, transfer, assign, or
+     otherwise commercially exploit or make available to any third party
+     the Software or any portion thereof;
+
+  d) Remove, alter, or obscure any proprietary notices, labels, or marks
+     on the Software, including this copyright notice;
+
+  e) Use the Software to build a competing product or service, or assist
+     any third party in doing so;
+
+  f) Use the Software for any purpose other than those expressly
+     authorised in writing by the Company.
+
+
+3. CONFIDENTIALITY
+------------------
+The Software constitutes confidential and proprietary information of the
+Company. You agree to take all reasonable steps to protect the
+confidentiality of the Software and to prevent its unauthorised
+disclosure or use. This obligation survives any termination or expiration
+of any agreement between you and the Company.
+
+
+4. NO WARRANTIES
+----------------
+THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, TITLE, OR NON-INFRINGEMENT. THE COMPANY
+DOES NOT WARRANT THAT THE SOFTWARE WILL BE ERROR-FREE OR THAT DEFECTS
+WILL BE CORRECTED.
+
+
+5. LIMITATION OF LIABILITY
+---------------------------
+IN NO EVENT SHALL THE COMPANY BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN
+CONNECTION WITH THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES. THE COMPANY'S TOTAL CUMULATIVE LIABILITY SHALL NOT EXCEED THE
+GREATER OF (A) THE AMOUNT PAID BY YOU FOR THE SOFTWARE IN THE TWELVE (12)
+MONTHS PRECEDING THE CLAIM, OR (B) ONE HUNDRED US DOLLARS (USD $100).
+
+
+6. INTELLECTUAL PROPERTY INFRINGEMENT
+--------------------------------------
+Any unauthorised copying, distribution, modification, or use of the
+Software constitutes copyright infringement and may subject you to civil
+and criminal penalties, including monetary damages, injunctive relief, and
+attorneys' fees, to the fullest extent permitted by applicable law.
+
+The Company reserves the right to pursue all available legal and equitable
+remedies against any party found to be infringing upon its intellectual
+property rights.
+
+
+7. GOVERNING LAW
+----------------
+This License shall be governed by and construed in accordance with the
+laws of the jurisdiction in which Smart Age Solutions is incorporated,
+without regard to its conflict of law provisions. Any disputes arising
+under this License shall be subject to the exclusive jurisdiction of the
+courts in that jurisdiction.
+
+
+8. ENTIRE AGREEMENT
+--------------------
+This License constitutes the entire agreement between you and the Company
+concerning the Software and supersedes all prior or contemporaneous
+understandings, communications, and agreements, whether written or oral,
+relating to its subject matter.
+
+
+9. CONTACT
+----------
+For licensing inquiries, permissions, or to report an infringement:
+
+  Smart Age Solutions
+  Email: legal@smartagesolutions.com
+  Web:   www.smartagesolutions.com
+
+
+By accessing, using, or possessing any portion of this Software, you
+acknowledge that you have read this License, understand it, and agree to
+be bound by its terms.
+
+SmartAppointment is a trademark of Smart Age Solutions.
+Unauthorised use of this trademark is strictly prohibited.
