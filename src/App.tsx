@@ -33,6 +33,7 @@ const CustomersPage = lazy(() => import("./pages/CustomersPage"));
 const ActivityPage = lazy(() => import("./pages/ActivityPage"));
 const HelpPage = lazy(() => import("./pages/HelpPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
 
 import { ClientPageGuard } from "@/components/auth/ClientPageGuard";
 import { BackofficeGuard } from "@/components/auth/BackofficeGuard";
@@ -71,6 +72,9 @@ const App = () => (
                   <Route path="/invitation/accept" element={<InvitationAcceptPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+                  {/* Public static pages */}
+                  <Route path="/terms" element={<TermsPage />} />
 
                   {/* Public Booking Routes (no auth required) */}
                   <Route path="/book/:slug" element={<SlugBookingPage />} />

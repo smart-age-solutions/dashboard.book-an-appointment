@@ -463,17 +463,31 @@ export function CustomerInfoForm({
             </span>
           </label>
 
-          <label className="flex items-start gap-2.5 cursor-pointer">
+          <div className="flex items-start gap-2.5">
             <input
+              id="accepted-terms-check"
               {...register("accepted_terms")}
               type="checkbox"
-              className="mt-0.5 w-4 h-4 rounded flex-shrink-0"
+              className="mt-0.5 w-4 h-4 rounded flex-shrink-0 cursor-pointer"
               style={{ accentColor: brandColor }}
             />
             <span className="text-xs text-gray-600">
-              I accept the <span className="underline">terms and conditions</span>. <span className="text-red-400">*</span>
+              <label htmlFor="accepted-terms-check" className="cursor-pointer">
+                I accept the{" "}
+              </label>
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline font-medium hover:opacity-75"
+                style={{ color: brandColor }}
+              >
+                terms and conditions
+              </a>
+              <label htmlFor="accepted-terms-check" className="cursor-pointer">.</label>
+              {" "}<span className="text-red-400">*</span>
             </span>
-          </label>
+          </div>
           {errors.accepted_terms && (
             <p className="text-xs text-red-500">{errors.accepted_terms.message}</p>
           )}
