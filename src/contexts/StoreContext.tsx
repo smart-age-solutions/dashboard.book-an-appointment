@@ -77,10 +77,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     hours: s.hours || [],
   });
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isClientUser } = useAuth();
 
   const fetchStores = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !isClientUser) {
       setIsLoading(false);
       return;
     }
@@ -93,7 +93,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, isClientUser]);
 
   useEffect(() => {
     fetchStores();
