@@ -1,7 +1,7 @@
 /**
  * bookingApi.ts
  * Unauthenticated public API client for the Booking Page flow.
- * No auth token or impersonation headers needed.
+ * No auth token or Admin Mode headers needed.
  */
 
 import type {

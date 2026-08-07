@@ -585,7 +585,7 @@ export default function BackofficeUsersPage() {
                 <ShieldAlert className="h-5 w-5" /> Add Backoffice Staff
               </DialogTitle>
               <DialogDescription>
-                Create a Super Admin who has full access to impersonate any client and manage the platform. 
+                Create a Super Admin who has full access to manage any client's data via Admin Mode, and manage the platform.
                 <br/><br/>
                 <strong className="text-foreground">Email must end with @smartagesolutions.com.</strong>
               </DialogDescription>

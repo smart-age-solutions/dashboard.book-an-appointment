@@ -2,7 +2,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Calendar, List, Mail, Users, Settings, Building2, FileText, LogOut, PlusCircle, UserCog, Activity, Contact, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 
 /**
  * Role hierarchy for sidebar nav visibility.
@@ -48,10 +48,10 @@ export const backofficeNavigation = [
 export function Sidebar() {
   const location = useLocation();
   const { user, isBackofficeUser, logout } = useAuth();
-  const { isImpersonating } = useImpersonation();
+  const { isAdminMode } = useAdminMode();
   const navigate = useNavigate();
-  // Backoffice users have no role field; grant owner-level menu access when impersonating
-  const userRole: string = isImpersonating ? "owner" : ((user as any)?.role ?? "staff");
+  // Backoffice users have no role field; grant owner-level menu access in Admin Mode
+  const userRole: string = isAdminMode ? "owner" : ((user as any)?.role ?? "staff");
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -69,8 +69,8 @@ export function Sidebar() {
 
   // Show client navigation when:
   // 1. User is a client
-  // 2. Backoffice user is impersonating a client
-  const showClientNav = !isBackofficeUser || isImpersonating;
+  // 2. Backoffice user is in Admin Mode for a client
+  const showClientNav = !isBackofficeUser || isAdminMode;
   const showBackofficeNav = isBackofficeUser;
 
   return (
@@ -90,7 +90,7 @@ export function Sidebar() {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-          {/* Client Navigation - shown for clients or during impersonation */}
+          {/* Client Navigation - shown for clients or while in Admin Mode */}
           {showClientNav && (
             <>
               {clientNavigation.filter(item => hasMinRole(userRole, item.minRole)).map((item) => {

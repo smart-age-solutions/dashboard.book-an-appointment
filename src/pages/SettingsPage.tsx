@@ -32,6 +32,7 @@ interface SmsConfig {
 
 interface EmailConfig {
   provider: EmailProvider;
+  senderEmail: string;
   awsAccessKeyId: string;
   awsSecretAccessKey: string;
   awsRegion: string;
@@ -42,15 +43,11 @@ interface EmailConfig {
   smtpSecure: boolean;
   mailgunApiKey: string;
   mailgunDomain: string;
-  senderDomain: string;
-  verificationToken: string;
-  dkimTokens: string[];
-  mailFromDomain: string;
-  isDomainVerified: boolean;
 }
 
 const initialEmailConfig: EmailConfig = {
   provider: "aws_ses_api",
+  senderEmail: "",
   awsAccessKeyId: "",
   awsSecretAccessKey: "",
   awsRegion: "us-east-1",
@@ -61,11 +58,34 @@ const initialEmailConfig: EmailConfig = {
   smtpSecure: true,
   mailgunApiKey: "",
   mailgunDomain: "",
-  senderDomain: "",
-  verificationToken: "",
-  dkimTokens: [],
-  mailFromDomain: "",
-  isDomainVerified: false,
+};
+
+// Fixed SMTP endpoints for providers with a single known host, so switching to that
+// provider fills in the right server instead of leaving smtpHost blank (which would
+// silently fall back to a different provider's default at send time).
+const SMTP_PROVIDER_DEFAULTS: Partial<Record<EmailProvider, { host: string; port: string }>> = {
+  mailgun_smtp: { host: "smtp.mailgun.org", port: "587" },
+  gmail_smtp: { host: "smtp.gmail.com", port: "587" },
+};
+
+// Fields required for each provider to have any chance of sending — mirrors
+// EmailService._REQUIRED_FIELDS_BY_PROVIDER in api/app/services/email_service.py.
+const REQUIRED_FIELDS_BY_PROVIDER: Record<EmailProvider, (keyof EmailConfig)[]> = {
+  aws_ses_api: ["awsAccessKeyId", "awsSecretAccessKey"],
+  aws_ses_smtp: ["smtpHost", "smtpUsername", "smtpPassword"],
+  gmail_smtp: ["smtpUsername", "smtpPassword"],
+  mailgun_api: ["mailgunApiKey", "mailgunDomain"],
+  mailgun_smtp: ["smtpUsername", "smtpPassword"],
+};
+
+const FIELD_LABELS: Partial<Record<keyof EmailConfig, string>> = {
+  awsAccessKeyId: "AWS Access Key ID",
+  awsSecretAccessKey: "AWS Secret Access Key",
+  smtpHost: "SMTP Host",
+  smtpUsername: "SMTP Username",
+  smtpPassword: "SMTP Password",
+  mailgunApiKey: "Mailgun API Key",
+  mailgunDomain: "Mailgun Domain",
 };
 
 const initialSmsConfig: SmsConfig = {
@@ -148,9 +168,21 @@ export default function SettingsPage() {
   };
 
   const handleSaveEmailConfig = async () => {
+    const requiredFields = REQUIRED_FIELDS_BY_PROVIDER[emailConfig.provider] || [];
+    const missing = requiredFields.filter((field) => !emailConfig[field]);
+    if (missing.length > 0) {
+      const missingLabels = missing.map((field) => FIELD_LABELS[field] || field).join(", ");
+      toast({
+        title: "Missing required fields",
+        description: `Please fill in: ${missingLabels}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await api.put("/auth/settings/email-config", emailConfig);
-      toast({ title: "Saved", description: "Email service configuration saved successfully" });
+      toast({ title: "Saved", description: "Email service configuration saved successfully. Use \"Send Test Email\" to confirm it actually works before relying on it." });
     } catch (error: any) {
       toast({ title: "Error", description: error.message || "Failed to save email config", variant: "destructive" });
     }
@@ -267,10 +299,6 @@ export default function SettingsPage() {
     }
   };
 
-  const handleVerifyDomain = () => {
-    toast({ title: "Verification Requested", description: "Domain verification process initiated." });
-  };
-
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -352,45 +380,6 @@ export default function SettingsPage() {
     }
     deleteStore(storeId);
     toast({ title: "Deleted", description: "Store removed successfully" });
-  };
-
-  const getDnsRecords = () => {
-    if (!emailConfig.senderDomain || !emailConfig.verificationToken) return [];
-    
-    const records = [
-      {
-        type: "TXT",
-        name: `_amazonses.${emailConfig.senderDomain}`,
-        value: emailConfig.verificationToken,
-        purpose: "Domain verification",
-      },
-    ];
-
-    emailConfig.dkimTokens.forEach((token, idx) => {
-      records.push({
-        type: "CNAME",
-        name: `${token}._domainkey.${emailConfig.senderDomain}`,
-        value: `${token}.dkim.amazonses.com`,
-        purpose: `DKIM record ${idx + 1}`,
-      });
-    });
-
-    if (emailConfig.mailFromDomain) {
-      records.push({
-        type: "MX",
-        name: emailConfig.mailFromDomain,
-        value: `feedback-smtp.${emailConfig.awsRegion}.amazonses.com`,
-        purpose: "Mail FROM domain",
-      });
-      records.push({
-        type: "TXT",
-        name: emailConfig.mailFromDomain,
-        value: `v=spf1 include:amazonses.com ~all`,
-        purpose: "SPF record",
-      });
-    }
-
-    return records;
   };
 
   const renderSmsProviderFields = () => {
@@ -708,8 +697,6 @@ export default function SettingsPage() {
         return null;
     }
   };
-
-  const dnsRecords = getDnsRecords();
 
   return (
     <DashboardLayout>
@@ -1177,9 +1164,19 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <Label>Email Provider</Label>
-                  <Select 
-                    value={emailConfig.provider} 
-                    onValueChange={(v: EmailProvider) => setEmailConfig({ ...emailConfig, provider: v })}
+                  <Select
+                    value={emailConfig.provider}
+                    onValueChange={(v: EmailProvider) => {
+                      const defaults = SMTP_PROVIDER_DEFAULTS[v];
+                      setEmailConfig({
+                        ...emailConfig,
+                        provider: v,
+                        // Only fill in host/port when they're still empty, so switching
+                        // providers back and forth never overwrites something the client typed.
+                        smtpHost: defaults && !emailConfig.smtpHost ? defaults.host : emailConfig.smtpHost,
+                        smtpPort: defaults && !emailConfig.smtpPort ? defaults.port : emailConfig.smtpPort,
+                      });
+                    }}
                   >
                     <SelectTrigger className="w-full md:w-80">
                       <SelectValue />
@@ -1194,6 +1191,23 @@ export default function SettingsPage() {
                   </Select>
                 </div>
 
+                <div className="space-y-2">
+                  <Label>From Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      className="pl-9"
+                      type="email"
+                      placeholder="no-reply@yourdomain.com"
+                      value={emailConfig.senderEmail}
+                      onChange={(e) => setEmailConfig({ ...emailConfig, senderEmail: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Must be a verified sender/domain with your provider. If left blank, your provider's default sender address is used instead.
+                  </p>
+                </div>
+
                 {renderProviderFields()}
 
                 <div className="mt-6 flex justify-end gap-2">
@@ -1206,125 +1220,6 @@ export default function SettingsPage() {
                     Save Configuration
                   </Button>
                 </div>
-              </div>
-            </div>
-
-            {/* Domain Verification & DKIM */}
-            <div className="rounded-xl bg-card p-6 card-shadow">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 rounded-lg bg-accent">
-                  <Globe className="h-5 w-5 text-accent-foreground" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-card-foreground">Domain Verification & DKIM</h2>
-                  <p className="text-sm text-muted-foreground">Configure DNS records for sending emails from your domain</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Sender Domain</Label>
-                    <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        className="pl-9"
-                        placeholder="yourdomain.com"
-                        value={emailConfig.senderDomain}
-                        onChange={(e) => setEmailConfig({ ...emailConfig, senderDomain: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="opacity-0">Action</Label>
-                    <Button 
-                      variant="outline" 
-                      onClick={handleVerifyDomain}
-                      disabled={!emailConfig.senderDomain}
-                      className="w-full"
-                    >
-                      Generate DNS Records
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Domain Verification Status */}
-                {emailConfig.senderDomain && (
-                  <div className={`flex items-center gap-2 p-3 rounded-lg ${
-                    emailConfig.isDomainVerified 
-                      ? "bg-green-500/10 border border-green-500/20" 
-                      : "bg-amber-500/10 border border-amber-500/20"
-                  }`}>
-                    {emailConfig.isDomainVerified ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                        <span className="text-sm text-green-600 dark:text-green-400">
-                          Domain verified and ready to send emails
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                        <span className="text-sm text-amber-600 dark:text-amber-400">
-                          Domain pending verification. Add the DNS records below to your domain.
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* DNS Records Table */}
-                {dnsRecords.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="font-medium text-card-foreground">Required DNS Records</h3>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b border-border">
-                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">Type</th>
-                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">Name</th>
-                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">Value</th>
-                            <th className="text-left py-2 px-3 font-medium text-muted-foreground">Purpose</th>
-                            <th className="py-2 px-3"></th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {dnsRecords.map((record, idx) => (
-                            <tr key={idx} className="border-b border-border/50">
-                              <td className="py-3 px-3">
-                                <span className="px-2 py-1 rounded bg-muted text-xs font-mono">
-                                  {record.type}
-                                </span>
-                              </td>
-                              <td className="py-3 px-3">
-                                <code className="text-xs break-all">{record.name}</code>
-                              </td>
-                              <td className="py-3 px-3 max-w-xs">
-                                <code className="text-xs break-all">{record.value}</code>
-                              </td>
-                              <td className="py-3 px-3 text-muted-foreground">
-                                {record.purpose}
-                              </td>
-                              <td className="py-3 px-3">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => copyToClipboard(record.value, `dns-${idx}`)}
-                                >
-                                  {copiedField === `dns-${idx}` ? (
-                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <Copy className="h-4 w-4" />
-                                  )}
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </TabsContent>

@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const data = await api.get("/auth/profile");
+      const data = await api.get("/auth/profile", undefined, { skipAdminHeader: true });
       if (data.user) {
         // Client context response: { user, client }
         setAuthState({
@@ -95,8 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
       } else if (data.email && !data.company_name) {
         // Backoffice context response: { id, name, email, ... }
-        // May include impersonated_client when impersonating — ignored here,
-        // ImpersonationContext (localStorage) owns that state.
+        // May include admin_managed_client when in Admin Mode — ignored here,
+        // AdminModeContext (localStorage) owns that state.
         setAuthState({
           isAuthenticated: true,
           identityType: "backoffice",
@@ -110,8 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
     } catch (error) {
-      logger.error("Failed to fetch profile; logging out", {}, error);
-      logout();
+      // Only a genuine auth failure (401, e.g. expired/invalid token) should
+      // clear the session. Anything else — a bad Admin Mode client header,
+      // a 403/404/500, a network blip — must not log the user out; that
+      // previously turned unrelated Admin Mode failures into a forced logout.
+      if ((error as any)?.status === 401) {
+        logger.error("Profile fetch unauthorized; logging out", {}, error);
+        logout();
+      } else {
+        logger.error("Failed to fetch profile", {}, error);
+      }
     } finally {
       setIsLoading(false);
     }

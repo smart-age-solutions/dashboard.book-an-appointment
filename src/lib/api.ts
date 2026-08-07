@@ -2,21 +2,39 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number>;
+  /** Skip the X-Admin-Client-ID header even if Admin Mode is active — for
+   * calls about the caller's own identity (e.g. /auth/profile) that must
+   * not be able to fail because of an unrelated Admin Mode/tenant issue. */
+  skipAdminHeader?: boolean;
+}
+
+/**
+ * Builds the Authorization + Admin Mode headers from localStorage.
+ * Exported so callers that need raw fetch() (e.g. blob/CSV downloads)
+ * can attach the same headers without duplicating this logic.
+ */
+export function getAuthHeaders(options: { skipAdminHeader?: boolean } = {}): Record<string, string> {
+  const headers: Record<string, string> = {};
+
+  const token = localStorage.getItem("access_token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const managedClient = localStorage.getItem("admin_managed_client");
+  if (managedClient && !options.skipAdminHeader) {
+    const { id } = JSON.parse(managedClient);
+    headers["X-Admin-Client-ID"] = id;
+  }
+
+  return headers;
 }
 
 export const apiFetch = async (endpoint: string, options: RequestOptions = {}) => {
-  const token = localStorage.getItem("access_token");
-  
   const headers = new Headers(options.headers || {});
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
-  }
-
-  const impersonated = localStorage.getItem("impersonate_client");
-  if (impersonated) {
-    const { id } = JSON.parse(impersonated);
-    headers.set("X-Impersonate-Client-ID", id);
-  }
+  Object.entries(getAuthHeaders({ skipAdminHeader: options.skipAdminHeader })).forEach(([key, value]) => {
+    headers.set(key, value);
+  });
 
   if (!(options.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -49,19 +67,23 @@ export const apiFetch = async (endpoint: string, options: RequestOptions = {}) =
       window.location.href = "/login";
     }
     // Throw the actual server error message so the UI shows something useful
-    throw new Error(data.error || data.message || "Invalid credentials");
+    const authError = new Error(data.error || data.message || "Invalid credentials");
+    (authError as any).status = 401;
+    throw authError;
   }
 
   if (!response.ok) {
-    throw new Error(data.error || data.message || "An error occurred");
+    const err = new Error(data.error || data.message || "An error occurred");
+    (err as any).status = response.status;
+    throw err;
   }
 
   return data;
 };
 
 export const api = {
-  get: (endpoint: string, params?: Record<string, string | number>) => 
-    apiFetch(endpoint, { method: "GET", params }),
+  get: (endpoint: string, params?: Record<string, string | number>, options?: Pick<RequestOptions, "skipAdminHeader">) =>
+    apiFetch(endpoint, { method: "GET", params, ...options }),
   post: (endpoint: string, body: any = {}) => 
     apiFetch(endpoint, { method: "POST", body: JSON.stringify(body) }),
   postFormData: (endpoint: string, body: FormData) =>

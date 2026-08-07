@@ -139,7 +139,7 @@ export default function BackofficeRegisterClientPage() {
                 <div>
                   <p className="font-medium">What happens next?</p>
                   <p className="mt-1 opacity-90">
-                    This will immediately provision a new workspace for the client. The administrative user can log in with the credentials provided above. You can also impersonate this client from the Client Management page to set up their workspace on their behalf.
+                    This will immediately provision a new workspace for the client. The administrative user can log in with the credentials provided above. You can also enter Admin Mode for this client from the Client Management page to set up their workspace on their behalf.
                   </p>
                 </div>
               </div>

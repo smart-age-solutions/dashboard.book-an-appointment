@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Search, Download, Mail, Users, CheckCircle, XCircle, Filter } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { api, apiFetch } from "@/lib/api";
+import { api, apiFetch, getAuthHeaders } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -81,11 +81,7 @@ export default function CustomersPage() {
   const downloadCsv = async (mode: "full" | "marketing") => {
     setIsExporting(mode);
     try {
-      const token = localStorage.getItem("access_token");
-      const impersonated = localStorage.getItem("impersonate_client");
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      if (impersonated) headers["X-Impersonate-Client-ID"] = JSON.parse(impersonated).id;
+      const headers = getAuthHeaders();
 
       const params = new URLSearchParams({ mode });
       if (search) params.set("search", search);
