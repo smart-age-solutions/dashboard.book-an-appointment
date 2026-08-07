@@ -1185,7 +1185,7 @@ export default function SettingsPage() {
                       <SelectItem value="aws_ses_api">AWS SES (API)</SelectItem>
                       <SelectItem value="aws_ses_smtp">AWS SES (SMTP)</SelectItem>
                       <SelectItem value="gmail_smtp">Gmail (SMTP)</SelectItem>
-                      <SelectItem value="mailgun_api">Mailgun (API)</SelectItem>
+                      {/* <SelectItem value="mailgun_api">Mailgun (API)</SelectItem> */}
                       <SelectItem value="mailgun_smtp">Mailgun (SMTP)</SelectItem>
                     </SelectContent>
                   </Select>
