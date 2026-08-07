@@ -85,9 +85,9 @@ export default function BackofficeLogsPage() {
         action: l.action,
         description: formatDescription(l.action, l.details),
         type: l.action.includes("failed") || l.action.includes("error") ? "error" : "info",
-        actor: { 
-          name: l.actor_id === "system" ? "System" : (l.details?.actor_name || "Admin"), 
-          type: l.actor_type === "backoffice" ? "backoffice" : l.actor_type === "client" ? "client" : "system" 
+        actor: {
+          name: l.actor_name || "System",
+          type: l.actor_type === "backoffice" ? "backoffice" : l.actor_type === "client" ? "client" : "system"
         },
         client: l.client_id ? { 
           id: l.client_id, 
