@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Sidebar, clientNavigation, backofficeNavigation } from "./Sidebar";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -13,19 +13,19 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isBackofficeUser } = useAuth();
-  const { isImpersonating } = useImpersonation();
+  const { isAdminMode } = useAdminMode();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // If backoffice user is on a client page but NOT impersonating, show a guard
+  // If backoffice user is on a client page but NOT in Admin Mode, show a guard
   const isClientPage = !window.location.pathname.startsWith("/backoffice");
-  const showGuard = isBackofficeUser && !isImpersonating && isClientPage;
-  const showClientNav = !isBackofficeUser || isImpersonating;
+  const showGuard = isBackofficeUser && !isAdminMode && isClientPage;
+  const showClientNav = !isBackofficeUser || isAdminMode;
   const showBackofficeNav = isBackofficeUser;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar />
-      <main className={`min-h-screen md:ml-64${isImpersonating ? " pt-10" : ""}`}>
+      <main className={`min-h-screen md:ml-64${isAdminMode ? " pt-10" : ""}`}>
         {/* Mobile header */}
         <header className="flex items-center justify-between gap-3 border-b border-sidebar-border bg-background px-4 py-3 md:hidden">
           <button
@@ -107,9 +107,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
                 <Building2 className="h-8 w-8 text-primary" />
               </div>
-              <h2 className="text-2xl font-bold mb-3">Impersonation Required</h2>
+              <h2 className="text-2xl font-bold mb-3">Select a Client to Manage</h2>
               <p className="text-muted-foreground mb-8 text-balance">
-                You are currently logged in as a Backoffice administrator. To view or manage client data, please select a client from the management portal.
+                You are currently logged in as a Backoffice administrator. To view or manage a client's data, enter Admin Mode for a client from the management portal.
               </p>
               <Button asChild size="lg" className="w-full">
                 <Link to="/backoffice">

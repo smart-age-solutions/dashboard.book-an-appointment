@@ -7,18 +7,18 @@ import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { useQuery } from "@tanstack/react-query";
 
 const Dashboard = memo(function Dashboard() {
   const { isBackofficeUser } = useAuth();
-  const { isImpersonating } = useImpersonation();
+  const { isAdminMode } = useAdminMode();
 
-  const isClientAccess = !isBackofficeUser || isImpersonating;
+  const isClientAccess = !isBackofficeUser || isAdminMode;
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ["dashboard-stats", isImpersonating],
+    queryKey: ["dashboard-stats", isAdminMode],
     queryFn: async () => {
       const data = await api.get("/auth/stats/dashboard");
       return {
@@ -58,7 +58,7 @@ const Dashboard = memo(function Dashboard() {
 
         {!isClientAccess ? (
           <div className="flex h-[40vh] items-center justify-center rounded-xl border-2 border-dashed border-muted p-12 text-center text-muted-foreground">
-            Please impersonate a client to view dashboard statistics.
+            Enter Admin Mode for a client to view dashboard statistics.
           </div>
         ) : (
           <>

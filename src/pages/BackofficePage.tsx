@@ -17,6 +17,7 @@ import {
   MoreHorizontal,
   Loader2,
   RefreshCw,
+  LogOut,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,16 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -52,7 +63,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
@@ -126,9 +137,11 @@ export default function BackofficePage() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLogoutAllOpen, setIsLogoutAllOpen] = useState(false);
+  const [isLoggingOutAll, setIsLoggingOutAll] = useState(false);
   const { toast } = useToast();
-  const { startImpersonation } = useImpersonation();
-  const { user } = useAuth();
+  const { startAdminMode } = useAdminMode();
+  const { user, logout } = useAuth();
 
   const fetchClients = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -206,9 +219,27 @@ export default function BackofficePage() {
     }
   };
 
-  const handleImpersonate = (client: Client) => {
-    startImpersonation({ id: client.id, companyName: client.companyName });
-    toast({ title: "Impersonating", description: `Now acting as ${client.companyName}.` });
+  const handleLogoutAll = async () => {
+    setIsLoggingOutAll(true);
+    try {
+      await api.post("/backoffice/logout-all");
+      toast({
+        title: "All users logged out",
+        description: "Every active session, including yours, has been invalidated.",
+      });
+      logout();
+      navigate("/login");
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsLoggingOutAll(false);
+      setIsLogoutAllOpen(false);
+    }
+  };
+
+  const handleManageClient = (client: Client) => {
+    startAdminMode({ id: client.id, companyName: client.companyName });
+    toast({ title: "Admin Mode", description: `Now managing ${client.companyName}.` });
     navigate("/");
   };
 
@@ -249,6 +280,15 @@ export default function BackofficePage() {
             <Button size="sm" onClick={() => navigate("/backoffice/users?tab=staff")}>
               <UserPlus className="h-4 w-4 mr-2" />
               Manage Staff
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-rose-600 border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+              onClick={() => setIsLogoutAllOpen(true)}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout All Users
             </Button>
           </div>
         </div>
@@ -379,9 +419,9 @@ export default function BackofficePage() {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleImpersonate(client)}>
+                          <DropdownMenuItem onClick={() => handleManageClient(client)}>
                             <UserCog className="h-4 w-4 mr-2" />
-                            Impersonate
+                            Manage
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
@@ -470,10 +510,10 @@ export default function BackofficePage() {
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => { setIsDetailsOpen(false); handleImpersonate(selectedClient); }}
+                  onClick={() => { setIsDetailsOpen(false); handleManageClient(selectedClient); }}
                 >
                   <UserCog className="h-4 w-4 mr-2" />
-                  Impersonate
+                  Manage
                 </Button>
                 <Button
                   variant="outline"
@@ -490,6 +530,33 @@ export default function BackofficePage() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* ── Logout All Users Confirmation ── */}
+      <AlertDialog open={isLogoutAllOpen} onOpenChange={setIsLogoutAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Logout all users?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will immediately end every active session across all clients, staff and
+              backoffice accounts — including your own. Everyone will need to log in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isLoggingOutAll}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-rose-600 hover:bg-rose-700 focus:ring-rose-600"
+              disabled={isLoggingOutAll}
+              onClick={handleLogoutAll}
+            >
+              {isLoggingOutAll ? (
+                <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Logging out…</>
+              ) : (
+                "Logout everyone"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   );
 }

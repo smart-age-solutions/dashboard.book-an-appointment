@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import { useStores } from "@/contexts/StoreContext";
-import { api } from "@/lib/api";
+import { api, getAuthHeaders } from "@/lib/api";
 import { useEffect } from "react";
 import { parseLocalDate } from "@/lib/date";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -575,8 +575,6 @@ export default function AppointmentsPage() {
     setIsExporting(true);
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-      const token = localStorage.getItem("access_token");
-      const impersonated = localStorage.getItem("impersonate_client");
 
       const params = new URLSearchParams({ format: exportFormat });
       if (exportPeriod === "7d") {
@@ -589,9 +587,7 @@ export default function AppointmentsPage() {
       }
       if (statusFilter !== "all") params.set("status", statusFilter);
 
-      const headers: Record<string, string> = {};
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-      if (impersonated) headers["X-Impersonate-Client-ID"] = JSON.parse(impersonated).id;
+      const headers = getAuthHeaders();
 
       const res = await fetch(`${API_URL}/appointments/export?${params.toString()}`, { headers });
       if (!res.ok) throw new Error("Export failed");

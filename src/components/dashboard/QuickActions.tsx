@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarPlus, CalendarDays, Copy, Check, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 import { cn } from "@/lib/utils";
 
 interface ActionTileProps {
@@ -50,10 +50,10 @@ function ActionTile({
 
 export function QuickActions() {
   const { client } = useAuth();
-  const { impersonatedClient } = useImpersonation();
+  const { managedClient } = useAdminMode();
   const [copied, setCopied] = useState(false);
 
-  const clientId = client?.id || impersonatedClient?.id;
+  const clientId = client?.id || managedClient?.id;
   const bookingUrl = clientId ? `${window.location.origin}/booking/${clientId}` : null;
 
   const handleCopy = () => {

@@ -7,7 +7,7 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { parseLocalDate } from "@/lib/date";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { useImpersonation } from "@/contexts/ImpersonationContext";
+import { useAdminMode } from "@/contexts/AdminModeContext";
 
 const statusStyles: Record<string, string> = {
   confirmed: "bg-success/10 text-success border-success/20",
@@ -18,10 +18,10 @@ const statusStyles: Record<string, string> = {
 
 export const UpcomingAppointments = memo(function UpcomingAppointments() {
   const [selected, setSelected] = useState<any | null>(null);
-  const { isImpersonating } = useImpersonation();
+  const { isAdminMode } = useAdminMode();
 
   const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ["upcoming-appointments", isImpersonating],
+    queryKey: ["upcoming-appointments", isAdminMode],
     queryFn: async () => {
       const today = format(new Date(), "yyyy-MM-dd");
       const data = await api.get("/appointments", {
