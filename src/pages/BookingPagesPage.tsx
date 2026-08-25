@@ -11,7 +11,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -122,7 +121,7 @@ export default function BookingPagesPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   
 
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [ccUserIds, setCcUserIds] = useState<string[]>([]);
   const [storeAssignments, setStoreAssignments] = useState<StoreAssignment[]>([]);
   const [emailTriggers, setEmailTriggers] = useState({
@@ -165,8 +164,8 @@ export default function BookingPagesPage() {
       return;
     }
 
-    if (!selectedUserId) {
-      toast({ title: "Validation Error", description: "A Bookable Staff member must be assigned.", variant: "destructive" });
+    if (selectedUserIds.length === 0) {
+      toast({ title: "Validation Error", description: "At least one Bookable Staff member must be assigned.", variant: "destructive" });
       return;
     }
 
@@ -184,13 +183,14 @@ export default function BookingPagesPage() {
       }
       
       if (pageId) {
-        // Update users: one bookable staff + any CC users
+        // Update users: one or more bookable staff (auto-assigned at random among
+        // those free at booking time) + any CC users
         const combinedUsers: any[] = [];
-        if (selectedUserId) {
-          combinedUsers.push({ user_id: selectedUserId, is_default: true, priority: 0, is_cc: false });
-        }
+        selectedUserIds.forEach((user_id, index) => {
+          combinedUsers.push({ user_id, is_default: index === 0, priority: index, is_cc: false });
+        });
         ccUserIds
-          .filter(user_id => user_id !== selectedUserId)
+          .filter(user_id => !selectedUserIds.includes(user_id))
           .forEach(user_id => {
             combinedUsers.push({ user_id, is_default: false, priority: 0, is_cc: true });
           });
@@ -267,8 +267,10 @@ export default function BookingPagesPage() {
     });
     
 
-    const bookableUser = (page.users || []).find(u => !u.is_cc);
-    setSelectedUserId(bookableUser?.user_id ?? null);
+    const bookableUsers = (page.users || [])
+      .filter(u => !u.is_cc)
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
+    setSelectedUserIds(bookableUsers.map(u => u.user_id));
     setCcUserIds((page.users || []).filter(u => u.is_cc).map(u => u.user_id));
     setStoreAssignments((page.stores || []).map(st => ({ store_id: st.store_id, use_store_hours: st.use_store_hours ?? false })));
     
@@ -324,7 +326,7 @@ export default function BookingPagesPage() {
       extra_cc_emails: "",
       service_name: "",
     });
-    setSelectedUserId(null);
+    setSelectedUserIds([]);
     setCcUserIds([]);
     setStoreAssignments([]);
     setEmailTriggers({ confirmation: "none", update: "none", cancellation: "none", reminder: "none", completed: "none" });
@@ -760,28 +762,33 @@ export default function BookingPagesPage() {
                       <Users className="h-4 w-4" /> Bookable Staff
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      <RadioGroup
-                        value={selectedUserId ?? ""}
-                        onValueChange={(val) => {
-                          setSelectedUserId(val || null);
-                          setCcUserIds(prev => prev.filter(id => id !== val));
-                        }}
-                      >
-                        {allUsers.map(user => (
-                          <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
-                            <RadioGroupItem value={user.id} id={`staff-${user.id}`} />
-                            <span className="text-sm">{user.name}</span>
-                          </label>
-                        ))}
-                      </RadioGroup>
+                      {allUsers.map(user => (
+                        <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
+                          <Checkbox
+                            checked={selectedUserIds.includes(user.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedUserIds(prev => [...prev, user.id]);
+                                setCcUserIds(prev => prev.filter(id => id !== user.id));
+                              } else {
+                                setSelectedUserIds(prev => prev.filter(id => id !== user.id));
+                              }
+                            }}
+                          />
+                          <span className="text-sm">{user.name}</span>
+                        </label>
+                      ))}
                     </div>
+                    <p className="text-[10px] text-muted-foreground italic">
+                      Select one or more staff. When a client books, an available staff member is assigned at random from this list, avoiding anyone already booked for that time.
+                    </p>
                   </div>
                   <div className="space-y-4">
                     <Label className="flex items-center gap-2 mb-3 font-semibold text-blue-600">
                       <Mail className="h-4 w-4" /> Send Copy To (BCC)
                     </Label>
                     <div className="border rounded-md p-3 h-[300px] overflow-y-auto space-y-2 bg-muted/20">
-                      {allUsers.filter(user => user.id !== selectedUserId).map(user => (
+                      {allUsers.filter(user => !selectedUserIds.includes(user.id)).map(user => (
                         <label key={user.id} className="flex items-center gap-2 cursor-pointer hover:bg-muted p-1 rounded transition-colors">
                           <Checkbox
                             checked={ccUserIds.includes(user.id)}
@@ -790,7 +797,7 @@ export default function BookingPagesPage() {
                           <span className="text-sm">{user.name}</span>
                         </label>
                       ))}
-                      {allUsers.filter(user => user.id !== selectedUserId).length === 0 && (
+                      {allUsers.filter(user => !selectedUserIds.includes(user.id)).length === 0 && (
                         <p className="text-xs text-muted-foreground italic py-2">No other users available for CC.</p>
                       )}
                     </div>
