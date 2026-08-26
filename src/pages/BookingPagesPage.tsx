@@ -55,6 +55,7 @@ interface BookingPageData {
   is_active: boolean;
   timezone: string;
   buffer_time_minutes: number;
+  min_advance_notice_hours: number;
   description: string;
   slot_duration_minutes: number;
   booking_window_days: number;
@@ -93,6 +94,7 @@ export default function BookingPagesPage() {
     slug: "",
     timezone: "UTC",
     buffer_time_minutes: 0,
+    min_advance_notice_hours: 0,
     description: "",
     is_active: true,
     slot_duration_minutes: 60,
@@ -242,6 +244,7 @@ export default function BookingPagesPage() {
       slug: page.slug,
       timezone: page.timezone || "UTC",
       buffer_time_minutes: page.buffer_time_minutes || 0,
+      min_advance_notice_hours: page.min_advance_notice_hours || 0,
       description: page.description || "",
       is_active: page.is_active,
       slot_duration_minutes: page.slot_duration_minutes || 60,
@@ -303,6 +306,7 @@ export default function BookingPagesPage() {
       slug: "",
       timezone: "UTC",
       buffer_time_minutes: 0,
+      min_advance_notice_hours: 0,
       description: "",
       is_active: true,
       slot_duration_minutes: 60,
@@ -647,6 +651,19 @@ export default function BookingPagesPage() {
                           </SelectContent>
                         </Select>
                         <p className="text-[10px] text-muted-foreground italic">Extra time blocked before and after each booking — gives staff time to prepare or wrap up</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Minimum Advance Notice</Label>
+                        <Select value={formData.min_advance_notice_hours.toString()} onValueChange={v => setFormData({...formData, min_advance_notice_hours: parseInt(v)})}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">No minimum</SelectItem>
+                            {[1, 2, 3, 4, 6, 8, 12, 24, 48].map(h => (
+                              <SelectItem key={h} value={h.toString()}>{h} hour{h > 1 ? "s" : ""}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-[10px] text-muted-foreground italic">How soon before an appointment a client can still book — e.g. 2 hours means the earliest bookable slot is always at least 2 hours from now</p>
                       </div>
                       <div className="space-y-2">
                         <Label>Booking Window (days)</Label>
