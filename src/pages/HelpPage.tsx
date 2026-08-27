@@ -96,6 +96,10 @@ const sections = [
         heading: "Cancelling or Deleting",
         body: `To cancel an appointment (keeping the record), change its status to **Cancelled** in the Edit form. To permanently remove it, click **Delete** — a confirmation dialog will appear before it is deleted. A cancellation email is sent to the customer if that notification is enabled.`,
       },
+      {
+        heading: "Blocking a Day",
+        body: `Select a date and click **Block Day** to stop it from being booked. In the dialog, choose a scope before confirming:\n\n• **Entire Business** — blocks the date for every booking page and every staff member (e.g. a company holiday). This is the default.\n• **Specific Booking Page** — blocks the date only for that one booking page; every other page stays open as normal.\n• **Specific Staff Member** — blocks that person for the date across every booking page, while your other staff remain bookable.\n\nYou can add an optional **Reason** (e.g. "Holiday", "Training") to remind yourself later why the date was blocked.\n\nMultiple scoped blocks can exist on the same date at the same time — for example, block one staff member for a personal day off and, separately, block a different booking page for maintenance, without either one affecting anything else. The date detail panel lists every active block for that day with its scope and reason, and each one has its own **Unblock** button — unblocking one scope never touches any other block on the same date. A day only shows as fully blocked (hiding the Add/Block buttons) when it has an Entire Business block; days with only a page- or staff-scoped block still accept other bookings.`,
+      },
     ],
   },
   {
@@ -148,7 +152,7 @@ const sections = [
       },
       {
         heading: "Tab: Availability",
-        body: `Controls when customers can book:\n\n• **Timezone** — The timezone used for all time slots on this page.\n• **Slot duration** — Length of each appointment (15, 30, 60, 90, or 120 minutes).\n• **Booking window** — How many days into the future customers can book (e.g. 30 days means they can book up to 30 days from today).\n• **Buffer time** — Minutes automatically blocked between appointments to give staff preparation time.`,
+        body: `Controls when customers can book:\n\n• **Timezone** — The timezone used for all time slots on this page.\n• **Slot duration** — Length of each appointment (15, 30, 60, 90, or 120 minutes).\n• **Break Between Appointments** — Minutes automatically blocked between appointments to give staff preparation time.\n• **Minimum Advance Notice** — How soon before an appointment a customer can still book it. For example, setting this to 2 hours means the earliest bookable slot is always at least 2 hours from the current time — a customer browsing at 10:00 AM would see the first available slot starting at 12:00 PM or later. Choose **No minimum** to allow booking right up to the next available slot.\n• **Booking window** — How many days into the future customers can book (e.g. 30 days means they can book up to 30 days from today).`,
       },
       {
         heading: "Tab: Hours",
