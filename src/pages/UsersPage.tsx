@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, MoreHorizontal, Edit2, Trash2, Shield, User } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Edit2, Trash2, Shield, User, Mail, KeyRound } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "@/hooks/use-toast";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface UserData {
@@ -23,6 +24,8 @@ interface UserData {
   lastActive: string;
 }
 
+const PENDING_STATUSES = ["invited", "expired"];
+
 const initialUsers: UserData[] = [];
 
 const roleStyles: Record<string, string> = {
@@ -33,10 +36,14 @@ const roleStyles: Record<string, string> = {
 };
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth();
+  const isAdminOrOwner = currentUser?.role === "admin" || currentUser?.role === "owner";
   const [users, setUsers] = useState<UserData[]>(initialUsers);
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserData | null>(null);
+  const [isResendingInvite, setIsResendingInvite] = useState(false);
+  const [isSendingPasswordReset, setIsSendingPasswordReset] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -141,6 +148,32 @@ export default function UsersPage() {
     setEditingUser(null);
     setFormData({ name: "", email: "", role: "staff", status: "active" });
     setIsDialogOpen(true);
+  };
+
+  const handleResendInvite = async () => {
+    if (!editingUser) return;
+    setIsResendingInvite(true);
+    try {
+      await api.post(`/teams/members/${editingUser.id}/resend-invite`);
+      toast({ title: "Invitation Resent", description: `A new invite email was sent to ${editingUser.email}` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsResendingInvite(false);
+    }
+  };
+
+  const handleSendPasswordReset = async () => {
+    if (!editingUser) return;
+    setIsSendingPasswordReset(true);
+    try {
+      await api.post(`/teams/members/${editingUser.id}/send-password-reset`);
+      toast({ title: "Reset Link Sent", description: `A password reset email was sent to ${editingUser.email}` });
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSendingPasswordReset(false);
+    }
   };
 
   const getInitials = (name: string) => {
@@ -343,6 +376,34 @@ export default function UsersPage() {
                   </SelectContent>
                 </Select>
               </div>
+              {editingUser && isAdminOrOwner && (
+                <div className="space-y-2 rounded-lg border p-3 bg-muted/20">
+                  <Label className="text-xs text-muted-foreground">Account Actions</Label>
+                  {PENDING_STATUSES.includes(editingUser.status) ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={handleResendInvite}
+                      isLoading={isResendingInvite}
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Resend Invitation
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={handleSendPasswordReset}
+                      isLoading={isSendingPasswordReset}
+                    >
+                      <KeyRound className="h-4 w-4 mr-2" />
+                      Send Password Reset Link
+                    </Button>
+                  )}
+                </div>
+              )}
               <div className="flex gap-2 pt-4">
                 <Button variant="outline" className="flex-1" onClick={() => setIsDialogOpen(false)}>
                   Cancel
