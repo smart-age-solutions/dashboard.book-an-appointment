@@ -84,6 +84,8 @@ interface Appointment {
 interface BlockedDay {
   date: Date;
   reason: string;
+  bookingPageId: string | null;
+  userId: string | null;
 }
 
 import { parseLocalDate } from "@/lib/date";
@@ -320,6 +322,9 @@ export default function CalendarPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
   const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null);
   const [blockReason, setBlockReason] = useState("");
+  const [blockScope, setBlockScope] = useState<"all" | "page" | "staff">("all");
+  const [blockScopeBookingPageId, setBlockScopeBookingPageId] = useState("");
+  const [blockScopeUserId, setBlockScopeUserId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customDataText, setCustomDataText] = useState("");
   
@@ -396,15 +401,27 @@ export default function CalendarPage() {
         userId: apt.user_id || "",
       }));
 
-      // In real backend, block-day marks all slots as blocked. 
-      // For the calendar, we'll consider a day blocked if any slot is blocked (simplified)
-      // or if we have a specific 'block-day' logic.
-      const blocked: BlockedDay[] = overrideData.overrides
+      // block-day marks every slot on the date as blocked (one AvailableSlot row
+      // per slot_time), scoped to the entire business, one booking page, or one
+      // staff member. Collapse those rows into one logical block per (date, scope).
+      const blockedByKey = new Map<string, BlockedDay>();
+      overrideData.overrides
         .filter((o: any) => o.is_blocked)
-        .map((o: any) => ({
-          date: parseLocalDate(o.date),
-          reason: "Blocked"
-        }));
+        .forEach((o: any) => {
+          const key = `${o.date}|${o.booking_page_id || ""}|${o.user_id || ""}`;
+          const existing = blockedByKey.get(key);
+          if (existing) {
+            if (o.reason && !existing.reason) existing.reason = o.reason;
+          } else {
+            blockedByKey.set(key, {
+              date: parseLocalDate(o.date),
+              reason: o.reason || "",
+              bookingPageId: o.booking_page_id || null,
+              userId: o.user_id || null,
+            });
+          }
+        });
+      const blocked: BlockedDay[] = Array.from(blockedByKey.values());
 
       setAppointments(transformedApts);
       setBlockedDays(blocked);
@@ -429,26 +446,69 @@ export default function CalendarPage() {
 
   const isPastDate = (date: Date) => isBefore(startOfDay(date), today);
 
-  const isBlockedDate = (date: Date) =>
-    blockedDays.some((b) => isSameDay(b.date, date));
+  const getBlocksForDate = (date: Date) =>
+    blockedDays.filter((b) => isSameDay(b.date, date));
 
-  const getBlockedReason = (date: Date) =>
-    blockedDays.find((b) => isSameDay(b.date, date))?.reason || "";
+  const isBlockedDate = (date: Date) => getBlocksForDate(date).length > 0;
+
+  const isFullyBlockedDate = (date: Date) =>
+    getBlocksForDate(date).some((b) => !b.bookingPageId && !b.userId);
+
+  const getBlockScopeLabel = (b: BlockedDay) => {
+    if (b.bookingPageId) {
+      const page = bookingPages.find((p: any) => p.id === b.bookingPageId);
+      return page ? `Page: ${page.name}` : "Booking Page";
+    }
+    if (b.userId) {
+      const staff = allUsers.find((u) => u.id === b.userId);
+      return staff ? `Staff: ${staff.name}` : "Staff Member";
+    }
+    return "Entire Business";
+  };
 
   const getAppointmentsForDate = (date: Date) => {
     return appointments.filter((apt) => isSameDay(apt.date, date));
   };
 
+  const openBlockDialog = () => {
+    // Default the dialog's scope from the calendar's current view filters, if set.
+    if (selectedBookingPageId !== "all") {
+      setBlockScope("page");
+      setBlockScopeBookingPageId(selectedBookingPageId);
+      setBlockScopeUserId("");
+    } else if (selectedUserId !== "all") {
+      setBlockScope("staff");
+      setBlockScopeUserId(selectedUserId);
+      setBlockScopeBookingPageId("");
+    } else {
+      setBlockScope("all");
+      setBlockScopeBookingPageId("");
+      setBlockScopeUserId("");
+    }
+    setBlockReason("");
+    setIsBlockDialogOpen(true);
+  };
+
   const handleBlockDay = async () => {
     if (!selectedDate) return;
+    if (blockScope === "page" && !blockScopeBookingPageId) {
+      toast({ title: "Select a booking page", description: "Choose which booking page to block.", variant: "destructive" });
+      return;
+    }
+    if (blockScope === "staff" && !blockScopeUserId) {
+      toast({ title: "Select a staff member", description: "Choose which staff member to block.", variant: "destructive" });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const payload: Record<string, string> = { date: format(selectedDate, "yyyy-MM-dd") };
-      if (selectedBookingPageId !== "all") payload.booking_page_id = selectedBookingPageId;
+      if (blockReason.trim()) payload.reason = blockReason.trim();
+      if (blockScope === "page") payload.booking_page_id = blockScopeBookingPageId;
+      if (blockScope === "staff") payload.user_id = blockScopeUserId;
       await api.post("/slots/override/block-day", payload);
       toast({
         title: "Blocked",
-        description: `${format(selectedDate, "MMMM d")} is now blocked`,
+        description: `${format(selectedDate, "MMMM d")} is now blocked${blockScope === "all" ? "" : ` (${blockScope === "page" ? "booking page" : "staff member"})`}`,
       });
       fetchData();
       setBlockReason("");
@@ -460,15 +520,16 @@ export default function CalendarPage() {
     }
   };
 
-  const handleUnblockDay = async (date: Date) => {
+  const handleUnblockDay = async (block: BlockedDay) => {
     setIsSubmitting(true);
     try {
-      await api.delete("/slots/override/reset-day", {
-        date: format(date, "yyyy-MM-dd")
-      });
+      const params: Record<string, string> = { date: format(block.date, "yyyy-MM-dd") };
+      if (block.bookingPageId) params.booking_page_id = block.bookingPageId;
+      if (block.userId) params.user_id = block.userId;
+      await api.delete("/slots/override/reset-day", params);
       toast({
         title: "Unblocked",
-        description: "Day is now available for appointments",
+        description: `${getBlockScopeLabel(block)} is now available for appointments`,
       });
       fetchData();
     } catch (error: any) {
@@ -778,7 +839,7 @@ export default function CalendarPage() {
                         <div className="space-y-0.5 overflow-hidden">
                           {isBlocked ? (
                             <div className="text-[11px] md:text-xs text-destructive truncate">
-                              {getBlockedReason(day) || "Blocked"}
+                              {getBlocksForDate(day).map((b) => getBlockScopeLabel(b)).join(", ")}
                             </div>
                           ) : (
                             <>
@@ -824,11 +885,14 @@ export default function CalendarPage() {
               </h3>
               {selectedDate && !isPastDate(selectedDate) && (
                 <div className="flex gap-2">
-                  {isBlockedDate(selectedDate) ? (
+                  {isFullyBlockedDate(selectedDate) ? (
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => handleUnblockDay(selectedDate)}
+                      onClick={() => {
+                        const block = getBlocksForDate(selectedDate).find((b) => !b.bookingPageId && !b.userId);
+                        if (block) handleUnblockDay(block);
+                      }}
                     >
                       <X className="h-4 w-4 mr-1" />
                       Unblock
@@ -838,7 +902,7 @@ export default function CalendarPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setIsBlockDialogOpen(true)}
+                        onClick={openBlockDialog}
                       >
                         <Ban className="h-4 w-4 mr-1" />
                         Block Day
@@ -863,18 +927,23 @@ export default function CalendarPage() {
               </div>
             ) : selectedDate ? (
               <div className="space-y-3 h-full max-h-[640px] overflow-auto">
-                {isBlockedDate(selectedDate) ? (
-                  <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <div className="flex items-center gap-2 text-destructive mb-2">
-                      <Ban className="h-4 w-4" />
-                      <span className="font-medium">Day Blocked</span>
+                {getBlocksForDate(selectedDate).map((block, i) => (
+                  <div key={i} className="p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start justify-between gap-2">
+                    <div>
+                      <div className="flex items-center gap-2 text-destructive mb-1">
+                        <Ban className="h-4 w-4" />
+                        <span className="font-medium">{getBlockScopeLabel(block)} Blocked</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {block.reason || "This scope is blocked for appointments"}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {getBlockedReason(selectedDate) ||
-                        "This day is blocked for appointments"}
-                    </p>
+                    <Button size="sm" variant="ghost" onClick={() => handleUnblockDay(block)}>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                ) : getAppointmentsForDate(selectedDate).length === 0 ? (
+                ))}
+                {isFullyBlockedDate(selectedDate) ? null : getAppointmentsForDate(selectedDate).length === 0 ? (
                   <p className="text-sm text-muted-foreground">
                     No appointments for this date
                   </p>
@@ -1397,6 +1466,43 @@ export default function CalendarPage() {
                 Block {selectedDate ? format(selectedDate, "MMMM d, yyyy") : ""}{" "}
                 from receiving appointments.
               </p>
+              <div className="space-y-2">
+                <Label>Scope</Label>
+                <Select value={blockScope} onValueChange={(v) => setBlockScope(v as "all" | "page" | "staff")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Entire Business</SelectItem>
+                    <SelectItem value="page">Specific Booking Page</SelectItem>
+                    <SelectItem value="staff">Specific Staff Member</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {blockScope === "page" && (
+                <div className="space-y-2">
+                  <Label>Booking Page</Label>
+                  <Select value={blockScopeBookingPageId} onValueChange={setBlockScopeBookingPageId}>
+                    <SelectTrigger><SelectValue placeholder="Select a booking page" /></SelectTrigger>
+                    <SelectContent>
+                      {bookingPages.map((p: any) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {blockScope === "staff" && (
+                <div className="space-y-2">
+                  <Label>Staff Member</Label>
+                  <Select value={blockScopeUserId} onValueChange={setBlockScopeUserId}>
+                    <SelectTrigger><SelectValue placeholder="Select a staff member" /></SelectTrigger>
+                    <SelectContent>
+                      {allUsers.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Reason (optional)</Label>
                 <Input
