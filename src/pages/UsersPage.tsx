@@ -86,9 +86,10 @@ export default function UsersPage() {
 
     try {
       if (editingUser) {
-        // Update user details (name and role)
-        await api.put(`/teams/members/${editingUser.id}`, { 
-          name: formData.name, 
+        // Update user details (name, email, role, status)
+        await api.put(`/teams/members/${editingUser.id}`, {
+          name: formData.name,
+          email: formData.email,
           role: formData.role,
           status: formData.status
         });
