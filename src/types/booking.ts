@@ -27,6 +27,7 @@ export interface BookingPageData {
   logo_url?: string | null;
   extra_cc_emails?: string;
   default_user_id?: string | null;
+  show_staff_selection?: boolean;
 }
 
 export interface BookingPageResponse {

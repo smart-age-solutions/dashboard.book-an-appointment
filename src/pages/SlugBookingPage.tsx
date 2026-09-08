@@ -30,6 +30,7 @@ export default function SlugBookingPage() {
     stores,
     selectedStoreId,
     availableUsers,
+    showStaffStep,
     selectedUser,
     selectedDate,
     selectedTime,
@@ -209,7 +210,7 @@ export default function SlugBookingPage() {
               )}
 
               <div className="flex gap-3 pt-2">
-                {(stores.length > 1 || availableUsers.length > 1) && (
+                {(stores.length > 1 || showStaffStep) && (
                   <BackButton onClick={goBack} label="Back" />
                 )}
                 <button

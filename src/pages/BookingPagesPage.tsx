@@ -56,6 +56,7 @@ interface BookingPageData {
   timezone: string;
   buffer_time_minutes: number;
   min_advance_notice_hours: number;
+  show_staff_selection: boolean;
   description: string;
   slot_duration_minutes: number;
   booking_window_days: number;
@@ -95,6 +96,7 @@ export default function BookingPagesPage() {
     timezone: "UTC",
     buffer_time_minutes: 0,
     min_advance_notice_hours: 0,
+    show_staff_selection: true,
     description: "",
     is_active: true,
     slot_duration_minutes: 60,
@@ -245,6 +247,7 @@ export default function BookingPagesPage() {
       timezone: page.timezone || "UTC",
       buffer_time_minutes: page.buffer_time_minutes || 0,
       min_advance_notice_hours: page.min_advance_notice_hours || 0,
+      show_staff_selection: page.show_staff_selection ?? true,
       description: page.description || "",
       is_active: page.is_active,
       slot_duration_minutes: page.slot_duration_minutes || 60,
@@ -307,6 +310,7 @@ export default function BookingPagesPage() {
       timezone: "UTC",
       buffer_time_minutes: 0,
       min_advance_notice_hours: 0,
+      show_staff_selection: true,
       description: "",
       is_active: true,
       slot_duration_minutes: 60,
@@ -799,6 +803,19 @@ export default function BookingPagesPage() {
                     <p className="text-[10px] text-muted-foreground italic">
                       Select one or more staff. When a client books, an available staff member is assigned at random from this list, avoiding anyone already booked for that time.
                     </p>
+                    <label className="flex items-start gap-2 cursor-pointer pt-1">
+                      <Checkbox
+                        checked={formData.show_staff_selection}
+                        onCheckedChange={(checked) => setFormData({...formData, show_staff_selection: !!checked})}
+                        className="mt-0.5"
+                      />
+                      <span className="text-xs">
+                        <span className="font-medium">Let customers choose their staff member</span>
+                        <span className="block text-muted-foreground italic mt-0.5">
+                          When enabled (default), customers see a "Choose your specialist" step if more than one staff member is selected above. When disabled, that step is never shown and staff are always assigned automatically.
+                        </span>
+                      </span>
+                    </label>
                   </div>
                   <div className="space-y-4">
                     <Label className="flex items-center gap-2 mb-3 font-semibold text-blue-600">

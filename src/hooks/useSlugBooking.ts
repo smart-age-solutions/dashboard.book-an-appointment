@@ -44,6 +44,14 @@ export function useSlugBooking(slug: string) {
     staleTime: 1000 * 60 * 5,
   });
 
+  // The booking page can opt out of ever showing the staff picker (always
+  // auto-assign), even when multiple staff are bookable. Defaults to shown.
+  const staffSelectionEnabled = pageQuery.data?.booking_page?.show_staff_selection !== false;
+  const shouldShowStaffStep = useCallback(
+    (userCount: number) => userCount > 1 && staffSelectionEnabled,
+    [staffSelectionEnabled]
+  );
+
   // Auto-resolve initial step, populate staff list, skip steps as needed
   useEffect(() => {
     if (!pageQuery.data || step !== "location") return;
@@ -54,14 +62,13 @@ export function useSlugBooking(slug: string) {
     setAvailableUsers(users);
 
     const hasMultipleStores = stores.length > 1;
-    const hasMultipleStaff = users.length > 1;
 
     if (!hasMultipleStores) {
       if (stores.length === 1) setSelectedStoreId(stores[0].id);
-      setStep(hasMultipleStaff ? "staff" : "datetime");
+      setStep(shouldShowStaffStep(users.length) ? "staff" : "datetime");
     }
     // else stay on "location"
-  }, [pageQuery.data, step]);
+  }, [pageQuery.data, step, shouldShowStaffStep]);
 
   // ── Fetch availability (per date) ─────────────────────────────────────────
   // When selectedUser is null (no preference), omit user_id — backend returns union.
@@ -133,8 +140,8 @@ export function useSlugBooking(slug: string) {
     setSelectedStoreId(storeId);
     setSelectedDate(null);
     setSelectedTime(null);
-    setStep(availableUsers.length > 1 ? "staff" : "datetime");
-  }, [availableUsers.length]);
+    setStep(shouldShowStaffStep(availableUsers.length) ? "staff" : "datetime");
+  }, [availableUsers.length, shouldShowStaffStep]);
 
   const selectUser = useCallback((user: UserOption | null) => {
     setSelectedUser(user);
@@ -165,7 +172,7 @@ export function useSlugBooking(slug: string) {
         }
         break;
       case "datetime":
-        if (availableUsers.length > 1) {
+        if (shouldShowStaffStep(availableUsers.length)) {
           setStep("staff");
           setSelectedDate(null);
           setSelectedTime(null);
@@ -182,7 +189,7 @@ export function useSlugBooking(slug: string) {
       default:
         break;
     }
-  }, [step, pageQuery.data, availableUsers.length]);
+  }, [step, pageQuery.data, availableUsers.length, shouldShowStaffStep]);
 
   const resetBooking = useCallback(() => {
     setStep("location");
@@ -197,11 +204,11 @@ export function useSlugBooking(slug: string) {
   // ── Derived helpers ───────────────────────────────────────────────────────
   const stores = pageQuery.data?.stores ?? [];
   const hasMultipleStores = stores.length > 1;
-  const hasMultipleStaff = availableUsers.length > 1;
+  const showStaffStep = shouldShowStaffStep(availableUsers.length);
 
   const stepLabels: { key: BookingStep; label: string }[] = [
     ...(hasMultipleStores ? [{ key: "location" as BookingStep, label: "Location" }] : []),
-    ...(hasMultipleStaff ? [{ key: "staff" as BookingStep, label: "Staff" }] : []),
+    ...(showStaffStep ? [{ key: "staff" as BookingStep, label: "Staff" }] : []),
     { key: "datetime", label: "Date & Time" },
     { key: "form", label: "Details" },
   ];
@@ -221,6 +228,7 @@ export function useSlugBooking(slug: string) {
     stores,
     selectedStoreId,
     availableUsers,
+    showStaffStep,
     selectedUser,
     selectedDate,
     selectedTime,
