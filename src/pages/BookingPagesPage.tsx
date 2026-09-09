@@ -57,6 +57,7 @@ interface BookingPageData {
   buffer_time_minutes: number;
   min_advance_notice_hours: number;
   show_staff_selection: boolean;
+  max_appointments_per_day?: number | null;
   description: string;
   slot_duration_minutes: number;
   booking_window_days: number;
@@ -97,6 +98,8 @@ export default function BookingPagesPage() {
     buffer_time_minutes: 0,
     min_advance_notice_hours: 0,
     show_staff_selection: true,
+    limit_appointments_per_day: false,
+    max_appointments_per_day: 10,
     description: "",
     is_active: true,
     slot_duration_minutes: 60,
@@ -175,12 +178,17 @@ export default function BookingPagesPage() {
 
     try {
       let pageId = editingPage?.id;
-      
+
+      const payload = {
+        ...formData,
+        max_appointments_per_day: formData.limit_appointments_per_day ? formData.max_appointments_per_day : null,
+      };
+
       if (editingPage) {
-        await api.put(`/booking-pages/${editingPage.id}`, formData);
+        await api.put(`/booking-pages/${editingPage.id}`, payload);
         toast({ title: "Updated", description: "Booking page settings updated." });
       } else {
-        const createRes = await api.post("/booking-pages", formData);
+        const createRes = await api.post("/booking-pages", payload);
         pageId = createRes.booking_page.id;
         setEditingPage(createRes.booking_page);
         toast({ title: "Created", description: "Booking page created." });
@@ -220,7 +228,7 @@ export default function BookingPagesPage() {
 
       // Optimistic update: merge saved data into state instead of full refetch
       if (editingPage) {
-        setPages(prev => prev.map(p => p.id === editingPage.id ? { ...p, ...formData } : p));
+        setPages(prev => prev.map(p => p.id === editingPage.id ? { ...p, ...payload } : p));
       } else {
         // For new pages, refetch to get server-assigned id and data
         fetchData();
@@ -248,6 +256,8 @@ export default function BookingPagesPage() {
       buffer_time_minutes: page.buffer_time_minutes || 0,
       min_advance_notice_hours: page.min_advance_notice_hours || 0,
       show_staff_selection: page.show_staff_selection ?? true,
+      limit_appointments_per_day: !!page.max_appointments_per_day,
+      max_appointments_per_day: page.max_appointments_per_day || 10,
       description: page.description || "",
       is_active: page.is_active,
       slot_duration_minutes: page.slot_duration_minutes || 60,
@@ -311,6 +321,8 @@ export default function BookingPagesPage() {
       buffer_time_minutes: 0,
       min_advance_notice_hours: 0,
       show_staff_selection: true,
+      limit_appointments_per_day: false,
+      max_appointments_per_day: 10,
       description: "",
       is_active: true,
       slot_duration_minutes: 60,
@@ -690,6 +702,30 @@ export default function BookingPagesPage() {
                         </Select>
                         <p className="text-[10px] text-muted-foreground italic">How far in advance clients can book appointments</p>
                       </div>
+                      <div className="space-y-2">
+                        <Label>Daily Appointment Limit</Label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={formData.limit_appointments_per_day}
+                            onCheckedChange={(checked) => setFormData({...formData, limit_appointments_per_day: !!checked})}
+                          />
+                          <span className="text-sm">Limit appointments per day</span>
+                        </label>
+                        {formData.limit_appointments_per_day && (
+                          <Input
+                            type="number"
+                            min={1}
+                            value={formData.max_appointments_per_day}
+                            onChange={e => setFormData({...formData, max_appointments_per_day: Math.max(1, parseInt(e.target.value) || 1)})}
+                            className="w-32"
+                          />
+                        )}
+                        <p className="text-[10px] text-muted-foreground italic">
+                          {formData.limit_appointments_per_day
+                            ? "Once this many appointments are booked on a day (across all staff on this page), that day is no longer bookable."
+                            : "Unlimited — customers can book as many appointments per day as there are open slots."}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -801,7 +837,7 @@ export default function BookingPagesPage() {
                       ))}
                     </div>
                     <p className="text-[10px] text-muted-foreground italic">
-                      Select one or more staff. When a client books, an available staff member is assigned at random from this list, avoiding anyone already booked for that time.
+                      Select one or more staff. When a client books, the first available staff member (in the order selected here) is assigned from this list, avoiding anyone already booked for that time.
                     </p>
                     <label className="flex items-start gap-2 cursor-pointer pt-1">
                       <Checkbox
