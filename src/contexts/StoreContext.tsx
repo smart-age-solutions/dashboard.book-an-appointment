@@ -77,14 +77,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     hours: s.hours || [],
   });
 
-  const { isAuthenticated, isClientUser } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   const fetchStores = useCallback(async () => {
-    if (!isAuthenticated || !isClientUser) {
+    if (!isAuthenticated) {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       const data = await api.get("/auth/stores");
       setStores(data.stores.map(transformStore));
@@ -93,7 +93,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, isClientUser]);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     fetchStores();
