@@ -75,6 +75,7 @@ export const apiFetch = async (endpoint: string, options: RequestOptions = {}) =
   if (!response.ok) {
     const err = new Error(data.error || data.message || "An error occurred");
     (err as any).status = response.status;
+    (err as any).data = data;
     throw err;
   }
 

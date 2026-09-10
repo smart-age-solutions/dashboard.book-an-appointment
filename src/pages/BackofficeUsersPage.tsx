@@ -185,7 +185,11 @@ export default function BackofficeUsersPage() {
       toast({ title: "Deleted", description: "User deleted successfully." });
       setUsers(users.filter(u => u.id !== userId));
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const conflicts = error.data?.conflicting_appointments as { date: string; time: string }[] | undefined;
+      const description = conflicts?.length
+        ? `${error.message} Conflicting slot(s): ${conflicts.map(c => `${c.date} ${c.time}`).join(", ")}.`
+        : error.message;
+      toast({ title: "Error", description, variant: "destructive" });
     }
   };
 
