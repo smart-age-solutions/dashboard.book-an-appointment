@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { api } from "@/lib/api";
+import { useAuth, BackofficeUser as AuthBackofficeUser } from "@/contexts/AuthContext";
 
 interface GlobalUser {
   id: string;
@@ -57,6 +58,7 @@ interface BackofficeStaff {
   email: string;
   status: string;
   is_active: boolean;
+  role: "super_admin" | "limited";
   created_at: string;
 }
 
@@ -75,8 +77,14 @@ function UserAvatar({ name, colorClass = "bg-blue-500" }: { name: string; colorC
 }
 
 export default function BackofficeUsersPage() {
+  const { user } = useAuth();
+  const currentStaff = user as AuthBackofficeUser | null;
+  // Limited backoffice admins are read-only here: no staff management, no
+  // creating/deleting tenant users or promoting one to backoffice staff.
+  const isLimited = currentStaff?.role === "limited";
+
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") === "staff" ? "staff" : "tenants";
+  const activeTab = isLimited ? "tenants" : (searchParams.get("tab") === "staff" ? "staff" : "tenants");
 
   const { toast } = useToast();
 
@@ -94,6 +102,7 @@ export default function BackofficeUsersPage() {
   const [isPromoteOpen, setIsPromoteOpen] = useState(false);
   const [userToPromote, setUserToPromote] = useState<GlobalUser | null>(null);
   const [promotePassword, setPromotePassword] = useState("");
+  const [promoteRole, setPromoteRole] = useState("super_admin");
 
   // Staff State
   const [staff, setStaff] = useState<BackofficeStaff[]>([]);
@@ -101,7 +110,7 @@ export default function BackofficeUsersPage() {
   const [staffSearchQuery, setStaffSearchQuery] = useState("");
   
   const [isCreateStaffOpen, setIsCreateStaffOpen] = useState(false);
-  const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "" });
+  const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "", role: "super_admin" });
 
   // ——— Fetching ———
 
@@ -186,10 +195,12 @@ export default function BackofficeUsersPage() {
         email: userToPromote.email,
         name: userToPromote.name,
         password: promotePassword,
+        role: promoteRole,
       });
       toast({ title: "Successfully Promoted", description: `${userToPromote.name} can now log in as backoffice staff.` });
       setIsPromoteOpen(false);
       setPromotePassword("");
+      setPromoteRole("super_admin");
       setSearchParams({ tab: "staff" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -212,7 +223,7 @@ export default function BackofficeUsersPage() {
       await api.post("/backoffice/staff/create", newStaff);
       toast({ title: "Staff Created", description: "Backoffice user created successfully." });
       setIsCreateStaffOpen(false);
-      setNewStaff({ name: "", email: "", password: "" });
+      setNewStaff({ name: "", email: "", password: "", role: "super_admin" });
       fetchStaff();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -242,6 +253,16 @@ export default function BackofficeUsersPage() {
     }
   };
 
+  const handleChangeStaffRole = async (staffId: string, role: "super_admin" | "limited") => {
+    try {
+      await api.put(`/backoffice/staff/${staffId}/role`, { role });
+      toast({ title: "Role Updated", description: "Staff access level updated." });
+      setStaff(staff.map(s => s.id === staffId ? { ...s, role } : s));
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -259,10 +280,12 @@ export default function BackofficeUsersPage() {
           </div>
           <div className="flex items-center gap-2">
             {activeTab === "tenants" ? (
-              <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Tenant User
-              </Button>
+              !isLimited && (
+                <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Tenant User
+                </Button>
+              )
             ) : (
               <Button size="sm" onClick={() => setIsCreateStaffOpen(true)}>
                 <ShieldAlert className="h-4 w-4 mr-2" />
@@ -282,14 +305,16 @@ export default function BackofficeUsersPage() {
           >
             Tenant Users (Client Apps)
           </button>
-          <button
-            onClick={() => setSearchParams({ tab: "staff" })}
-            className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
-              activeTab === "staff" ? "border-orange-500 text-orange-500" : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Backoffice Staff
-          </button>
+          {!isLimited && (
+            <button
+              onClick={() => setSearchParams({ tab: "staff" })}
+              className={`px-4 py-3 font-medium text-sm transition-colors border-b-2 flex items-center gap-2 ${
+                activeTab === "staff" ? "border-orange-500 text-orange-500" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Backoffice Staff
+            </button>
+          )}
         </div>
 
         {/* ─── TAB: TENANT USERS ─── */}
@@ -391,6 +416,7 @@ export default function BackofficeUsersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
+                          {!isLimited && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -416,6 +442,7 @@ export default function BackofficeUsersPage() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
@@ -475,8 +502,12 @@ export default function BackofficeUsersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium uppercase tracking-wider bg-orange-500/10 text-orange-600 border border-orange-500/20">
-                            Super Admin
+                          <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-medium uppercase tracking-wider border ${
+                            member.role === "limited"
+                              ? "bg-slate-500/10 text-slate-600 border-slate-500/20"
+                              : "bg-orange-500/10 text-orange-600 border-orange-500/20"
+                          }`}>
+                            {member.role === "limited" ? "Limited" : "Super Admin"}
                           </span>
                         </TableCell>
                         <TableCell>
@@ -501,6 +532,17 @@ export default function BackofficeUsersPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              {member.id !== currentStaff?.id && (
+                                <>
+                                  <DropdownMenuItem
+                                    onClick={() => handleChangeStaffRole(member.id, member.role === "limited" ? "super_admin" : "limited")}
+                                  >
+                                    <Shield className="h-4 w-4 mr-2 text-orange-500" />
+                                    {member.role === "limited" ? "Make Super Admin" : "Make Limited"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
                               <DropdownMenuItem
                                 onClick={() => handleToggleStaff(member.id)}
                                 className={member.is_active ? "text-rose-600" : "text-emerald-600"}
@@ -578,14 +620,14 @@ export default function BackofficeUsersPage() {
         </Dialog>
 
         {/* Create Backoffice Staff Dialog */}
-        <Dialog open={isCreateStaffOpen} onOpenChange={(open) => { if (!open) setNewStaff({ name: "", email: "", password: "" }); setIsCreateStaffOpen(open); }}>
+        <Dialog open={isCreateStaffOpen} onOpenChange={(open) => { if (!open) setNewStaff({ name: "", email: "", password: "", role: "super_admin" }); setIsCreateStaffOpen(open); }}>
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">
                 <ShieldAlert className="h-5 w-5" /> Add Backoffice Staff
               </DialogTitle>
               <DialogDescription>
-                Create a Super Admin who has full access to manage any client's data via Admin Mode, and manage the platform.
+                Create a backoffice staff account that can enter Admin Mode to manage client data.
                 <br/><br/>
                 <strong className="text-foreground">Email must end with @smartagesolutions.com.</strong>
               </DialogDescription>
@@ -603,6 +645,21 @@ export default function BackofficeUsersPage() {
                 <Label>Initial Password *</Label>
                 <Input required type="password" placeholder="••••••••" minLength={8} value={newStaff.password} onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })} />
               </div>
+              <div className="space-y-2">
+                <Label>Access Level *</Label>
+                <Select value={newStaff.role} onValueChange={(val) => setNewStaff({ ...newStaff, role: val })} required>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="super_admin">Super Admin — full access</SelectItem>
+                    <SelectItem value="limited">Limited — view only + Admin Mode</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-[11px] text-muted-foreground">
+                  {newStaff.role === "limited"
+                    ? "Can view clients and users and enter Admin Mode, but cannot create/delete clients, manage tenant users, or manage other backoffice staff."
+                    : "Full access to manage clients, tenant users, and other backoffice staff."}
+                </p>
+              </div>
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsCreateStaffOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={isCreating} className="bg-orange-600 hover:bg-orange-700 text-white">
@@ -614,14 +671,14 @@ export default function BackofficeUsersPage() {
         </Dialog>
 
         {/* Promote User Dialog */}
-        <Dialog open={isPromoteOpen} onOpenChange={setIsPromoteOpen}>
+        <Dialog open={isPromoteOpen} onOpenChange={(open) => { if (!open) { setPromotePassword(""); setPromoteRole("super_admin"); } setIsPromoteOpen(open); }}>
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">
                 <Shield className="h-5 w-5" /> Promote to Backoffice
               </DialogTitle>
               <DialogDescription>
-                You are about to give <strong>{userToPromote?.name}</strong> full Super Admin access to the platform.
+                You are about to give <strong>{userToPromote?.name}</strong> backoffice access to the platform.
                 Because this is a completely separate identity, you need to set their initial backoffice password.
               </DialogDescription>
             </DialogHeader>
@@ -629,6 +686,16 @@ export default function BackofficeUsersPage() {
                <div className="space-y-2">
                 <Label>Email</Label>
                 <Input disabled value={userToPromote?.email || ""} className="bg-muted text-muted-foreground border-none" />
+              </div>
+              <div className="space-y-2">
+                <Label>Access Level *</Label>
+                <Select value={promoteRole} onValueChange={setPromoteRole} required>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="super_admin">Super Admin — full access</SelectItem>
+                    <SelectItem value="limited">Limited — view only + Admin Mode</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>New Backoffice Password *</Label>

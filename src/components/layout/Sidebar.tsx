@@ -40,7 +40,7 @@ export const clientNavigation = [
 
 export const backofficeNavigation = [
   { name: "Client Management", href: "/backoffice",      icon: Building2 },
-  { name: "Register Client",   href: "/backoffice/clients/new", icon: PlusCircle },
+  { name: "Register Client",   href: "/backoffice/clients/new", icon: PlusCircle, superAdminOnly: true },
   { name: "Global Users",      href: "/backoffice/users", icon: UserCog },
   { name: "Global Logs",       href: "/backoffice/logs", icon: FileText },
 ];
@@ -50,15 +50,19 @@ export function Sidebar() {
   const { user, isBackofficeUser, logout } = useAuth();
   const { isAdminMode } = useAdminMode();
   const navigate = useNavigate();
-  // Backoffice users have no role field; grant owner-level menu access in Admin Mode
+  // Backoffice users' own role ("super_admin"/"limited") only matters for the
+  // Backoffice nav section; grant owner-level client-nav access in Admin Mode.
   const userRole: string = isAdminMode ? "owner" : ((user as any)?.role ?? "staff");
+  const isLimitedBackoffice = isBackofficeUser && !isAdminMode && (user as any)?.role === "limited";
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case "owner":   return "bg-purple-500/20 text-purple-400";
-      case "admin":   return "bg-blue-500/20 text-blue-400";
-      case "manager": return "bg-teal-500/20 text-teal-400";
-      default:        return "bg-sidebar-accent text-sidebar-muted";
+      case "owner":       return "bg-purple-500/20 text-purple-400";
+      case "admin":       return "bg-blue-500/20 text-blue-400";
+      case "manager":     return "bg-teal-500/20 text-teal-400";
+      case "super_admin": return "bg-orange-500/20 text-orange-400";
+      case "limited":     return "bg-slate-500/20 text-slate-400";
+      default:            return "bg-sidebar-accent text-sidebar-muted";
     }
   };
 
@@ -121,7 +125,7 @@ export function Sidebar() {
               <p className="px-3 py-1 text-xs font-semibold uppercase text-sidebar-muted tracking-wider">
                 Backoffice
               </p>
-              {backofficeNavigation.map((item) => {
+              {backofficeNavigation.filter(item => !(item.superAdminOnly && isLimitedBackoffice)).map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <NavLink
@@ -158,7 +162,7 @@ export function Sidebar() {
               </p>
               {userRole && (
                 <span className={`mt-0.5 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold capitalize ${getRoleBadgeColor(userRole)}`}>
-                  {userRole}
+                  {userRole.replace(/_/g, " ")}
                 </span>
               )}
             </div>

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export interface ManagedClient {
   id: string;
@@ -14,11 +14,21 @@ interface AdminModeContextType {
 
 const AdminModeContext = createContext<AdminModeContextType | undefined>(undefined);
 
+// Fired by AuthContext.logout() so Admin Mode is exited even though
+// AuthContext and AdminModeContext otherwise keep independent state.
+export const ADMIN_MODE_CLEARED_EVENT = "admin-mode-cleared";
+
 export function AdminModeProvider({ children }: { children: ReactNode }) {
   const [managedClient, setManagedClient] = useState<ManagedClient | null>(() => {
     const saved = localStorage.getItem("admin_managed_client");
     return saved ? JSON.parse(saved) : null;
   });
+
+  useEffect(() => {
+    const handleCleared = () => setManagedClient(null);
+    window.addEventListener(ADMIN_MODE_CLEARED_EVENT, handleCleared);
+    return () => window.removeEventListener(ADMIN_MODE_CLEARED_EVENT, handleCleared);
+  }, []);
 
   const startAdminMode = (client: ManagedClient) => {
     setManagedClient(client);

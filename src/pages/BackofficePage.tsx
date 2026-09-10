@@ -64,7 +64,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminMode } from "@/contexts/AdminModeContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, BackofficeUser as AuthBackofficeUser } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 interface Client {
@@ -142,6 +142,9 @@ export default function BackofficePage() {
   const { toast } = useToast();
   const { startAdminMode } = useAdminMode();
   const { user, logout } = useAuth();
+  // Limited backoffice admins can view clients and enter Admin Mode, but
+  // cannot create/deactivate clients, manage staff, or force logout-all.
+  const isLimited = (user as AuthBackofficeUser | null)?.role === "limited";
 
   const fetchClients = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -273,23 +276,27 @@ export default function BackofficePage() {
               <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? "animate-spin" : ""}`} />
               Refresh
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/backoffice/clients/new")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Register Client
-            </Button>
-            <Button size="sm" onClick={() => navigate("/backoffice/users?tab=staff")}>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Manage Staff
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-rose-600 border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-950/20"
-              onClick={() => setIsLogoutAllOpen(true)}
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout All Users
-            </Button>
+            {!isLimited && (
+              <>
+                <Button variant="outline" size="sm" onClick={() => navigate("/backoffice/clients/new")}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Register Client
+                </Button>
+                <Button size="sm" onClick={() => navigate("/backoffice/users?tab=staff")}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Manage Staff
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-rose-600 border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-950/20"
+                  onClick={() => setIsLogoutAllOpen(true)}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout All Users
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -423,17 +430,21 @@ export default function BackofficePage() {
                             <UserCog className="h-4 w-4 mr-2" />
                             Manage
                           </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleToggleStatus(client)}
-                            className={client.status === "active" ? "text-rose-600 focus:text-rose-600" : "text-emerald-600 focus:text-emerald-600"}
-                          >
-                            {client.status === "active" ? (
-                              <><ToggleLeft className="h-4 w-4 mr-2" />Deactivate</>
-                            ) : (
-                              <><ToggleRight className="h-4 w-4 mr-2" />Activate</>
-                            )}
-                          </DropdownMenuItem>
+                          {!isLimited && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleToggleStatus(client)}
+                                className={client.status === "active" ? "text-rose-600 focus:text-rose-600" : "text-emerald-600 focus:text-emerald-600"}
+                              >
+                                {client.status === "active" ? (
+                                  <><ToggleLeft className="h-4 w-4 mr-2" />Deactivate</>
+                                ) : (
+                                  <><ToggleRight className="h-4 w-4 mr-2" />Activate</>
+                                )}
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -515,16 +526,18 @@ export default function BackofficePage() {
                   <UserCog className="h-4 w-4 mr-2" />
                   Manage
                 </Button>
-                <Button
-                  variant="outline"
-                  className={`flex-1 ${selectedClient.status === "active" ? "text-rose-600 border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-950/20" : "text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"}`}
-                  onClick={() => { handleToggleStatus(selectedClient); setIsDetailsOpen(false); }}
-                >
-                  {selectedClient.status === "active"
-                    ? <><ToggleLeft className="h-4 w-4 mr-2" />Deactivate</>
-                    : <><ToggleRight className="h-4 w-4 mr-2" />Activate</>
-                  }
-                </Button>
+                {!isLimited && (
+                  <Button
+                    variant="outline"
+                    className={`flex-1 ${selectedClient.status === "active" ? "text-rose-600 border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-950/20" : "text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"}`}
+                    onClick={() => { handleToggleStatus(selectedClient); setIsDetailsOpen(false); }}
+                  >
+                    {selectedClient.status === "active"
+                      ? <><ToggleLeft className="h-4 w-4 mr-2" />Deactivate</>
+                      : <><ToggleRight className="h-4 w-4 mr-2" />Activate</>
+                    }
+                  </Button>
+                )}
               </div>
             </div>
           )}

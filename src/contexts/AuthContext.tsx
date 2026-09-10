@@ -1,14 +1,17 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
 import { api } from "@/lib/api";
 import { logger } from "@/lib/logger";
+import { ADMIN_MODE_CLEARED_EVENT } from "@/contexts/AdminModeContext";
 
 export type IdentityType = "client" | "backoffice";
+
+export type BackofficeRole = "super_admin" | "limited";
 
 export interface BackofficeUser {
   id: string;
   name: string;
   email: string;
-  role?: string;
+  role?: BackofficeRole;
 }
 
 /** Represents a client-side user (team member, admin, or owner). */
@@ -78,6 +81,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("admin_managed_client");
+    window.dispatchEvent(new Event(ADMIN_MODE_CLEARED_EVENT));
     setAuthState(initialState);
   }, []);
 

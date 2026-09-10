@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Plus, ArrowLeft, Loader2 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
@@ -6,12 +6,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth, BackofficeUser as AuthBackofficeUser } from "@/contexts/AuthContext";
 import { api } from "@/lib/api";
 
 export default function BackofficeRegisterClientPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+  const { user } = useAuth();
+  const isLimited = (user as AuthBackofficeUser | null)?.role === "limited";
+
+  useEffect(() => {
+    if (isLimited) {
+      toast({ title: "Forbidden", description: "Limited backoffice admins cannot register new clients.", variant: "destructive" });
+      navigate("/backoffice");
+    }
+  }, [isLimited, navigate, toast]);
+
   const [formData, setFormData] = useState({
     companyName: "",
     ownerName: "",
