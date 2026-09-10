@@ -35,6 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from "react-router-dom";
 import { api } from "@/lib/api";
@@ -60,6 +61,7 @@ interface BackofficeStaff {
   is_active: boolean;
   role: "super_admin" | "limited";
   created_at: string;
+  has_tenant_account: boolean;
 }
 
 interface ClientOption {
@@ -103,6 +105,7 @@ export default function BackofficeUsersPage() {
   const [userToPromote, setUserToPromote] = useState<GlobalUser | null>(null);
   const [promotePassword, setPromotePassword] = useState("");
   const [promoteRole, setPromoteRole] = useState("super_admin");
+  const [promoteSendInvite, setPromoteSendInvite] = useState(true);
 
   // Staff State
   const [staff, setStaff] = useState<BackofficeStaff[]>([]);
@@ -188,19 +191,26 @@ export default function BackofficeUsersPage() {
 
   const handlePromoteUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userToPromote || !promotePassword) return;
+    if (!userToPromote) return;
+    if (!promoteSendInvite && !promotePassword) return;
     setIsCreating(true);
     try {
       await api.post("/backoffice/staff/promote", {
         email: userToPromote.email,
         name: userToPromote.name,
-        password: promotePassword,
         role: promoteRole,
+        ...(promoteSendInvite ? {} : { password: promotePassword }),
       });
-      toast({ title: "Successfully Promoted", description: `${userToPromote.name} can now log in as backoffice staff.` });
+      toast({
+        title: "Successfully Promoted",
+        description: promoteSendInvite
+          ? `${userToPromote.name} has been emailed an invite to set their backoffice password.`
+          : `${userToPromote.name} can now log in as backoffice staff.`,
+      });
       setIsPromoteOpen(false);
       setPromotePassword("");
       setPromoteRole("super_admin");
+      setPromoteSendInvite(true);
       setSearchParams({ tab: "staff" });
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -248,6 +258,17 @@ export default function BackofficeUsersPage() {
       await api.delete(`/backoffice/staff/${staffId}`);
       toast({ title: "Deleted", description: "Staff member deleted." });
       setStaff(staff.filter(s => s.id !== staffId));
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleDemoteStaff = async (member: BackofficeStaff) => {
+    if (!confirm(`Remove ${member.name}'s backoffice access and send them back to their tenant account?`)) return;
+    try {
+      const res = await api.post(`/backoffice/staff/${member.id}/demote`);
+      toast({ title: "Demoted", description: res.message ?? `${member.name} no longer has backoffice access.` });
+      setStaff(staff.filter(s => s.id !== member.id));
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     }
@@ -549,6 +570,12 @@ export default function BackofficeUsersPage() {
                               >
                                 {member.is_active ? "Suspend Access" : "Reactivate Access"}
                               </DropdownMenuItem>
+                              {member.id !== currentStaff?.id && member.has_tenant_account && (
+                                <DropdownMenuItem onClick={() => handleDemoteStaff(member)}>
+                                  <ArrowRightCircle className="h-4 w-4 mr-2 text-orange-500" />
+                                  Demote to Tenant User
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => handleDeleteStaff(member.id)} className="text-rose-600">
                                 <Trash2 className="h-4 w-4 mr-2" /> Permanently Delete
@@ -671,7 +698,7 @@ export default function BackofficeUsersPage() {
         </Dialog>
 
         {/* Promote User Dialog */}
-        <Dialog open={isPromoteOpen} onOpenChange={(open) => { if (!open) { setPromotePassword(""); setPromoteRole("super_admin"); } setIsPromoteOpen(open); }}>
+        <Dialog open={isPromoteOpen} onOpenChange={(open) => { if (!open) { setPromotePassword(""); setPromoteRole("super_admin"); setPromoteSendInvite(true); } setIsPromoteOpen(open); }}>
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">
@@ -679,7 +706,7 @@ export default function BackofficeUsersPage() {
               </DialogTitle>
               <DialogDescription>
                 You are about to give <strong>{userToPromote?.name}</strong> backoffice access to the platform.
-                Because this is a completely separate identity, you need to set their initial backoffice password.
+                Because this is a completely separate identity, they need a backoffice password — either set one now, or send them an email to set their own.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handlePromoteUser} className="space-y-4 mt-2">
@@ -697,21 +724,32 @@ export default function BackofficeUsersPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>New Backoffice Password *</Label>
-                <Input
-                  required
-                  type="password"
-                  placeholder="Set an initial password"
-                  minLength={8}
-                  value={promotePassword}
-                  onChange={(e) => setPromotePassword(e.target.value)}
-                />
+              <div className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                <div className="space-y-0.5 pr-4">
+                  <Label className="text-sm">Send invite email instead</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    They'll set their own password the next time they try to access the dashboard.
+                  </p>
+                </div>
+                <Switch checked={promoteSendInvite} onCheckedChange={setPromoteSendInvite} />
               </div>
+              {!promoteSendInvite && (
+                <div className="space-y-2">
+                  <Label>New Backoffice Password *</Label>
+                  <Input
+                    required
+                    type="password"
+                    placeholder="Set an initial password"
+                    minLength={8}
+                    value={promotePassword}
+                    onChange={(e) => setPromotePassword(e.target.value)}
+                  />
+                </div>
+              )}
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsPromoteOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={isCreating} className="bg-orange-600 hover:bg-orange-700 text-white">
-                  Confirm Promotion
+                  {promoteSendInvite ? "Send Invite & Promote" : "Confirm Promotion"}
                 </Button>
               </DialogFooter>
             </form>
