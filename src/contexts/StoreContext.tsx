@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "./AuthContext";
+import { useAdminMode } from "./AdminModeContext";
 import { logger } from "@/lib/logger";
 
 export interface StoreHours {
@@ -77,10 +78,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     hours: s.hours || [],
   });
 
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isClientUser } = useAuth();
+  const { isAdminMode } = useAdminMode();
+
+  // A client login always has a client context. A backoffice login only has
+  // one while impersonating a client via Admin Mode - fetching stores with
+  // no client context at all (a bare backoffice session) is a guaranteed
+  // 403, so skip it rather than firing a doomed request every page load.
+  const hasClientContext = isClientUser || isAdminMode;
 
   const fetchStores = useCallback(async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !hasClientContext) {
       setIsLoading(false);
       return;
     }
@@ -93,7 +101,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, hasClientContext]);
 
   useEffect(() => {
     fetchStores();

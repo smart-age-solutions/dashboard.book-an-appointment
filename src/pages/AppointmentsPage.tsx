@@ -1132,8 +1132,8 @@ export default function AppointmentsPage() {
                           <SelectValue placeholder="+1" />
                         </SelectTrigger>
                         <SelectContent>
-                          {AREA_CODES.map((a) => (
-                            <SelectItem key={a.code} value={a.code}>{a.label}</SelectItem>
+                          {AREA_CODES.map((a, i) => (
+                            <SelectItem key={`${a.code}-${i}`} value={a.code}>{a.label}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
