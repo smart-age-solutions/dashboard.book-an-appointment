@@ -19,6 +19,10 @@ interface Customer {
   phone_area_code: string | null;
   phone_number: string | null;
   country_of_residence: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  zip_code: string | null;
   preferred_communication: string | null;
   accepted_terms: boolean;
   consent_communication: boolean;
@@ -187,7 +191,6 @@ export default function CustomersPage() {
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Name</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Email</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Phone</th>
-                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Country</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Pref. Channel</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Terms</th>
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground">Consent</th>
@@ -198,20 +201,24 @@ export default function CustomersPage() {
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-16 text-center text-muted-foreground">
                     Loading customers…
                   </td>
                 </tr>
               ) : customers.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-4 py-16 text-center text-muted-foreground">
                     No customers found.
                   </td>
                 </tr>
               ) : (
                 customers.map(c => {
                   const isExpanded = expandedRow === c.email;
-                  const hasExtra = (c.title || c.preferred_communication || Object.keys(c.custom_data).length > 0);
+                  const hasExtra = (
+                    c.title || c.preferred_communication ||
+                    c.country_of_residence || c.address || c.city || c.state || c.zip_code ||
+                    Object.keys(c.custom_data).length > 0
+                  );
                   return (
                     <>
                       <tr
@@ -229,7 +236,6 @@ export default function CustomersPage() {
                             ? <span>+{(c.phone_area_code ?? "").replace(/^\+/, "")} {c.phone_number}</span>
                             : <span className="text-muted-foreground">—</span>}
                         </td>
-                        <td className="px-4 py-3 text-foreground">{c.country_of_residence || <span className="text-muted-foreground">—</span>}</td>
                         <td className="px-4 py-3">
                           {c.preferred_communication
                             ? <Badge variant="secondary" className="capitalize">{c.preferred_communication}</Badge>
@@ -254,38 +260,79 @@ export default function CustomersPage() {
                       {/* Expanded detail row */}
                       {isExpanded && (
                         <tr key={`${c.email}-expanded`} className="bg-muted/10 border-b">
-                          <td colSpan={9} className="px-6 py-4">
-                            <div className="flex flex-wrap gap-8 text-sm">
-                              {c.first_name && (
+                          <td colSpan={8} className="px-6 py-4">
+                            <div className="space-y-4 text-sm">
+                              <div className="flex flex-wrap gap-8">
+                                {c.first_name && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-0.5">First Name</p>
+                                    <p className="font-medium">{c.first_name}</p>
+                                  </div>
+                                )}
+                                {c.last_name && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-0.5">Last Name</p>
+                                    <p className="font-medium">{c.last_name}</p>
+                                  </div>
+                                )}
+                                {c.title && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-0.5">Title</p>
+                                    <p className="font-medium">{c.title}</p>
+                                  </div>
+                                )}
+                                {(c.phone_area_code || c.phone_number) && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
+                                    <p className="font-medium">+{(c.phone_area_code ?? "").replace(/^\+/, "")} {c.phone_number}</p>
+                                  </div>
+                                )}
+                                {c.preferred_communication && (
+                                  <div>
+                                    <p className="text-xs text-muted-foreground mb-0.5">Preferred Channel</p>
+                                    <p className="font-medium capitalize">{c.preferred_communication}</p>
+                                  </div>
+                                )}
+                              </div>
+
+                              {(c.country_of_residence || c.address || c.city || c.state || c.zip_code) && (
                                 <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">First Name</p>
-                                  <p className="font-medium">{c.first_name}</p>
+                                  <p className="text-xs text-muted-foreground mb-1">Additional Data</p>
+                                  <div className="flex flex-wrap gap-8">
+                                    {c.country_of_residence && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-0.5">Country</p>
+                                        <p className="font-medium">{c.country_of_residence}</p>
+                                      </div>
+                                    )}
+                                    {c.address && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-0.5">Address</p>
+                                        <p className="font-medium">{c.address}</p>
+                                      </div>
+                                    )}
+                                    {c.city && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-0.5">City</p>
+                                        <p className="font-medium">{c.city}</p>
+                                      </div>
+                                    )}
+                                    {c.state && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-0.5">State</p>
+                                        <p className="font-medium">{c.state}</p>
+                                      </div>
+                                    )}
+                                    {c.zip_code && (
+                                      <div>
+                                        <p className="text-xs text-muted-foreground mb-0.5">Zip Code</p>
+                                        <p className="font-medium">{c.zip_code}</p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
-                              {c.last_name && (
-                                <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">Last Name</p>
-                                  <p className="font-medium">{c.last_name}</p>
-                                </div>
-                              )}
-                              {c.title && (
-                                <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">Title</p>
-                                  <p className="font-medium">{c.title}</p>
-                                </div>
-                              )}
-                              {(c.phone_area_code || c.phone_number) && (
-                                <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">Phone</p>
-                                  <p className="font-medium">+{(c.phone_area_code ?? "").replace(/^\+/, "")} {c.phone_number}</p>
-                                </div>
-                              )}
-                              {c.preferred_communication && (
-                                <div>
-                                  <p className="text-xs text-muted-foreground mb-0.5">Preferred Channel</p>
-                                  <p className="font-medium capitalize">{c.preferred_communication}</p>
-                                </div>
-                              )}
+
                               {Object.keys(c.custom_data).length > 0 && (
                                 <div>
                                   <p className="text-xs text-muted-foreground mb-1">Custom Data</p>

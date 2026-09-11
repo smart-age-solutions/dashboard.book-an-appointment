@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { format, subDays } from "date-fns";
-import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck, MessageSquare, Download } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Eye, Edit2, Trash2, X, User, Mail, Clock, Calendar, Phone, FileText, Building2, Plus, UserCheck, MessageSquare, Download, MapPin } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,10 @@ interface Appointment {
   title: string;
   phone_area_code: string;
   country_of_residence: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
   preferred_communication: string;
   accepted_terms: boolean;
   consent_communication: boolean;
@@ -321,6 +325,10 @@ export default function AppointmentsPage() {
     purpose: "",
     notes: "",
     country_of_residence: "",
+    address: "",
+    city: "",
+    state: "",
+    zip_code: "",
     store_id: "",
     custom_data: "",
     duration: "60",
@@ -334,7 +342,9 @@ export default function AppointmentsPage() {
     setNewAppointment({
       first_name: "", last_name: "", email: "", phone: "",
       phone_area_code: "", title: "", date: "", time: "",
-      purpose: "", notes: "", country_of_residence: "", store_id: "", custom_data: "",
+      purpose: "", notes: "", country_of_residence: "",
+      address: "", city: "", state: "", zip_code: "",
+      store_id: "", custom_data: "",
       duration: "60", user_id: "",
       preferred_communication: "",
       accepted_terms: false,
@@ -363,6 +373,10 @@ export default function AppointmentsPage() {
         purpose: newAppointment.purpose || undefined,
         notes: newAppointment.notes || undefined,
         country_of_residence: newAppointment.country_of_residence || undefined,
+        address: newAppointment.address || undefined,
+        city: newAppointment.city || undefined,
+        state: newAppointment.state || undefined,
+        zip_code: newAppointment.zip_code || undefined,
       };
       if (newAppointment.store_id) payload.store_id = newAppointment.store_id;
       if (newAppointment.user_id) payload.user_id = newAppointment.user_id;
@@ -415,6 +429,10 @@ export default function AppointmentsPage() {
         title: apt.title || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
+        address: apt.address || "",
+        city: apt.city || "",
+        state: apt.state || "",
+        zip_code: apt.zip_code || "",
         preferred_communication: apt.preferred_communication || "",
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
@@ -474,6 +492,10 @@ export default function AppointmentsPage() {
       title: apt.title,
       phone_area_code: apt.phone_area_code,
       country_of_residence: apt.country_of_residence,
+      address: apt.address,
+      city: apt.city,
+      state: apt.state,
+      zip_code: apt.zip_code,
       preferred_communication: apt.preferred_communication,
       accepted_terms: apt.accepted_terms,
       consent_communication: apt.consent_communication,
@@ -508,6 +530,10 @@ export default function AppointmentsPage() {
       if (editFormData.title) payload.title = editFormData.title;
       if (editFormData.phone_area_code) payload.phone_area_code = editFormData.phone_area_code;
       if (editFormData.country_of_residence) payload.country_of_residence = editFormData.country_of_residence;
+      if (editFormData.address !== undefined) payload.address = editFormData.address;
+      if (editFormData.city !== undefined) payload.city = editFormData.city;
+      if (editFormData.state !== undefined) payload.state = editFormData.state;
+      if (editFormData.zip_code !== undefined) payload.zip_code = editFormData.zip_code;
       if (editFormData.preferred_communication) payload.preferred_communication = editFormData.preferred_communication;
       payload.accepted_terms = editFormData.accepted_terms;
       payload.consent_communication = editFormData.consent_communication;
@@ -935,6 +961,18 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
 
+                {(selectedAppointment.address || selectedAppointment.city || selectedAppointment.state || selectedAppointment.zip_code) && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Address</p>
+                      <p className="text-sm font-medium text-card-foreground">
+                        {[selectedAppointment.address, selectedAppointment.city, selectedAppointment.state, selectedAppointment.zip_code].filter(Boolean).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {stores.length > 1 && (
                   <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                     <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -1120,6 +1158,46 @@ export default function AppointmentsPage() {
                       onChange={(e) => setEditFormData({ ...editFormData, country_of_residence: e.target.value })}
                       placeholder="United States"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Address</Label>
+                    <Input
+                      className="h-9"
+                      value={editFormData.address || ""}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      placeholder="123 Main Street"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">City</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.city || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                        placeholder="New York"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">State</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.state || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+                        placeholder="NY"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Zip Code</Label>
+                      <Input
+                        className="h-9"
+                        value={editFormData.zip_code || ""}
+                        onChange={(e) => setEditFormData({ ...editFormData, zip_code: e.target.value })}
+                        placeholder="10001"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1499,6 +1577,26 @@ export default function AppointmentsPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs">Country of Residence</Label>
                     <Input className="h-9" placeholder="United States" value={newAppointment.country_of_residence} onChange={(e) => setNewAppointment({ ...newAppointment, country_of_residence: e.target.value })} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Address</Label>
+                    <Input className="h-9" placeholder="123 Main Street" value={newAppointment.address} onChange={(e) => setNewAppointment({ ...newAppointment, address: e.target.value })} />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">City</Label>
+                      <Input className="h-9" placeholder="New York" value={newAppointment.city} onChange={(e) => setNewAppointment({ ...newAppointment, city: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">State</Label>
+                      <Input className="h-9" placeholder="NY" value={newAppointment.state} onChange={(e) => setNewAppointment({ ...newAppointment, state: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Zip Code</Label>
+                      <Input className="h-9" placeholder="10001" value={newAppointment.zip_code} onChange={(e) => setNewAppointment({ ...newAppointment, zip_code: e.target.value })} />
+                    </div>
                   </div>
                 </div>
 

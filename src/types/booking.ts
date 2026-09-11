@@ -104,6 +104,10 @@ export interface CustomerData {
   phone_area_code?: string;
   phone?: string;
   country_of_residence?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
   preferred_communication?: string;
   notes?: string;
   accepted_terms: boolean;

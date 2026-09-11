@@ -31,6 +31,7 @@ import {
   Ban,
   X,
   MessageSquare,
+  MapPin,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,10 @@ interface Appointment {
   phone: string;
   phone_area_code: string;
   country_of_residence: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
   preferred_communication: string;
   accepted_terms: boolean;
   consent_communication: boolean;
@@ -340,6 +345,10 @@ export default function CalendarPage() {
     phone: "",
     phone_area_code: "",
     country_of_residence: "",
+    address: "",
+    city: "",
+    state: "",
+    zip_code: "",
     preferred_communication: "",
     accepted_terms: false,
     consent_communication: false,
@@ -386,6 +395,10 @@ export default function CalendarPage() {
         phone: apt.phone || "",
         phone_area_code: apt.phone_area_code || "",
         country_of_residence: apt.country_of_residence || "",
+        address: apt.address || "",
+        city: apt.city || "",
+        state: apt.state || "",
+        zip_code: apt.zip_code || "",
         preferred_communication: apt.preferred_communication || "",
         accepted_terms: apt.accepted_terms || false,
         consent_communication: apt.consent_communication || false,
@@ -559,6 +572,10 @@ export default function CalendarPage() {
         phone: formData.phone,
         phone_area_code: formData.phone_area_code,
         country_of_residence: formData.country_of_residence,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        zip_code: formData.zip_code,
         preferred_communication: formData.preferred_communication,
         accepted_terms: formData.accepted_terms,
         consent_communication: formData.consent_communication,
@@ -612,6 +629,10 @@ export default function CalendarPage() {
       phone: apt.phone,
       phone_area_code: apt.phone_area_code,
       country_of_residence: apt.country_of_residence,
+      address: apt.address,
+      city: apt.city,
+      state: apt.state,
+      zip_code: apt.zip_code,
       preferred_communication: apt.preferred_communication,
       accepted_terms: apt.accepted_terms,
       consent_communication: apt.consent_communication,
@@ -661,6 +682,10 @@ export default function CalendarPage() {
       phone: "",
       phone_area_code: "",
       country_of_residence: "",
+      address: "",
+      city: "",
+      state: "",
+      zip_code: "",
       preferred_communication: "",
       accepted_terms: false,
       consent_communication: false,
@@ -1123,6 +1148,18 @@ export default function CalendarPage() {
                     </div>
                   </div>
 
+                  {(viewingAppointment.address || viewingAppointment.city || viewingAppointment.state || viewingAppointment.zip_code) && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Address</p>
+                        <p className="text-sm font-medium text-card-foreground">
+                          {[viewingAppointment.address, viewingAppointment.city, viewingAppointment.state, viewingAppointment.zip_code].filter(Boolean).join(", ")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {viewingAppointment.notes && (
                     <div className="p-3 rounded-lg bg-muted/50">
                       <div className="flex items-center gap-2 mb-2">
@@ -1272,6 +1309,26 @@ export default function CalendarPage() {
                   <div className="space-y-1.5">
                     <Label className="text-xs">Country of Residence</Label>
                     <Input className="h-9" placeholder="United States" value={formData.country_of_residence} onChange={(e) => setFormData({ ...formData, country_of_residence: e.target.value })} />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Address</Label>
+                    <Input className="h-9" placeholder="123 Main Street" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">City</Label>
+                      <Input className="h-9" placeholder="New York" value={formData.city} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">State</Label>
+                      <Input className="h-9" placeholder="NY" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Zip Code</Label>
+                      <Input className="h-9" placeholder="10001" value={formData.zip_code} onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })} />
+                    </div>
                   </div>
                 </div>
 

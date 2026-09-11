@@ -208,6 +208,10 @@ const schema = z.object({
   phone_area_code: z.string().optional(),
   phone: z.string().optional(),
   country_of_residence: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  zip_code: z.string().optional(),
   preferred_communication: z.string().optional(),
   notes: z.string().optional(),
   accepted_terms: z.boolean().refine((v) => v === true, "You must accept the terms to continue"),
@@ -405,6 +409,60 @@ export function CustomerInfoForm({
                 className={inputClass()}
               />
             </div>
+          </div>
+        </div>
+
+        {/* Address */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Address <span className="text-gray-400 font-normal text-xs">(optional)</span>
+          </label>
+          <input
+            {...register("address")}
+            type="text"
+            placeholder="123 Main Street"
+            autoComplete="street-address"
+            className={inputClass()}
+          />
+        </div>
+
+        {/* City + State + Zip */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              City <span className="text-gray-400 font-normal text-xs">(optional)</span>
+            </label>
+            <input
+              {...register("city")}
+              type="text"
+              placeholder="New York"
+              autoComplete="address-level2"
+              className={inputClass()}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              State <span className="text-gray-400 font-normal text-xs">(optional)</span>
+            </label>
+            <input
+              {...register("state")}
+              type="text"
+              placeholder="NY"
+              autoComplete="address-level1"
+              className={inputClass()}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Zip Code <span className="text-gray-400 font-normal text-xs">(optional)</span>
+            </label>
+            <input
+              {...register("zip_code")}
+              type="text"
+              placeholder="10001"
+              autoComplete="postal-code"
+              className={inputClass()}
+            />
           </div>
         </div>
 
