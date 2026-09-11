@@ -1372,6 +1372,14 @@ export default function SettingsPage() {
                         placeholder="NY"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Zip Code</Label>
+                      <Input
+                        value={storeFormData.zip}
+                        onChange={(e) => setStoreFormData({ ...storeFormData, zip: e.target.value })}
+                        placeholder="10001"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

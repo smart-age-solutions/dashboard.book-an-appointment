@@ -65,9 +65,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     email: s.email || "",
     phone: s.phone || "",
     address: s.address || "",
-    city: "",
-    state: "",
-    zip: "",
+    city: s.city || "",
+    state: s.state || "",
+    zip: s.zip || "",
     isActive: s.is_active,
     mapUrl: s.map_url || "",
     mapImageUrl: s.map_image_url || "",
@@ -106,6 +106,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         email: store.email,
         phone: store.phone,
         address: store.address,
+        city: store.city,
+        state: store.state,
+        zip: store.zip,
         map_url: store.mapUrl,
         map_image_url: store.mapImageUrl,
         lat: store.lat,
@@ -128,6 +131,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (updates.email !== undefined) payload.email = updates.email;
       if (updates.phone !== undefined) payload.phone = updates.phone;
       if (updates.address !== undefined) payload.address = updates.address;
+      if (updates.city !== undefined) payload.city = updates.city;
+      if (updates.state !== undefined) payload.state = updates.state;
+      if (updates.zip !== undefined) payload.zip = updates.zip;
       if (updates.isActive !== undefined) payload.is_active = updates.isActive;
       if (updates.mapUrl !== undefined) payload.map_url = updates.mapUrl;
       if (updates.mapImageUrl !== undefined) payload.map_image_url = updates.mapImageUrl;

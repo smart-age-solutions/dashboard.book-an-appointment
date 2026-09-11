@@ -113,7 +113,7 @@ export default function BackofficeUsersPage() {
   const [staffSearchQuery, setStaffSearchQuery] = useState("");
   
   const [isCreateStaffOpen, setIsCreateStaffOpen] = useState(false);
-  const [newStaff, setNewStaff] = useState({ name: "", email: "", password: "", role: "super_admin" });
+  const [newStaff, setNewStaff] = useState({ name: "", email: "", role: "super_admin" });
 
   // ——— Fetching ———
 
@@ -181,8 +181,8 @@ export default function BackofficeUsersPage() {
   const handleDeleteUser = async (userId: string) => {
     if (!confirm("Are you sure you want to delete this tenant user?")) return;
     try {
-      await api.delete(`/backoffice/users/${userId}`);
-      toast({ title: "Deleted", description: "User deleted successfully." });
+      const res = await api.delete(`/backoffice/users/${userId}`);
+      toast({ title: "Deleted", description: res.message ?? "User deleted successfully." });
       setUsers(users.filter(u => u.id !== userId));
     } catch (error: any) {
       const conflicts = error.data?.conflicting_appointments as { date: string; time: string }[] | undefined;
@@ -234,10 +234,10 @@ export default function BackofficeUsersPage() {
     e.preventDefault();
     setIsCreating(true);
     try {
-      await api.post("/backoffice/staff/create", newStaff);
-      toast({ title: "Staff Created", description: "Backoffice user created successfully." });
+      const res = await api.post("/backoffice/staff/create", newStaff);
+      toast({ title: "Invite Sent", description: res.message ?? "Backoffice user created and invited." });
       setIsCreateStaffOpen(false);
-      setNewStaff({ name: "", email: "", password: "", role: "super_admin" });
+      setNewStaff({ name: "", email: "", role: "super_admin" });
       fetchStaff();
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -651,14 +651,15 @@ export default function BackofficeUsersPage() {
         </Dialog>
 
         {/* Create Backoffice Staff Dialog */}
-        <Dialog open={isCreateStaffOpen} onOpenChange={(open) => { if (!open) setNewStaff({ name: "", email: "", password: "", role: "super_admin" }); setIsCreateStaffOpen(open); }}>
+        <Dialog open={isCreateStaffOpen} onOpenChange={(open) => { if (!open) setNewStaff({ name: "", email: "", role: "super_admin" }); setIsCreateStaffOpen(open); }}>
           <DialogContent className="max-w-md bg-card border-orange-500/20">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-orange-600">
                 <ShieldAlert className="h-5 w-5" /> Add Backoffice Staff
               </DialogTitle>
               <DialogDescription>
-                Create a backoffice staff account that can enter Admin Mode to manage client data.
+                Invite a backoffice staff account that can enter Admin Mode to manage client data.
+                They'll get an email to set their own password on first login.
                 <br/><br/>
                 <strong className="text-foreground">Email must end with @smartagesolutions.com.</strong>
               </DialogDescription>
@@ -671,10 +672,6 @@ export default function BackofficeUsersPage() {
               <div className="space-y-2">
                 <Label>Staff Email *</Label>
                 <Input required type="email" placeholder="jane@smartagesolutions.com" value={newStaff.email} onChange={(e) => setNewStaff({ ...newStaff, email: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label>Initial Password *</Label>
-                <Input required type="password" placeholder="••••••••" minLength={8} value={newStaff.password} onChange={(e) => setNewStaff({ ...newStaff, password: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Access Level *</Label>
@@ -694,7 +691,7 @@ export default function BackofficeUsersPage() {
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsCreateStaffOpen(false)}>Cancel</Button>
                 <Button type="submit" disabled={isCreating} className="bg-orange-600 hover:bg-orange-700 text-white">
-                  Add Staff Member
+                  Send Invite
                 </Button>
               </DialogFooter>
             </form>
